@@ -1,0 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* 1920s Noir Color Palette */
+  --color-noir-black: #0a0a0a;
+  --color-noir-charcoal: #1a1a1a;
+  --color-noir-slate: #2d2d2d;
+  --color-noir-smoke: #4a4a4a;
+  --color-noir-ash: #8a8a8a;
+  --color-noir-cream: #f5f0e6;
+  --color-noir-gold: #c9a227;
+  --color-noir-rust: #8b4513;
+  --color-noir-blood: #722f37;
+
+  /* Typography */
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+/* Base styles */
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--color-noir-black);
+  color: var(--color-noir-cream);
+  font-family: var(--font-sans);
+}
+
+/* Animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fog {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.2;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.8s ease-out forwards;
+}
