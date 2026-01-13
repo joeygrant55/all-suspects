@@ -1,73 +1,65 @@
-# React + TypeScript + Vite
+# All Suspects
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A browser-based 3D murder mystery game where every NPC is an AI agent capable of real conversation, deception, and memory.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Players investigate a murder mystery by interrogating AI-powered suspects in an interactive 3D manor environment. Each character has their own personality, secrets, and the ability to lie or deflect during questioning.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React 18 + TypeScript + Vite
+- **3D Graphics**: React Three Fiber + Drei
+- **State Management**: Zustand
+- **Styling**: Tailwind CSS v4
+- **AI Backend**: Anthropic SDK (Claude) + Express
 
-## Expanding the ESLint configuration
+## Quick Start
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev:all    # Runs frontend + backend concurrently
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Or run separately:
+```bash
+npm run dev        # Frontend only (port 5173)
+npm run server     # Backend only (port 3001)
 ```
+
+## Current Mystery: The Ashford Affair
+
+**Setting**: New Year's Eve, 1929 at Ashford Manor during a snowstorm
+
+**Victim**: Edmund Ashford, wealthy industrialist
+
+**Suspects**: 6 characters, each with motives and secrets to uncover
+
+## Project Structure
+
+```
+all-suspects/
+├── src/
+│   ├── components/
+│   │   ├── Scene/       # React Three Fiber 3D components
+│   │   ├── UI/          # Game interface components
+│   │   └── Chat/        # Conversation interface
+│   ├── agents/          # AI agent system
+│   ├── game/            # Zustand state management
+│   └── App.tsx
+├── server/              # Express backend with Claude integration
+├── mysteries/           # Mystery scenario data
+└── package.json
+```
+
+## Development Status
+
+- Phase 1: Foundation (Complete)
+- Phase 2: Agent System (In Progress)
+- Phase 3: Mystery Content (Planned)
+- Phase 4: Polish (Planned)
+- Phase 5: Game Loop (Planned)
+
+## License
+
+Private - All rights reserved
