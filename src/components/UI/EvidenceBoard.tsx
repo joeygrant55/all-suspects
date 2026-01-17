@@ -1,6 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useGameStore } from '../../game/state'
 import { EVIDENCE_DATABASE } from '../../data/evidence'
+import { VideoComparison } from '../VideoPlayer/VideoComparison'
+import { isVideoAvailable } from '../../api/client'
 
 interface EvidenceBoardProps {
   isOpen: boolean
@@ -12,6 +14,18 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
   const contradictions = useGameStore((state) => state.contradictions)
   const characters = useGameStore((state) => state.characters)
   const [activeTab, setActiveTab] = useState<'evidence' | 'suspects' | 'timeline'>('evidence')
+  const [videoEnabled, setVideoEnabled] = useState(false)
+  const [selectedContradiction, setSelectedContradiction] = useState<{
+    testimony1: { characterId: string; characterName: string; testimony: string; question: string }
+    testimony2: { characterId: string; characterName: string; testimony: string; question: string }
+    explanation: string
+    type: 'timeline' | 'location' | 'witness' | 'factual' | 'behavioral'
+  } | null>(null)
+
+  // Check video availability
+  useEffect(() => {
+    isVideoAvailable().then(setVideoEnabled)
+  }, [])
 
   // Calculate suspicion levels based on collected evidence
   const getSuspicionLevel = (characterId: string): number => {
@@ -265,7 +279,31 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
                             <p className="text-noir-smoke italic truncate">"{contradiction.statement2.content.slice(0, 60)}..."</p>
                           </div>
                         </div>
-                        <div className="mt-2 flex justify-end">
+                        <div className="mt-2 flex justify-between items-center">
+                          {/* Compare Videos button */}
+                          {videoEnabled && (
+                            <button
+                              onClick={() => setSelectedContradiction({
+                                testimony1: {
+                                  characterId: contradiction.statement1.characterId,
+                                  characterName: contradiction.statement1.characterName,
+                                  testimony: contradiction.statement1.content,
+                                  question: contradiction.statement1.playerQuestion,
+                                },
+                                testimony2: {
+                                  characterId: contradiction.statement2.characterId,
+                                  characterName: contradiction.statement2.characterName,
+                                  testimony: contradiction.statement2.content,
+                                  question: contradiction.statement2.playerQuestion,
+                                },
+                                explanation: contradiction.explanation,
+                                type: 'factual', // Default type
+                              })}
+                              className="text-xs text-noir-gold hover:text-noir-cream transition-colors flex items-center gap-1"
+                            >
+                              🎬 Compare Videos
+                            </button>
+                          )}
                           <span className={`text-xs px-2 py-0.5 rounded ${
                             contradiction.severity === 'major' ? 'bg-noir-blood/50 text-noir-cream' :
                             contradiction.severity === 'significant' ? 'bg-amber-900/50 text-amber-200' :
@@ -435,6 +473,17 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
         <div className="absolute bottom-3 left-3 w-3 h-3 rounded-full bg-red-600 shadow-lg" />
         <div className="absolute bottom-3 right-3 w-3 h-3 rounded-full bg-red-600 shadow-lg" />
       </div>
+
+      {/* Video Comparison Modal */}
+      {selectedContradiction && (
+        <VideoComparison
+          testimony1={selectedContradiction.testimony1}
+          testimony2={selectedContradiction.testimony2}
+          contradictionExplanation={selectedContradiction.explanation}
+          contradictionType={selectedContradiction.type}
+          onClose={() => setSelectedContradiction(null)}
+        />
+      )}
     </div>
   )
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ManorScene } from './components/Scene'
-import { ChatPanel } from './components/Chat'
+import { InterrogationModal } from './components/Chat'
 import { Header, CharacterList, TitleScreen, EvidenceBoard, AccusationModal, ExaminationModal, TutorialModal, EvidenceNotification } from './components/UI'
 import { useEvidenceNotification } from './components/UI/EvidenceNotification'
 import { useGameStore } from './game/state'
@@ -92,7 +92,7 @@ function App() {
 
         {/* Main content */}
         <div className="flex-1 flex overflow-hidden">
-          {/* Left panel - 3D Scene */}
+          {/* 3D Scene - Full width */}
           <div className="flex-1 relative">
             <ManorScene onExamineEvidence={handleExamineEvidence} />
 
@@ -147,22 +147,17 @@ function App() {
             <AudioControls />
           </div>
 
-          {/* Right panel - Characters + Chat */}
+          {/* Right panel - Character list only (narrower) */}
           <div
-            className="w-96 flex flex-col bg-noir-charcoal border-l border-noir-slate"
+            className="w-72 flex flex-col bg-noir-charcoal border-l border-noir-slate"
             onWheel={(e) => e.stopPropagation()}
           >
-            {/* Character list */}
-            <div className="border-b border-noir-slate">
-              <CharacterList />
-            </div>
-
-            {/* Chat area */}
-            <div className="flex-1 overflow-hidden">
-              <ChatPanel />
-            </div>
+            <CharacterList />
           </div>
         </div>
+
+        {/* Interrogation Modal - Cinematic overlay */}
+        <InterrogationModal />
 
         {/* Evidence notification toast */}
         <EvidenceNotification

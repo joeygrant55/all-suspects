@@ -54,9 +54,9 @@ export type AudioManager = AudioManagerState & AudioManagerActions
 
 export function useAudioManager(): AudioManager {
   const [state, setState] = useState<AudioManagerState>({
-    musicEnabled: true,
-    sfxEnabled: true,
-    ambienceEnabled: true,
+    musicEnabled: false, // Disabled by default until audio files are added
+    sfxEnabled: false,
+    ambienceEnabled: false,
     masterVolume: 0.7,
     musicVolume: 0.4,
     sfxVolume: 0.6,

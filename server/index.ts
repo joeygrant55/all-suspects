@@ -14,11 +14,47 @@ import {
 import {
   recordConfrontation,
   recordContradiction,
+  recordEvidencePresented as recordPressureEvidence,
   getPressurePromptModifier,
   getPressureState,
   clearPressure,
   getAllPressureStates,
 } from './pressureSystem'
+import {
+  processAgentMessage,
+  showEvidenceToCharacter,
+  buildEnhancedSystemPrompt,
+} from './agents/characterAgent'
+import {
+  clearAllMemories,
+  clearCharacterMemories,
+  exportAllMemories,
+  getMemorySummary,
+} from './agents/memoryStore'
+import {
+  clearCrossReferences,
+  recordAccusation,
+  getAllGossipFor,
+} from './agents/crossReference'
+import {
+  generateVideo,
+  generateImage,
+  getGenerationStatus,
+  isVeoConfigured,
+} from './video/veoClient'
+import {
+  analyzeTestimony,
+  buildVideoPrompt,
+  buildIntroductionPrompt,
+} from './video/promptBuilder'
+import {
+  getCachedVideo,
+  cacheVideo,
+  generateCacheKey,
+  getCacheStats,
+  clearVideoCache,
+  startCacheCleanup,
+} from './video/videoCache'
 
 const app = express()
 app.use(cors())
@@ -99,10 +135,10 @@ RULES:
 Remember: The player is a detective investigating Edmund Ashford's murder. They will try to catch you in lies or contradictions.`
 }
 
-// Chat endpoint
+// Chat endpoint - Enhanced with Agent SDK features
 app.post('/api/chat', async (req, res) => {
   try {
-    const { characterId, message } = req.body
+    const { characterId, message, evidenceId } = req.body
 
     if (!characterId || !message) {
       return res.status(400).json({ error: 'Missing characterId or message' })
@@ -119,33 +155,38 @@ app.post('/api/chat', async (req, res) => {
     }
     const history = conversationHistory.get(characterId)!
 
-    // Add user message to history
-    history.push({ role: 'user', content: message })
-
     // Track pressure from this confrontation
     recordConfrontation(characterId)
+
+    // If evidence was presented, track it
+    if (evidenceId) {
+      showEvidenceToCharacter(characterId, evidenceId, message)
+      recordPressureEvidence(characterId, evidenceId)
+    }
+
+    // Check for accusations in the message
+    const messageLower = message.toLowerCase()
+    if (messageLower.includes('you killed') || messageLower.includes('you murdered') ||
+        messageLower.includes('you\'re the killer') || messageLower.includes('you are guilty')) {
+      recordAccusation(characterId, message)
+    }
 
     // Get current pressure state
     const pressureState = getPressureState(characterId)
     const pressureModifier = getPressurePromptModifier(pressureState.level, character.isGuilty)
 
-    // Build system prompt with pressure modifier
-    const systemPrompt = buildSystemPrompt(characterId, pressureModifier)
+    // Use the enhanced agent system with tool use
+    const agentResponse = await processAgentMessage(
+      anthropic,
+      character,
+      message,
+      history,
+      pressureModifier
+    )
 
-    // Call Claude API
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 300,
-      system: systemPrompt,
-      messages: history,
-    })
-
-    // Extract response text
-    const assistantMessage =
-      response.content[0].type === 'text' ? response.content[0].text : ''
-
-    // Add assistant response to history
-    history.push({ role: 'assistant', content: assistantMessage })
+    // Add messages to history
+    history.push({ role: 'user', content: message })
+    history.push({ role: 'assistant', content: agentResponse.message })
 
     // Keep history manageable (last 20 exchanges)
     if (history.length > 40) {
@@ -153,9 +194,9 @@ app.post('/api/chat', async (req, res) => {
     }
 
     // Track this statement for contradiction detection
-    const statement = addStatement(characterId, character.name, message, assistantMessage)
+    const statement = addStatement(characterId, character.name, message, agentResponse.message)
 
-    // Check for contradictions with other characters' statements (async, don't block response)
+    // Check for contradictions with other characters' statements
     let newContradictions: DetectedContradiction[] = []
     try {
       newContradictions = await checkForContradictions(anthropic, statement)
@@ -173,10 +214,11 @@ app.post('/api/chat', async (req, res) => {
     const finalPressureState = getPressureState(characterId)
 
     res.json({
-      message: assistantMessage,
+      message: agentResponse.message,
       characterName: character.name,
       statementId: statement.id,
       contradictions: newContradictions,
+      toolsUsed: agentResponse.toolsUsed, // New: show what tools the agent used
       pressure: {
         level: finalPressureState.level,
         confrontations: finalPressureState.confrontations,
@@ -207,12 +249,33 @@ app.post('/api/reset', (req, res) => {
   if (characterId) {
     conversationHistory.delete(characterId)
     clearPressure(characterId)
+    clearCharacterMemories(characterId)
   } else {
     conversationHistory.clear()
     clearStatements() // Also clear statement tracking
     clearPressure() // Also clear pressure tracking
+    clearAllMemories() // Clear agent memories
+    clearCrossReferences() // Clear gossip network
   }
   res.json({ success: true })
+})
+
+// Get character memories (for debugging)
+app.get('/api/memories/:characterId', (req, res) => {
+  const { characterId } = req.params
+  const summary = getMemorySummary(characterId)
+  const gossip = getAllGossipFor(characterId)
+  res.json({
+    characterId,
+    memorySummary: summary,
+    gossip,
+  })
+})
+
+// Get all memories (for debugging)
+app.get('/api/memories', (_req, res) => {
+  const allMemories = exportAllMemories()
+  res.json({ memories: allMemories })
 })
 
 // Get pressure states for all characters
@@ -345,7 +408,227 @@ app.get('/api/voices', (_req, res) => {
   })
 })
 
+// ============================================================
+// VIDEO GENERATION ENDPOINTS (Veo 3 / Imagen)
+// ============================================================
+
+// Generate a video from character testimony
+app.post('/api/video/testimony', async (req, res) => {
+  try {
+    const { characterId, testimony, question, testimonyId } = req.body
+
+    if (!characterId || !testimony) {
+      return res.status(400).json({ error: 'Missing characterId or testimony' })
+    }
+
+    // Check if Veo is configured
+    if (!isVeoConfigured()) {
+      return res.status(503).json({
+        error: 'Video service not configured',
+        message: 'Gemini API key not set. Add GEMINI_API_KEY to your .env file.',
+      })
+    }
+
+    // Analyze the testimony to extract visual elements
+    const analysis = await analyzeTestimony(
+      anthropic,
+      testimony,
+      characterId,
+      question || 'What did you see?'
+    )
+
+    // Build the video prompt
+    const videoPrompt = buildVideoPrompt(analysis, characterId)
+
+    // Check cache first
+    const cacheKey = generateCacheKey(characterId, videoPrompt.fullPrompt, 'testimony')
+    const cached = getCachedVideo(cacheKey)
+
+    if (cached) {
+      return res.json({
+        success: true,
+        cached: true,
+        videoUrl: cached.videoUrl,
+        videoData: cached.videoData,
+        prompt: cached.prompt,
+        analysis,
+      })
+    }
+
+    // Generate the video
+    const result = await generateVideo({
+      prompt: videoPrompt.fullPrompt,
+      characterId,
+      testimonyId: testimonyId || `testimony-${Date.now()}`,
+      duration: videoPrompt.duration,
+      aspectRatio: videoPrompt.aspectRatio,
+    })
+
+    if (result.success && result.videoUrl) {
+      // Cache the result
+      cacheVideo(cacheKey, {
+        characterId,
+        testimonyId: result.testimonyId,
+        videoUrl: result.videoUrl,
+        prompt: result.prompt,
+        createdAt: result.generatedAt,
+        type: 'testimony',
+      })
+    }
+
+    res.json({
+      success: result.success,
+      cached: false,
+      videoUrl: result.videoUrl,
+      videoData: result.videoData,
+      error: result.error,
+      generationId: result.generationId,
+      prompt: result.prompt,
+      analysis,
+    })
+  } catch (error) {
+    console.error('Error generating testimony video:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Failed to generate video', details: errorMessage })
+  }
+})
+
+// Generate a character introduction video
+app.post('/api/video/introduction', async (req, res) => {
+  try {
+    const { characterId } = req.body
+
+    if (!characterId) {
+      return res.status(400).json({ error: 'Missing characterId' })
+    }
+
+    // Check if Veo is configured
+    if (!isVeoConfigured()) {
+      return res.status(503).json({
+        error: 'Video service not configured',
+        message: 'Gemini API key not set.',
+      })
+    }
+
+    // Build introduction prompt
+    const videoPrompt = buildIntroductionPrompt(characterId)
+
+    // Check cache
+    const cacheKey = generateCacheKey(characterId, videoPrompt.fullPrompt, 'introduction')
+    const cached = getCachedVideo(cacheKey)
+
+    if (cached) {
+      return res.json({
+        success: true,
+        cached: true,
+        videoUrl: cached.videoUrl,
+        prompt: cached.prompt,
+      })
+    }
+
+    // Generate the video
+    const result = await generateVideo({
+      prompt: videoPrompt.fullPrompt,
+      characterId,
+      testimonyId: `intro-${characterId}`,
+      duration: videoPrompt.duration,
+      aspectRatio: videoPrompt.aspectRatio,
+    })
+
+    if (result.success && result.videoUrl) {
+      cacheVideo(cacheKey, {
+        characterId,
+        testimonyId: `intro-${characterId}`,
+        videoUrl: result.videoUrl,
+        prompt: result.prompt,
+        createdAt: result.generatedAt,
+        type: 'introduction',
+      })
+    }
+
+    res.json({
+      success: result.success,
+      cached: false,
+      videoUrl: result.videoUrl,
+      error: result.error,
+      generationId: result.generationId,
+      prompt: result.prompt,
+    })
+  } catch (error) {
+    console.error('Error generating introduction video:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Failed to generate video', details: errorMessage })
+  }
+})
+
+// Generate an image fallback (faster than video)
+app.post('/api/video/image', async (req, res) => {
+  try {
+    const { characterId, testimony, question } = req.body
+
+    if (!characterId || !testimony) {
+      return res.status(400).json({ error: 'Missing characterId or testimony' })
+    }
+
+    if (!isVeoConfigured()) {
+      return res.status(503).json({
+        error: 'Image service not configured',
+        message: 'Gemini API key not set.',
+      })
+    }
+
+    // Analyze testimony
+    const analysis = await analyzeTestimony(anthropic, testimony, characterId, question || '')
+    const videoPrompt = buildVideoPrompt(analysis, characterId)
+
+    // Generate image instead of video
+    const result = await generateImage(videoPrompt.fullPrompt, characterId)
+
+    res.json({
+      success: result.success,
+      imageUrl: result.imageUrl,
+      error: result.error,
+      prompt: videoPrompt.fullPrompt,
+      analysis,
+    })
+  } catch (error) {
+    console.error('Error generating image:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Failed to generate image', details: errorMessage })
+  }
+})
+
+// Check video generation status
+app.get('/api/video/status/:generationId', (req, res) => {
+  const { generationId } = req.params
+  const status = getGenerationStatus(generationId)
+
+  if (!status) {
+    return res.status(404).json({ error: 'Generation not found' })
+  }
+
+  res.json(status)
+})
+
+// Get video cache stats
+app.get('/api/video/cache', (_req, res) => {
+  const stats = getCacheStats()
+  res.json({
+    configured: isVeoConfigured(),
+    cache: stats,
+  })
+})
+
+// Clear video cache
+app.post('/api/video/cache/clear', (_req, res) => {
+  clearVideoCache()
+  res.json({ success: true })
+})
+
 const PORT = process.env.PORT || 3001
+
+// Start cache cleanup interval
+startCacheCleanup()
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)

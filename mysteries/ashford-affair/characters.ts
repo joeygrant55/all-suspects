@@ -25,6 +25,16 @@ export const WORLD_STATE: WorldState = {
   ],
 }
 
+// Initial greetings when first approaching each character
+export const CHARACTER_GREETINGS: Record<string, string> = {
+  victoria: "*Victoria Ashford sits rigidly in her chair, pearls catching the firelight. She regards you with cool, appraising eyes.*\n\nDetective. I understand you have questions. One must cooperate with the authorities, of course, though I confess I find this all rather... distasteful. My husband is dead, and we're being interrogated like common criminals.\n\n*She adjusts her gloves with practiced precision.*\n\nVery well. What do you wish to know?",
+  thomas: "*Thomas stands by the window, a nervous energy barely contained beneath his forced casual demeanor. He turns as you approach, attempting a charming smile that doesn't quite reach his eyes.*\n\nAh, Detective. Come to grill me, have you? Can't blame you, I suppose - the prodigal son returned, father turns up dead. Quite the scandal for the gossip columns.\n\n*He laughs, but it sounds hollow.*\n\nI've nothing to hide. Ask away.",
+  eleanor: "*Eleanor Crane sits with impeccable posture at a small writing desk, her hands folded. She watches you approach with alert, intelligent eyes that seem to catalog every detail.*\n\nDetective. I've been expecting you. As Mr. Ashford's secretary, I imagine you'll have questions about his affairs - business affairs, that is.\n\n*A pause, almost imperceptible.*\n\nI'll help however I can. Mr. Ashford was... a complex man.",
+  marcus: "*Dr. Webb rises from his chair as you approach, extending a hand in professional greeting. His manner is calm, but there's a tightness around his eyes.*\n\nDetective. A terrible business, this. I've known Edmund for fifteen years - treated the whole family. Never imagined I'd be certifying his death under such circumstances.\n\n*He gestures for you to sit.*\n\nPlease, ask what you must. We all want to see justice done.",
+  lillian: "*Lillian Moore sits alone, a cup of cold tea forgotten beside her. She looks up as you approach, her expression a curious mixture of grief and something harder.*\n\nAnother one come to pick through the bones of the past. I knew Edmund when we were all young and foolish. That was a long time ago.\n\n*She sighs, a bitter edge creeping into her voice.*\n\nI'm sure you've heard things. Everyone has a story to tell about the Ashfords.",
+  james: "*James the butler stands at attention, decades of service evident in his bearing. His face is carefully neutral, though his eyes hold a depth of knowledge.*\n\nDetective. I am at your disposal. I have served this house for thirty years - I know its secrets as well as anyone.\n\n*He inclines his head slightly.*\n\nIf you wish to know what happened tonight, I shall tell you what I observed. That is my duty.",
+}
+
 export const CHARACTERS: CharacterProfile[] = [
   {
     id: 'victoria',
