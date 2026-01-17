@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useGameStore } from '../../game/state'
+import { AudioContext } from '../../hooks/useAudioManager'
 
 export function TitleScreen() {
   const startGame = useGameStore((state) => state.startGame)
   const [showIntro, setShowIntro] = useState(false)
   const [introStep, setIntroStep] = useState(0)
+  const audioManager = useContext(AudioContext)
 
   const introText = [
     "New Year's Eve, 1929",
@@ -17,6 +19,8 @@ export function TitleScreen() {
   ]
 
   const handleStart = () => {
+    // Initialize audio on user interaction (required by browsers)
+    audioManager?.initializeAudio()
     setShowIntro(true)
   }
 
@@ -24,6 +28,8 @@ export function TitleScreen() {
     if (introStep < introText.length - 1) {
       setIntroStep(introStep + 1)
     } else {
+      // Start playing music when game begins
+      audioManager?.playMusic()
       startGame()
     }
   }

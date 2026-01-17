@@ -6,9 +6,10 @@ interface ExaminationModalProps {
   isOpen: boolean
   onClose: () => void
   isAlreadyCollected: boolean
+  onEvidenceCollected?: (evidenceId: string, evidenceName: string, hint?: string) => void
 }
 
-export function ExaminationModal({ evidence, isOpen, onClose, isAlreadyCollected }: ExaminationModalProps) {
+export function ExaminationModal({ evidence, isOpen, onClose, isAlreadyCollected, onEvidenceCollected }: ExaminationModalProps) {
   const addEvidence = useGameStore((state) => state.addEvidence)
 
   if (!isOpen || !evidence) return null
@@ -19,6 +20,10 @@ export function ExaminationModal({ evidence, isOpen, onClose, isAlreadyCollected
       description: evidence.name,
       source: evidence.id,
     })
+    // Trigger notification callback
+    if (onEvidenceCollected) {
+      onEvidenceCollected(evidence.id, evidence.name, evidence.hint)
+    }
     onClose()
   }
 

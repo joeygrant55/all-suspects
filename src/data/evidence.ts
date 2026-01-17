@@ -19,6 +19,8 @@ Thomas"
 The paper is expensive stationery with the Ashford family crest.`,
     type: 'document',
     relatedCharacter: 'thomas',
+    hint: 'Someone in the family had a strong motive...',
+    pointsTo: 'thomas',
   },
   'champagne-glass': {
     id: 'champagne-glass',
@@ -31,6 +33,8 @@ Upon closer inspection, there's a powdery residue along the inside of the glass 
 This appears to be the glass Edmund drank from at the midnight toast.`,
     type: 'physical',
     relatedCharacter: 'thomas',
+    hint: 'Who poured the champagne that night?',
+    pointsTo: 'thomas',
   },
   'body-outline': {
     id: 'body-outline',
@@ -42,6 +46,7 @@ The position suggests he collapsed suddenly while seated. Papers are scattered a
 
 There are no signs of a struggle - whatever happened, it was quick and unexpected. The victim likely trusted whoever brought him the champagne.`,
     type: 'physical',
+    hint: 'No struggle means Edmund trusted his killer...',
   },
 
   // PARLOR - 2 pieces of evidence
@@ -56,6 +61,8 @@ There are no signs of a struggle - whatever happened, it was quick and unexpecte
 Someone tried to destroy this document recently - the ashes are still warm. This appears to be Edmund's new will, which would have disinherited Thomas.`,
     type: 'document',
     relatedCharacter: 'thomas',
+    hint: 'Someone stood to lose everything...',
+    pointsTo: 'thomas',
   },
   'victoria-medication': {
     id: 'victoria-medication',
@@ -68,6 +75,8 @@ The bottle is nearly empty. According to the label, it was filled just last week
 Victoria claims she only takes it occasionally, but this much is missing in just a few days?`,
     type: 'physical',
     relatedCharacter: 'victoria',
+    hint: 'Where did all the medication go?',
+    pointsTo: 'victoria',
   },
 
   // DINING ROOM - 1 piece of evidence
@@ -81,6 +90,7 @@ Who was the seventh place for? Did someone not show up... or did someone leave e
 
 The setting appears untouched - whoever was expected never arrived or never ate.`,
     type: 'physical',
+    hint: 'Someone was expected but never came...',
   },
 
   // KITCHEN - 1 piece of evidence
@@ -95,6 +105,8 @@ However, the container has been opened recently - the seal is broken and some po
 The active ingredient? Arsenic - the same compound that would cause Edmund's symptoms.`,
     type: 'physical',
     relatedCharacter: 'james',
+    hint: 'Arsenic... the murder weapon?',
+    pointsTo: 'thomas',
   },
 
   // HALLWAY - 1 piece of evidence
@@ -108,6 +120,8 @@ According to James, the clock was working fine earlier in the evening. It appear
 
 11:32 PM - fifteen minutes before Edmund was found dead. Someone was in a hurry through this hallway right around the time of the murder.`,
     type: 'physical',
+    hint: '11:32 PM - a crucial timestamp. Where was everyone?',
+    pointsTo: 'thomas',
   },
 
   // GARDEN - 1 piece of evidence
@@ -122,6 +136,8 @@ The gloves have a faint chemical smell - the same slight bitterness you detected
 Someone wore these while handling something toxic, then discarded them in the fountain, hoping the water would wash away any evidence.`,
     type: 'physical',
     relatedCharacter: 'thomas',
+    hint: 'Expensive men\'s gloves with poison residue... who owns them?',
+    pointsTo: 'thomas',
   },
 }
 

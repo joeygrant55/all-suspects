@@ -1,3 +1,5 @@
+import { useState } from 'react'
+
 interface CharacterPortraitProps {
   characterId: string
   name: string
@@ -16,7 +18,7 @@ const CHARACTER_COLORS: Record<string, { primary: string; accent: string }> = {
   james: { primary: '#1a1a1a', accent: '#4a4a4a' }, // Black, butler
 }
 
-// Initials for each character
+// Initials for each character (fallback when no portrait image)
 const CHARACTER_INITIALS: Record<string, string> = {
   victoria: 'VA',
   thomas: 'TA',
@@ -26,6 +28,16 @@ const CHARACTER_INITIALS: Record<string, string> = {
   james: 'J',
 }
 
+// Portrait image paths (relative to public folder)
+const PORTRAIT_PATHS: Record<string, string> = {
+  victoria: '/portraits/victoria.webp',
+  thomas: '/portraits/thomas.webp',
+  eleanor: '/portraits/eleanor.webp',
+  marcus: '/portraits/marcus.webp',
+  lillian: '/portraits/lillian.webp',
+  james: '/portraits/james.webp',
+}
+
 export function CharacterPortrait({
   characterId,
   name,
@@ -33,8 +45,12 @@ export function CharacterPortrait({
   size = 'medium',
   isActive = false,
 }: CharacterPortraitProps) {
+  const [imageLoaded, setImageLoaded] = useState(false)
+  const [imageError, setImageError] = useState(false)
+
   const colors = CHARACTER_COLORS[characterId] || { primary: '#2d2d2d', accent: '#c9a227' }
   const initials = CHARACTER_INITIALS[characterId] || name.charAt(0)
+  const portraitPath = PORTRAIT_PATHS[characterId]
 
   const sizeClasses = {
     small: 'w-12 h-12',
@@ -48,6 +64,8 @@ export function CharacterPortrait({
     large: 'text-5xl',
   }
 
+  const showImage = portraitPath && !imageError
+
   return (
     <div className="flex flex-col items-center">
       {/* Portrait frame */}
@@ -60,13 +78,26 @@ export function CharacterPortrait({
             : 'inset 0 0 30px rgba(0,0,0,0.5)',
         }}
       >
-        {/* Background gradient */}
+        {/* Background gradient (always present as base) */}
         <div
           className="absolute inset-0"
           style={{
             background: `linear-gradient(180deg, ${colors.primary} 0%, ${colors.primary}dd 60%, #0a0a0a 100%)`,
           }}
         />
+
+        {/* AI-generated portrait image */}
+        {showImage && (
+          <img
+            src={portraitPath}
+            alt={`Portrait of ${name}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
+              imageLoaded ? 'opacity-100' : 'opacity-0'
+            }`}
+            onLoad={() => setImageLoaded(true)}
+            onError={() => setImageError(true)}
+          />
+        )}
 
         {/* Vignette overlay */}
         <div
@@ -77,17 +108,30 @@ export function CharacterPortrait({
           }}
         />
 
-        {/* Silhouette placeholder - stylized initials */}
-        <div
-          className={`absolute inset-0 flex items-center justify-center ${textSizes[size]} font-serif`}
-          style={{
-            color: colors.accent,
-            textShadow: `0 0 10px ${colors.accent}66`,
-            fontFamily: 'Georgia, serif',
-          }}
-        >
-          {initials}
-        </div>
+        {/* Silhouette placeholder - stylized initials (shown when no image or loading) */}
+        {(!showImage || !imageLoaded) && (
+          <div
+            className={`absolute inset-0 flex items-center justify-center ${textSizes[size]} font-serif`}
+            style={{
+              color: colors.accent,
+              textShadow: `0 0 10px ${colors.accent}66`,
+              fontFamily: 'Georgia, serif',
+            }}
+          >
+            {initials}
+          </div>
+        )}
+
+        {/* Sepia/noir color overlay for portraits */}
+        {showImage && imageLoaded && (
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'linear-gradient(180deg, rgba(30, 20, 10, 0.2) 0%, rgba(10, 10, 10, 0.4) 100%)',
+              mixBlendMode: 'multiply',
+            }}
+          />
+        )}
 
         {/* Film grain overlay */}
         <div

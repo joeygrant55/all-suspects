@@ -1,22 +1,51 @@
 import { useState } from 'react'
 import { useGameStore } from '../../game/state'
 import { CharacterPortrait } from './CharacterPortrait'
+import { EVIDENCE_DATABASE } from '../../data/evidence'
 
 interface AccusationModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
-type AccusationStage = 'select' | 'confirm' | 'reveal' | 'result'
+type AccusationStage = 'summary' | 'select' | 'confirm' | 'reveal' | 'result'
 
 export function AccusationModal({ isOpen, onClose }: AccusationModalProps) {
   const characters = useGameStore((state) => state.characters)
+  const collectedEvidence = useGameStore((state) => state.collectedEvidence)
+  const accusationAttempts = useGameStore((state) => state.accusationAttempts)
+  const lastWrongAccusation = useGameStore((state) => state.lastWrongAccusation)
+  const recordAccusationAttempt = useGameStore((state) => state.recordAccusationAttempt)
+
   const [selectedSuspect, setSelectedSuspect] = useState<string | null>(null)
-  const [stage, setStage] = useState<AccusationStage>('select')
+  const [stage, setStage] = useState<AccusationStage>('summary')
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
 
   // Thomas Ashford is the killer (from characters.ts)
   const KILLER_ID = 'thomas'
+
+  // Get evidence-based hints for wrong accusations
+  const getWrongAccusationHint = (wrongId: string): string => {
+    const hints: Record<string, string> = {
+      victoria: 'Victoria was in the parlor during the critical time. The evidence points to someone who had direct access to the study.',
+      eleanor: 'Eleanor left the study at 11 PM. Consider who was seen with Edmund later that evening.',
+      marcus: 'Dr. Webb arrived late and had limited access. The killer needed time alone with Edmund.',
+      lillian: 'Lillian was in the garden most of the night. Someone inside the manor is responsible.',
+      james: 'James discovered the body, but the evidence suggests a family motive, not servitude.',
+    }
+    return hints[wrongId] || 'Review your evidence carefully. Who had the strongest motive and opportunity?'
+  }
+
+  // Calculate suspicion for each character based on evidence
+  const calculateSuspicion = (characterId: string): number => {
+    let suspicion = 0
+    collectedEvidence.forEach((e) => {
+      const evidenceData = EVIDENCE_DATABASE[e.source]
+      if (evidenceData?.pointsTo === characterId) suspicion += 2
+      if (evidenceData?.relatedCharacter === characterId) suspicion += 1
+    })
+    return suspicion
+  }
 
   const handleSuspectSelect = (id: string) => {
     setSelectedSuspect(id)
@@ -30,16 +59,22 @@ export function AccusationModal({ isOpen, onClose }: AccusationModalProps) {
     setStage('reveal')
     // Dramatic delay before showing result
     setTimeout(() => {
-      setIsCorrect(selectedSuspect === KILLER_ID)
+      const correct = selectedSuspect === KILLER_ID
+      setIsCorrect(correct)
+      recordAccusationAttempt(selectedSuspect!, correct)
       setStage('result')
     }, 3000)
   }
 
   const handleClose = () => {
     setSelectedSuspect(null)
-    setStage('select')
+    setStage('summary')
     setIsCorrect(null)
     onClose()
+  }
+
+  const handleProceedToSelect = () => {
+    setStage('select')
   }
 
   const selectedCharacter = characters.find((c) => c.id === selectedSuspect)
@@ -65,15 +100,114 @@ export function AccusationModal({ isOpen, onClose }: AccusationModalProps) {
               textShadow: '0 0 30px rgba(201, 162, 39, 0.5)',
             }}
           >
+            {stage === 'summary' && 'REVIEW YOUR EVIDENCE'}
             {stage === 'select' && 'MAKE YOUR ACCUSATION'}
             {stage === 'confirm' && 'CONFIRM ACCUSATION'}
             {stage === 'reveal' && 'THE TRUTH REVEALS ITSELF...'}
             {stage === 'result' && (isCorrect ? 'CASE SOLVED' : 'WRONG ACCUSATION')}
           </h2>
+          {accusationAttempts > 0 && stage !== 'result' && (
+            <p className="text-noir-blood text-sm mt-2" style={{ fontFamily: 'Georgia, serif' }}>
+              Previous attempts: {accusationAttempts}
+            </p>
+          )}
         </div>
 
         {/* Content */}
         <div className="p-8">
+          {/* Summary stage - Review evidence before accusing */}
+          {stage === 'summary' && (
+            <>
+              <p className="text-center text-noir-cream mb-6" style={{ fontFamily: 'Georgia, serif' }}>
+                Before making your accusation, review the evidence you've collected.
+              </p>
+
+              {/* Evidence summary */}
+              <div className="bg-noir-slate/20 border border-noir-slate/50 rounded-sm p-4 mb-6 max-h-60 overflow-y-auto">
+                <h4 className="text-noir-gold text-sm mb-3 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>
+                  COLLECTED EVIDENCE ({collectedEvidence.length}/5)
+                </h4>
+                {collectedEvidence.length === 0 ? (
+                  <p className="text-noir-smoke text-sm italic">No evidence collected yet.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {collectedEvidence.map((evidence) => {
+                      const evidenceData = EVIDENCE_DATABASE[evidence.source]
+                      return (
+                        <div key={evidence.id} className="flex items-start gap-2 text-sm">
+                          <span className="text-noir-gold">•</span>
+                          <div>
+                            <span className="text-noir-cream">{evidenceData?.name || evidence.description}</span>
+                            {evidenceData?.hint && (
+                              <span className="text-noir-smoke italic ml-2">— {evidenceData.hint}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Suspect suspicion summary */}
+              <div className="bg-noir-slate/20 border border-noir-slate/50 rounded-sm p-4 mb-6">
+                <h4 className="text-noir-gold text-sm mb-3 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>
+                  SUSPICION LEVELS
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {characters
+                    .map((char) => ({ ...char, suspicion: calculateSuspicion(char.id) }))
+                    .sort((a, b) => b.suspicion - a.suspicion)
+                    .map((char) => (
+                      <div key={char.id} className="flex items-center justify-between text-sm">
+                        <span className="text-noir-cream">{char.name}</span>
+                        <div className="flex gap-0.5">
+                          {[0, 1, 2, 3, 4].map((i) => (
+                            <div
+                              key={i}
+                              className={`w-2 h-1.5 rounded-sm ${
+                                i < char.suspicion ? 'bg-noir-blood' : 'bg-noir-slate/50'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+
+              {/* Previous wrong accusation hint */}
+              {lastWrongAccusation && (
+                <div className="bg-noir-blood/10 border border-noir-blood/30 rounded-sm p-4 mb-6">
+                  <p className="text-noir-cream text-sm" style={{ fontFamily: 'Georgia, serif' }}>
+                    <span className="text-noir-blood font-bold">Investigator's Note:</span>{' '}
+                    {getWrongAccusationHint(lastWrongAccusation)}
+                  </p>
+                </div>
+              )}
+
+              <p className="text-center text-noir-smoke text-sm mb-6 italic" style={{ fontFamily: 'Georgia, serif' }}>
+                Based on your investigation, who murdered Edmund Ashford?
+              </p>
+
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={handleClose}
+                  className="px-6 py-3 border border-noir-slate text-noir-smoke hover:text-noir-cream hover:border-noir-cream transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleProceedToSelect}
+                  className="px-6 py-3 bg-noir-gold text-noir-black hover:bg-noir-gold/90 transition-colors"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  PROCEED TO ACCUSATION
+                </button>
+              </div>
+            </>
+          )}
+
           {/* Select stage */}
           {stage === 'select' && (
             <>
@@ -234,13 +368,23 @@ export function AccusationModal({ isOpen, onClose }: AccusationModalProps) {
                   >
                     The Wrong Suspect
                   </p>
-                  <p className="text-noir-cream mb-6" style={{ fontFamily: 'Georgia, serif' }}>
+                  <p className="text-noir-cream mb-4" style={{ fontFamily: 'Georgia, serif' }}>
                     {selectedCharacter?.name} was not the killer.
                     <br />
                     The real murderer remains free...
                   </p>
-                  <p className="text-noir-smoke text-sm mb-6 italic">
-                    Perhaps you should have gathered more evidence.
+                  {/* Investigative hint */}
+                  <div
+                    className="p-4 bg-noir-slate/30 rounded mb-6 text-left max-w-md mx-auto"
+                    style={{ fontFamily: 'Georgia, serif' }}
+                  >
+                    <p className="text-noir-gold text-sm mb-2">INVESTIGATOR'S INSIGHT:</p>
+                    <p className="text-noir-cream text-sm italic">
+                      {selectedSuspect ? getWrongAccusationHint(selectedSuspect) : ''}
+                    </p>
+                  </div>
+                  <p className="text-noir-smoke text-xs mb-6">
+                    Attempt {accusationAttempts} — You may try again.
                   </p>
                 </>
               )}

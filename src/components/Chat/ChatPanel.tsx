@@ -1,20 +1,92 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useContext, useMemo } from 'react'
 import { useGameStore } from '../../game/state'
 import { sendMessage, healthCheck } from '../../api/client'
+import { VoiceContext } from '../../hooks/useVoice'
+import { EVIDENCE_DIALOGUE_UNLOCKS } from '../../data/evidence'
 
 export function ChatPanel() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [apiConnected, setApiConnected] = useState<boolean | null>(null)
+  const [newContradiction, setNewContradiction] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const currentConversation = useGameStore((state) => state.currentConversation)
   const characters = useGameStore((state) => state.characters)
   const messages = useGameStore((state) => state.messages)
+  const collectedEvidence = useGameStore((state) => state.collectedEvidence)
   const addMessage = useGameStore((state) => state.addMessage)
+  const addContradictions = useGameStore((state) => state.addContradictions)
+  const updateCharacterPressure = useGameStore((state) => state.updateCharacterPressure)
   const endConversation = useGameStore((state) => state.endConversation)
 
+  const voiceManager = useContext(VoiceContext)
   const currentCharacter = characters.find((c) => c.id === currentConversation)
+
+  // Generate suggested questions based on evidence and character
+  const suggestedQuestions = useMemo(() => {
+    if (!currentConversation) return []
+
+    const suggestions: string[] = []
+
+    // Base questions for each character
+    const baseQuestions: Record<string, string[]> = {
+      victoria: [
+        'Where were you when Edmund died?',
+        'How was your relationship with Edmund?',
+        'Did you notice anything unusual tonight?',
+      ],
+      thomas: [
+        'Where were you at 11:30 PM?',
+        'I heard you argued with your father tonight.',
+        'Tell me about your inheritance.',
+      ],
+      eleanor: [
+        'What were you working on in the study?',
+        'Did you see anyone near Edmund\'s office?',
+        'What was Edmund\'s mood tonight?',
+      ],
+      marcus: [
+        'Why did you arrive late tonight?',
+        'What was Edmund\'s state of health?',
+        'Did you prescribe any medications recently?',
+      ],
+      lillian: [
+        'How long have you known the family?',
+        'What were you doing in the garden?',
+        'Did you see anyone else outside?',
+      ],
+      james: [
+        'Walk me through your duties tonight.',
+        'Who served Edmund his champagne?',
+        'Did you notice anything out of place?',
+      ],
+    }
+
+    // Add base questions
+    const charQuestions = baseQuestions[currentConversation] || []
+    suggestions.push(...charQuestions.slice(0, 2))
+
+    // Add evidence-based questions
+    collectedEvidence.forEach((evidence) => {
+      const unlocks = EVIDENCE_DIALOGUE_UNLOCKS[evidence.source]
+      if (unlocks) {
+        unlocks.forEach((unlock) => {
+          if (unlock.characterId === currentConversation && !suggestions.includes(unlock.prompt)) {
+            suggestions.push(unlock.prompt)
+          }
+        })
+      }
+    })
+
+    // Limit to 3 suggestions max
+    return suggestions.slice(0, 3)
+  }, [currentConversation, collectedEvidence])
+
+  // Handle clicking a suggested question
+  const handleSuggestionClick = (question: string) => {
+    setInput(question)
+  }
 
   // Check API connection on mount
   useEffect(() => {
@@ -36,7 +108,6 @@ export function ChatPanel() {
     const playerMessage = input.trim()
     setInput('')
 
-    // Add player message
     addMessage({
       role: 'player',
       characterId: currentConversation,
@@ -52,6 +123,26 @@ export function ChatPanel() {
         characterId: currentConversation,
         content: response.message,
       })
+
+      // Handle any detected contradictions
+      if (response.contradictions && response.contradictions.length > 0) {
+        addContradictions(response.contradictions)
+        // Show the first contradiction as a notification
+        const firstContradiction = response.contradictions[0]
+        setNewContradiction(firstContradiction.explanation)
+        // Auto-dismiss after 6 seconds
+        setTimeout(() => setNewContradiction(null), 6000)
+      }
+
+      // Update character pressure level
+      if (response.pressure) {
+        updateCharacterPressure(currentConversation, response.pressure)
+      }
+
+      // Trigger voice synthesis for character response
+      if (voiceManager?.voiceEnabled && response.message) {
+        voiceManager.speak(currentConversation, response.message)
+      }
     } catch (error) {
       console.error('Error:', error)
       addMessage({
@@ -63,6 +154,12 @@ export function ChatPanel() {
     } finally {
       setIsLoading(false)
     }
+  }
+
+  // Stop voice when ending conversation
+  const handleEndConversation = () => {
+    voiceManager?.stop()
+    endConversation()
   }
 
   if (!currentConversation || !currentCharacter) {
@@ -116,9 +213,41 @@ export function ChatPanel() {
           >
             {currentCharacter.name}
           </span>
+          {/* Pressure indicator */}
+          {currentCharacter.pressure && currentCharacter.pressure.level > 0 && (
+            <div className="flex items-center gap-1" title={`Pressure: ${Math.round(currentCharacter.pressure.level)}%`}>
+              <div className="w-16 h-1.5 bg-noir-slate/50 rounded-full overflow-hidden">
+                <div
+                  className={`h-full transition-all duration-500 ${
+                    currentCharacter.pressure.level >= 80 ? 'bg-noir-blood animate-pulse' :
+                    currentCharacter.pressure.level >= 60 ? 'bg-amber-500' :
+                    currentCharacter.pressure.level >= 30 ? 'bg-amber-700' :
+                    'bg-noir-gold/50'
+                  }`}
+                  style={{ width: `${currentCharacter.pressure.level}%` }}
+                />
+              </div>
+              {currentCharacter.pressure.level >= 80 && (
+                <span className="text-xs text-noir-blood animate-pulse">!</span>
+              )}
+            </div>
+          )}
+          {/* Voice indicator */}
+          {voiceManager?.isPlaying && (
+            <span className="flex items-center gap-1 text-xs text-noir-gold">
+              <span className="w-1.5 h-1.5 bg-noir-gold rounded-full animate-pulse" />
+              speaking
+            </span>
+          )}
+          {voiceManager?.isLoading && (
+            <span className="flex items-center gap-1 text-xs text-noir-smoke">
+              <span className="w-1.5 h-1.5 bg-noir-smoke rounded-full animate-pulse" />
+              loading voice
+            </span>
+          )}
         </div>
         <button
-          onClick={endConversation}
+          onClick={handleEndConversation}
           className="px-2 py-1 text-xs border border-noir-slate text-noir-smoke hover:border-noir-gold hover:text-noir-gold transition-colors"
         >
           END
@@ -133,8 +262,35 @@ export function ChatPanel() {
         </div>
       )}
 
+      {/* Contradiction notification */}
+      {newContradiction && (
+        <div
+          className="px-3 py-2.5 bg-noir-blood/30 border-l-4 border-noir-blood text-noir-cream animate-pulse"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          <div className="flex items-start gap-2">
+            <span className="text-noir-blood text-lg shrink-0">!</span>
+            <div>
+              <p className="text-xs font-bold text-noir-blood uppercase tracking-wider mb-1">
+                Contradiction Detected
+              </p>
+              <p className="text-sm">{newContradiction}</p>
+            </div>
+            <button
+              onClick={() => setNewContradiction(null)}
+              className="ml-auto text-noir-smoke hover:text-noir-cream text-lg shrink-0"
+            >
+              x
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Messages - now has much more space */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      <div
+        className="flex-1 overflow-y-auto p-3 space-y-3"
+        onWheel={(e) => e.stopPropagation()}
+      >
         {conversationMessages.length === 0 && (
           <div className="text-center py-4">
             <p className="text-noir-smoke italic text-sm">
@@ -170,6 +326,17 @@ export function ChatPanel() {
               >
                 <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
               </div>
+              {/* Replay voice button for character messages */}
+              {message.role === 'character' && voiceManager?.voiceEnabled && (
+                <button
+                  onClick={() => voiceManager.speak(currentConversation!, message.content)}
+                  disabled={voiceManager.isLoading || voiceManager.isPlaying}
+                  className="mt-1 text-xs text-noir-smoke hover:text-noir-gold transition-colors disabled:opacity-50"
+                  title="Replay voice"
+                >
+                  {voiceManager.isPlaying ? '...' : '🔊 replay'}
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -186,7 +353,23 @@ export function ChatPanel() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input - more compact */}
+      {/* Suggested questions - compact inline */}
+      {suggestedQuestions.length > 0 && (
+        <div className="px-3 py-1.5 border-t border-noir-slate/30 bg-noir-black/20 flex items-center gap-2 overflow-x-auto" onWheel={(e) => e.stopPropagation()}>
+          <span className="text-[10px] text-noir-smoke shrink-0">Try:</span>
+          {suggestedQuestions.map((question, index) => (
+            <button
+              key={index}
+              onClick={() => handleSuggestionClick(question)}
+              className="px-2 py-0.5 text-[11px] bg-noir-slate/30 hover:bg-noir-gold/20 text-noir-cream/70 hover:text-noir-cream rounded-sm shrink-0 transition-colors"
+            >
+              {question}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Input */}
       <form onSubmit={handleSubmit} className="p-3 border-t border-noir-slate">
         <div className="flex gap-2">
           <input

@@ -1,11 +1,19 @@
 import { create } from 'zustand'
 
+export interface PressureLevel {
+  level: number
+  confrontations: number
+  evidencePresented: number
+  contradictionsExposed: number
+}
+
 export interface Character {
   id: string
   name: string
   role: string
   location: string
   portrait?: string
+  pressure?: PressureLevel
 }
 
 export interface Evidence {
@@ -16,11 +24,32 @@ export interface Evidence {
   timestamp: number
 }
 
-export interface Contradiction {
+export interface StatementRecord {
   id: string
   characterId: string
-  claim1: string
-  claim2: string
+  characterName: string
+  topic: string
+  content: string
+  timestamp: number
+  playerQuestion: string
+}
+
+export interface Contradiction {
+  id: string
+  statement1: {
+    characterId: string
+    characterName: string
+    content: string
+    playerQuestion: string
+  }
+  statement2: {
+    characterId: string
+    characterName: string
+    content: string
+    playerQuestion: string
+  }
+  explanation: string
+  severity: 'minor' | 'significant' | 'major'
   discoveredAt: number
 }
 
@@ -53,6 +82,9 @@ export interface GameState {
   accusationUnlocked: boolean
   gameComplete: boolean
   gameStarted: boolean
+  tutorialSeen: boolean
+  accusationAttempts: number
+  lastWrongAccusation: string | null // Character ID of last wrong guess
 
   // Actions
   setCurrentRoom: (room: string) => void
@@ -61,8 +93,12 @@ export interface GameState {
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void
   addEvidence: (evidence: Omit<Evidence, 'id' | 'timestamp'>) => void
   markEvidenceDiscovered: (evidenceId: string) => void
-  addContradiction: (contradiction: Omit<Contradiction, 'id' | 'discoveredAt'>) => void
+  addContradiction: (contradiction: Contradiction) => void
+  addContradictions: (contradictions: Contradiction[]) => void
+  updateCharacterPressure: (characterId: string, pressure: PressureLevel) => void
   startGame: () => void
+  setTutorialSeen: () => void
+  recordAccusationAttempt: (characterId: string, isCorrect: boolean) => void
   isEvidenceDiscovered: (evidenceId: string) => boolean
   isEvidenceCollected: (evidenceId: string) => boolean
 }
@@ -91,6 +127,9 @@ export const useGameStore = create<GameState>((set, get) => ({
   accusationUnlocked: false,
   gameComplete: false,
   gameStarted: false,
+  tutorialSeen: false,
+  accusationAttempts: 0,
+  lastWrongAccusation: null,
 
   // Actions
   setCurrentRoom: (room) => set({ currentRoom: room }),
@@ -137,18 +176,47 @@ export const useGameStore = create<GameState>((set, get) => ({
     }),
 
   addContradiction: (contradiction) =>
+    set((state) => {
+      // Don't add duplicate contradictions
+      if (state.contradictions.some((c) => c.id === contradiction.id)) {
+        return state
+      }
+      return {
+        contradictions: [...state.contradictions, contradiction],
+      }
+    }),
+
+  addContradictions: (contradictions) =>
+    set((state) => {
+      // Filter out duplicates
+      const newContradictions = contradictions.filter(
+        (c) => !state.contradictions.some((existing) => existing.id === c.id)
+      )
+      if (newContradictions.length === 0) {
+        return state
+      }
+      return {
+        contradictions: [...state.contradictions, ...newContradictions],
+      }
+    }),
+
+  updateCharacterPressure: (characterId, pressure) =>
     set((state) => ({
-      contradictions: [
-        ...state.contradictions,
-        {
-          ...contradiction,
-          id: crypto.randomUUID(),
-          discoveredAt: Date.now(),
-        },
-      ],
+      characters: state.characters.map((c) =>
+        c.id === characterId ? { ...c, pressure } : c
+      ),
     })),
 
   startGame: () => set({ gameStarted: true }),
+
+  setTutorialSeen: () => set({ tutorialSeen: true }),
+
+  recordAccusationAttempt: (characterId, isCorrect) =>
+    set((state) => ({
+      accusationAttempts: state.accusationAttempts + 1,
+      lastWrongAccusation: isCorrect ? null : characterId,
+      gameComplete: isCorrect,
+    })),
 
   isEvidenceDiscovered: (evidenceId) => get().discoveredEvidenceIds.includes(evidenceId),
 

@@ -1,8 +1,20 @@
+import type { Contradiction } from '../game/state'
+
 const API_BASE = 'http://localhost:3001/api'
+
+export interface PressureData {
+  level: number
+  confrontations: number
+  evidencePresented: number
+  contradictionsExposed: number
+}
 
 export interface ChatResponse {
   message: string
   characterName: string
+  statementId?: string
+  contradictions?: Contradiction[]
+  pressure?: PressureData
 }
 
 export async function sendMessage(
