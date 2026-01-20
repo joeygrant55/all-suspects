@@ -55,12 +55,24 @@ export function VideoInterrogationView({
   const analyserRef = useRef<AnalyserNode | null>(null)
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Use refs to track current state for polling callback (avoid stale closures)
+  const isVoicePlayingRef = useRef(isVoicePlaying)
+  const playbackStateRef = useRef(playbackState)
+
+  // Keep refs in sync with state
+  useEffect(() => {
+    isVoicePlayingRef.current = isVoicePlaying
+  }, [isVoicePlaying])
+
+  useEffect(() => {
+    playbackStateRef.current = playbackState
+  }, [playbackState])
+
   // Transition to video playback
   const transitionToVideo = useCallback(() => {
     setPlaybackState('transitioning')
     setTimeout(() => {
       setPlaybackState('video')
-      videoRef.current?.play()
     }, 500)
   }, [])
 
@@ -138,7 +150,7 @@ export function VideoInterrogationView({
           onPlaybackComplete?.()
         }
       } catch (err) {
-        console.error('Voice playback failed:', err)
+        console.warn('Voice playback interrupted:', err)
         // Continue without voice
       }
     } else if (videoGenerationId) {
@@ -188,18 +200,22 @@ export function VideoInterrogationView({
         }
 
         if (status.status === 'completed' && status.videoUrl) {
+          // Use refs for current state to avoid stale closures
+          const currentIsVoicePlaying = isVoicePlayingRef.current
+          const currentPlaybackState = playbackStateRef.current
+
           clearInterval(pollIntervalRef.current!)
           setVideoUrl(status.videoUrl)
           setProgress(100)
           onVideoReady?.(status.videoUrl)
 
-          // If voice is done, transition to video
-          if (!isVoicePlaying && playbackState === 'voice-only') {
+          // If voice is done, transition to video immediately
+          if (!currentIsVoicePlaying && currentPlaybackState === 'voice-only') {
             transitionToVideo()
           }
         } else if (status.status === 'failed') {
           clearInterval(pollIntervalRef.current!)
-          console.warn('Video generation failed, staying in voice mode')
+          console.warn('Video generation failed:', status.error || 'Unknown error')
         }
       } catch (err) {
         console.error('Error polling video status:', err)
@@ -211,7 +227,7 @@ export function VideoInterrogationView({
         clearInterval(pollIntervalRef.current)
       }
     }
-  }, [videoGenerationId, videoUrl, isVoicePlaying, playbackState, onVideoReady, transitionToVideo])
+  }, [videoGenerationId, videoUrl, onVideoReady, transitionToVideo])
 
   // Handle voice finished - transition to video if ready
   useEffect(() => {
@@ -219,6 +235,19 @@ export function VideoInterrogationView({
       transitionToVideo()
     }
   }, [isVoicePlaying, playbackState, videoUrl, transitionToVideo])
+
+  // Ensure video plays when entering 'video' state (backup for autoPlay)
+  useEffect(() => {
+    if (playbackState === 'video' && videoRef.current && videoUrl) {
+      const video = videoRef.current
+      // Only attempt play if paused (autoPlay might have already started it)
+      if (video.paused) {
+        video.play().catch((err) => {
+          console.warn('Auto-play blocked:', err)
+        })
+      }
+    }
+  }, [playbackState, videoUrl])
 
   const handleVideoEnded = useCallback(() => {
     setPlaybackState('complete')
