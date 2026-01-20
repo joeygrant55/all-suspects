@@ -289,3 +289,240 @@ export async function generateVoice(
 
   return response.json()
 }
+
+// ============================================================
+// WATSON INVESTIGATION ASSISTANT API
+// ============================================================
+
+export interface WatsonContradiction {
+  id: string
+  type: 'direct' | 'logical' | 'timeline'
+  severity: 'minor' | 'significant' | 'critical'
+  statement1: {
+    characterId: string
+    characterName: string
+    content: string
+  }
+  statement2: {
+    characterId: string
+    characterName: string
+    content: string
+  }
+  explanation: string
+  suggestedFollowUp?: string[]
+}
+
+export interface WatsonTimelineEvent {
+  time: string
+  location: string
+  description: string
+  sources: string[]
+  confirmed: boolean
+  disputed: boolean
+}
+
+export interface WatsonSuggestion {
+  id: string
+  type: 'follow_up' | 'new_line' | 'evidence' | 'comparison'
+  priority: 'low' | 'medium' | 'high'
+  text: string
+  reasoning: string
+  targetCharacter?: string
+}
+
+export interface WatsonTheoryEvaluation {
+  score: number
+  grade: string
+  verdict: string
+  supports?: string[]
+  contradicts?: string[]
+  missing?: string[]
+  watsonComment?: string
+}
+
+export interface WatsonAnalysis {
+  success: boolean
+  analysis: {
+    newContradictions: WatsonContradiction[]
+    observations: string[]
+    suggestions: WatsonSuggestion[]
+    timelineUpdates: WatsonTimelineEvent[]
+  }
+}
+
+export interface WatsonSummary {
+  totalStatements: number
+  statementsPerCharacter: Record<string, number>
+  contradictionCount: number
+  unresolvedContradictions: number
+  timelineEvents: number
+  confirmedEvents: number
+  disputedEvents: number
+  activeTheories: number
+}
+
+/**
+ * Process a statement through Watson for analysis
+ */
+export async function analyzeWithWatson(
+  characterId: string,
+  characterName: string,
+  statement: string,
+  question: string,
+  pressure: number = 0
+): Promise<WatsonAnalysis> {
+  const response = await fetch(`${API_BASE}/watson/analyze`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ characterId, characterName, statement, question, pressure }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || error.error || 'Watson analysis failed')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get all detected contradictions
+ */
+export async function getWatsonContradictions(): Promise<{ contradictions: WatsonContradiction[] }> {
+  const response = await fetch(`${API_BASE}/watson/contradictions`)
+
+  if (!response.ok) {
+    throw new Error('Failed to get contradictions')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get investigation timeline
+ */
+export async function getWatsonTimeline(): Promise<{ timeline: WatsonTimelineEvent[] }> {
+  const response = await fetch(`${API_BASE}/watson/timeline`)
+
+  if (!response.ok) {
+    throw new Error('Failed to get timeline')
+  }
+
+  return response.json()
+}
+
+/**
+ * Evaluate a player's theory
+ */
+export async function evaluateWatsonTheory(theory: {
+  accusedId: string
+  accusedName: string
+  motive: string
+  method: string
+  opportunity: string
+  supportingEvidence?: string[]
+  supportingStatements?: string[]
+}): Promise<{ success: boolean; evaluation: WatsonTheoryEvaluation }> {
+  const response = await fetch(`${API_BASE}/watson/evaluate-theory`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(theory),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || error.error || 'Theory evaluation failed')
+  }
+
+  return response.json()
+}
+
+/**
+ * Quick theory evaluation (no AI, for real-time feedback)
+ */
+export async function quickEvaluateWatsonTheory(theory: {
+  accusedId: string
+  motive: string
+  opportunity: string
+}): Promise<{ score: number; grade: string; verdict: string }> {
+  const response = await fetch(`${API_BASE}/watson/quick-evaluate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(theory),
+  })
+
+  if (!response.ok) {
+    throw new Error('Quick evaluation failed')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get investigation suggestions
+ */
+export async function getWatsonSuggestions(): Promise<{ suggestions: WatsonSuggestion[] }> {
+  const response = await fetch(`${API_BASE}/watson/suggestions`)
+
+  if (!response.ok) {
+    throw new Error('Failed to get suggestions')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get summary of a specific suspect
+ */
+export async function getWatsonSuspectSummary(characterId: string): Promise<{
+  characterId: string
+  characterName: string
+  statementsCount: number
+  contradictionsInvolved: number
+  summary: string
+  keyStatements: { id: string; content: string; topic: string }[]
+  emotionalPattern: string
+  cooperationLevel: number
+}> {
+  const response = await fetch(`${API_BASE}/watson/suspect/${characterId}`)
+
+  if (!response.ok) {
+    throw new Error('Failed to get suspect summary')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get overall investigation summary
+ */
+export async function getWatsonSummary(): Promise<WatsonSummary> {
+  const response = await fetch(`${API_BASE}/watson/summary`)
+
+  if (!response.ok) {
+    throw new Error('Failed to get investigation summary')
+  }
+
+  return response.json()
+}
+
+/**
+ * Reset Watson for a new game
+ */
+export async function resetWatson(): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${API_BASE}/watson/reset`, {
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to reset Watson')
+  }
+
+  return response.json()
+}
