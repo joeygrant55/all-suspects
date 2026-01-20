@@ -55,6 +55,15 @@ import {
   clearVideoCache,
   startCacheCleanup,
 } from './video/videoCache'
+import { getWatson, resetWatson } from './watson'
+import {
+  generateMystery,
+  getCurrentMystery,
+  saveMystery,
+  clearCurrentMystery,
+  exportMystery,
+  importMystery,
+} from './mystery'
 
 const app = express()
 app.use(cors())
@@ -551,7 +560,7 @@ app.get('/api/statements', (_req, res) => {
 app.get('/', (_req, res) => {
   res.json({
     name: 'All Suspects API',
-    version: '1.1.0',
+    version: '1.2.0',
     endpoints: {
       'GET /': 'This info',
       'GET /api/health': 'Health check',
@@ -560,6 +569,9 @@ app.get('/', (_req, res) => {
       'POST /api/reset': 'Reset conversation history and statements',
       'GET /api/contradictions': 'Get all detected contradictions',
       'GET /api/statements': 'Get all tracked character statements',
+      'POST /api/mystery/generate': 'Generate a new procedural mystery (body: {difficulty})',
+      'GET /api/mystery/current': 'Get current mystery (player-safe)',
+      'GET /api/mystery/debug': 'Get full mystery including solution (admin)',
     },
   })
 })
@@ -874,6 +886,357 @@ app.get('/api/video/cache', (_req, res) => {
 app.post('/api/video/cache/clear', (_req, res) => {
   clearVideoCache()
   res.json({ success: true })
+})
+
+// ============================================================
+// WATSON INVESTIGATION ASSISTANT ENDPOINTS
+// ============================================================
+
+/**
+ * Process a new statement through Watson
+ * Call this after each interrogation response
+ */
+app.post('/api/watson/analyze', async (req, res) => {
+  try {
+    const { characterId, characterName, statement, question, pressure } = req.body
+
+    if (!characterId || !statement) {
+      return res.status(400).json({ error: 'Missing characterId or statement' })
+    }
+
+    const watson = getWatson()
+    const analysis = await watson.processStatement(
+      characterId,
+      characterName || characterId,
+      statement,
+      { question: question || '', pressure: pressure || 0 }
+    )
+
+    res.json({
+      success: true,
+      analysis,
+    })
+  } catch (error) {
+    console.error('[WATSON] Analysis failed:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Watson analysis failed', details: errorMessage })
+  }
+})
+
+/**
+ * Get all detected contradictions
+ */
+app.get('/api/watson/contradictions', (_req, res) => {
+  try {
+    const watson = getWatson()
+    const contradictions = watson.getContradictions()
+    res.json({ contradictions })
+  } catch (error) {
+    console.error('[WATSON] Get contradictions failed:', error)
+    res.status(500).json({ error: 'Failed to get contradictions' })
+  }
+})
+
+/**
+ * Get investigation timeline
+ */
+app.get('/api/watson/timeline', (_req, res) => {
+  try {
+    const watson = getWatson()
+    const timeline = watson.getTimeline()
+    res.json({ timeline })
+  } catch (error) {
+    console.error('[WATSON] Get timeline failed:', error)
+    res.status(500).json({ error: 'Failed to get timeline' })
+  }
+})
+
+/**
+ * Evaluate a player's theory
+ */
+app.post('/api/watson/evaluate-theory', async (req, res) => {
+  try {
+    const { accusedId, accusedName, motive, method, opportunity, supportingEvidence, supportingStatements } = req.body
+
+    if (!accusedId || !motive) {
+      return res.status(400).json({ error: 'Missing accusedId or motive' })
+    }
+
+    const watson = getWatson()
+    const evaluation = await watson.evaluateTheory({
+      accusedId,
+      accusedName: accusedName || accusedId,
+      motive,
+      method: method || '',
+      opportunity: opportunity || '',
+      supportingEvidence,
+      supportingStatements,
+    })
+
+    res.json({
+      success: true,
+      evaluation,
+    })
+  } catch (error) {
+    console.error('[WATSON] Theory evaluation failed:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Theory evaluation failed', details: errorMessage })
+  }
+})
+
+/**
+ * Quick theory evaluation (no AI, for real-time UI feedback)
+ */
+app.post('/api/watson/quick-evaluate', (req, res) => {
+  try {
+    const { accusedId, motive, opportunity } = req.body
+
+    if (!accusedId) {
+      return res.status(400).json({ error: 'Missing accusedId' })
+    }
+
+    const watson = getWatson()
+    const result = watson.quickEvaluateTheory({
+      accusedId,
+      motive: motive || '',
+      opportunity: opportunity || '',
+    })
+
+    res.json(result)
+  } catch (error) {
+    console.error('[WATSON] Quick evaluation failed:', error)
+    res.status(500).json({ error: 'Quick evaluation failed' })
+  }
+})
+
+/**
+ * Get investigation suggestions
+ */
+app.get('/api/watson/suggestions', async (_req, res) => {
+  try {
+    const watson = getWatson()
+    const suggestions = await watson.getSuggestions()
+    res.json({ suggestions })
+  } catch (error) {
+    console.error('[WATSON] Get suggestions failed:', error)
+    res.status(500).json({ error: 'Failed to get suggestions' })
+  }
+})
+
+/**
+ * Get summary of a specific suspect
+ */
+app.get('/api/watson/suspect/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+    const watson = getWatson()
+    const summary = await watson.getSuspectSummary(id)
+    res.json(summary)
+  } catch (error) {
+    console.error('[WATSON] Get suspect summary failed:', error)
+    res.status(500).json({ error: 'Failed to get suspect summary' })
+  }
+})
+
+/**
+ * Get investigation summary
+ */
+app.get('/api/watson/summary', (_req, res) => {
+  try {
+    const watson = getWatson()
+    const summary = watson.getInvestigationSummary()
+    res.json(summary)
+  } catch (error) {
+    console.error('[WATSON] Get summary failed:', error)
+    res.status(500).json({ error: 'Failed to get investigation summary' })
+  }
+})
+
+/**
+ * Get all tracked statements
+ */
+app.get('/api/watson/statements', (_req, res) => {
+  try {
+    const watson = getWatson()
+    const statements = watson.getAllStatements()
+    res.json({ statements })
+  } catch (error) {
+    console.error('[WATSON] Get statements failed:', error)
+    res.status(500).json({ error: 'Failed to get statements' })
+  }
+})
+
+/**
+ * Get character profiles
+ */
+app.get('/api/watson/profiles', (_req, res) => {
+  try {
+    const watson = getWatson()
+    const profiles = watson.getCharacterProfiles()
+    res.json({ profiles })
+  } catch (error) {
+    console.error('[WATSON] Get profiles failed:', error)
+    res.status(500).json({ error: 'Failed to get character profiles' })
+  }
+})
+
+/**
+ * Reset Watson for a new game
+ */
+app.post('/api/watson/reset', (_req, res) => {
+  try {
+    resetWatson()
+    res.json({ success: true, message: 'Watson reset complete' })
+  } catch (error) {
+    console.error('[WATSON] Reset failed:', error)
+    res.status(500).json({ error: 'Failed to reset Watson' })
+  }
+})
+
+// ============================================================
+// MYSTERY GENERATION ENDPOINTS (Mystery Architect)
+// ============================================================
+
+/**
+ * Generate a new procedural mystery
+ * This creates a unique mystery with victim, suspects, evidence, and solution
+ */
+app.post('/api/mystery/generate', async (req, res) => {
+  try {
+    const { difficulty = 'medium' } = req.body
+    console.log('[MYSTERY] Generating new mystery, difficulty:', difficulty)
+
+    const mystery = await generateMystery(difficulty)
+    await saveMystery(mystery)
+
+    // Don't return full mystery (spoilers!)
+    // Return only player-safe information
+    res.json({
+      success: true,
+      mysteryId: mystery.id,
+      setting: mystery.setting,
+      victim: {
+        name: mystery.victim.name,
+        role: mystery.victim.role,
+        causeOfDeath: mystery.victim.causeOfDeath,
+      },
+      suspectCount: mystery.suspects.length,
+      evidenceCount: mystery.evidence.length,
+    })
+  } catch (error) {
+    console.error('[MYSTERY] Generation failed:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Failed to generate mystery', details: errorMessage })
+  }
+})
+
+/**
+ * Get current mystery (player-safe, no spoilers)
+ * Returns setting, victim, and suspect info but NOT killer identity or solution
+ */
+app.get('/api/mystery/current', async (_req, res) => {
+  try {
+    const mystery = await getCurrentMystery()
+    if (!mystery) {
+      return res.status(404).json({ error: 'No active mystery', message: 'Generate a mystery first with POST /api/mystery/generate' })
+    }
+
+    // Return player-safe data only
+    res.json({
+      id: mystery.id,
+      difficulty: mystery.difficulty,
+      setting: mystery.setting,
+      victim: mystery.victim,
+      suspects: mystery.suspects.map(s => ({
+        id: s.id,
+        name: s.name,
+        role: s.role,
+        personality: s.personality,
+        videoStyle: s.videoStyle,
+        // Exclude: alibi truth, secrets, knowledge, pressure profile
+      })),
+      evidenceCount: mystery.evidence.length,
+      timelineCount: mystery.timeline.length,
+      // Exclude: killer, solution, evidence implications
+    })
+  } catch (error) {
+    console.error('[MYSTERY] Get current failed:', error)
+    res.status(500).json({ error: 'Failed to get mystery' })
+  }
+})
+
+/**
+ * Admin/debug endpoint - returns FULL mystery including solution
+ * Only use for testing/development!
+ */
+app.get('/api/mystery/debug', async (_req, res) => {
+  try {
+    const mystery = await getCurrentMystery()
+    if (!mystery) {
+      return res.status(404).json({ error: 'No active mystery' })
+    }
+
+    // Return full mystery including solution (for debugging)
+    res.json(mystery)
+  } catch (error) {
+    console.error('[MYSTERY] Debug get failed:', error)
+    res.status(500).json({ error: 'Failed to get mystery' })
+  }
+})
+
+/**
+ * Export current mystery as JSON (for saving/sharing)
+ */
+app.get('/api/mystery/export', async (_req, res) => {
+  try {
+    const json = await exportMystery()
+    if (!json) {
+      return res.status(404).json({ error: 'No active mystery to export' })
+    }
+
+    res.setHeader('Content-Type', 'application/json')
+    res.setHeader('Content-Disposition', 'attachment; filename="mystery.json"')
+    res.send(json)
+  } catch (error) {
+    console.error('[MYSTERY] Export failed:', error)
+    res.status(500).json({ error: 'Failed to export mystery' })
+  }
+})
+
+/**
+ * Import a mystery from JSON
+ */
+app.post('/api/mystery/import', async (req, res) => {
+  try {
+    const { mystery: mysteryJson } = req.body
+    if (!mysteryJson) {
+      return res.status(400).json({ error: 'Missing mystery JSON in request body' })
+    }
+
+    const mystery = await importMystery(typeof mysteryJson === 'string' ? mysteryJson : JSON.stringify(mysteryJson))
+    res.json({
+      success: true,
+      mysteryId: mystery.id,
+      setting: mystery.setting,
+    })
+  } catch (error) {
+    console.error('[MYSTERY] Import failed:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Failed to import mystery', details: errorMessage })
+  }
+})
+
+/**
+ * Clear current mystery
+ */
+app.post('/api/mystery/clear', async (_req, res) => {
+  try {
+    await clearCurrentMystery()
+    res.json({ success: true, message: 'Mystery cleared' })
+  } catch (error) {
+    console.error('[MYSTERY] Clear failed:', error)
+    res.status(500).json({ error: 'Failed to clear mystery' })
+  }
 })
 
 const PORT = process.env.PORT || 3001
