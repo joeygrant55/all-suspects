@@ -66,6 +66,8 @@ async function startVeoGeneration(
   resolution: string = '720p'
 ): Promise<{ operationName: string } | { error: string }> {
   const url = `${VEO_API_BASE}/models/${VEO_MODEL}:predictLongRunning`
+  console.log('[VEO3] Starting video generation...')
+  console.log('[VEO3] Prompt:', prompt.substring(0, 100) + '...')
 
   try {
     const response = await fetch(url, {
@@ -93,6 +95,7 @@ async function startVeoGeneration(
 
     // The response contains an operation name for polling
     if (data.name) {
+      console.log('[VEO3] Got operation name:', data.name)
       return { operationName: data.name }
     }
 
@@ -130,6 +133,7 @@ async function pollVeoOperation(operationName: string): Promise<{
     const data = await response.json()
 
     if (data.done) {
+      console.log('[VEO3] Generation completed!')
       // Extract video URL from response
       const videoUri =
         data.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ||
@@ -140,6 +144,7 @@ async function pollVeoOperation(operationName: string): Promise<{
         const videoUrl = videoUri.includes('?')
           ? `${videoUri}&key=${GEMINI_API_KEY}`
           : `${videoUri}?key=${GEMINI_API_KEY}`
+        console.log('[VEO3] Video URL ready:', videoUrl.substring(0, 80) + '...')
         return { done: true, videoUrl }
       }
 
@@ -289,14 +294,17 @@ Keep it cinematic and noir-styled.`,
 async function pollForCompletion(generationId: string, operationName: string): Promise<void> {
   const maxAttempts = 60 // 5 minutes max (5 second intervals)
   let attempts = 0
+  console.log(`[VEO3] Starting background polling for ${generationId}`)
 
   const poll = async () => {
     attempts++
+    console.log(`[VEO3] Poll attempt ${attempts} for ${generationId}`)
 
     const result = await pollVeoOperation(operationName)
 
     if (result.done) {
       if (result.videoUrl) {
+        console.log(`[VEO3] Storing videoUrl in queue for ${generationId}`)
         generationQueue.set(generationId, {
           generationId,
           status: 'completed',
@@ -304,7 +312,7 @@ async function pollForCompletion(generationId: string, operationName: string): P
           videoUrl: result.videoUrl,
           operationName,
         })
-        console.log(`Video generation completed: ${generationId}`)
+        console.log(`[VEO3] Video generation completed: ${generationId}`)
       } else {
         generationQueue.set(generationId, {
           generationId,
