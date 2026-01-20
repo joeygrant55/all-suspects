@@ -77,14 +77,40 @@ ELEVENLABS_API_KEY=your-key   # Required for voice
 ANTHROPIC_API_KEY=your-key    # Required for Claude
 ```
 
-## Parallel Work Opportunities
+## Parallel Work Opportunities (5 Terminal Setup)
 
-These tasks can be done independently:
-- **Terminal 1**: Fix veoClient.ts (Veo 3 API)
-- **Terminal 2**: UI improvements to video viewport
-- **Terminal 3**: Pre-generation caching system
-- **Terminal 4**: Character intro videos
-- **Terminal 5**: Testing and QA
+These tasks can be done independently across 5 terminals:
+
+### Terminal 1: Core Video Flow (COMPLETE)
+- [x] Fix veoClient.ts to use Veo 3 REST API
+- [x] Add background polling for video completion
+- [x] Return videoUrl in generation status
+- [ ] Test end-to-end flow with GEMINI_API_KEY
+
+### Terminal 2: UI/UX Improvements
+- [ ] Enhance VideoInterrogationView transitions
+- [ ] Add loading progress bar during video generation
+- [ ] Improve "Video generating..." indicator with percentage
+- [ ] Add video preview thumbnail while loading
+
+### Terminal 3: Pre-Generation & Caching
+- [ ] Implement character intro video pre-generation on game start
+- [ ] Add IndexedDB caching for generated videos
+- [ ] Queue videos during player thinking time
+- [ ] Implement cache warming strategies
+
+### Terminal 4: Character Intro Videos
+- [ ] Create intro video prompts for each character
+- [ ] Add `POST /api/video/introduction` improvements
+- [ ] Build intro video player component
+- [ ] Add dramatic entrance animations
+
+### Terminal 5: Testing & QA
+- [ ] Test voice generation (ElevenLabs)
+- [ ] Test video generation (Veo 3)
+- [ ] Test fallback behavior when APIs fail
+- [ ] Verify contradiction detection still works
+- [ ] Test pressure system with video
 
 ## Success Criteria
 
