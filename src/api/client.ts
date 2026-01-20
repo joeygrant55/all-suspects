@@ -17,6 +17,28 @@ export interface ChatResponse {
   pressure?: PressureData
 }
 
+export interface ChatVideoResponse {
+  message: string
+  characterName: string
+  statementId?: string
+  contradictions?: Contradiction[]
+  toolsUsed?: string[]
+  pressure?: PressureData
+  voiceAudioBase64?: string
+  videoGenerationId?: string
+  videoUrl?: string
+  cached?: boolean
+  analysis?: {
+    location: string
+    timeOfDay: string
+    characters: string[]
+    actions: string[]
+    objects: string[]
+    mood: string
+    keyVisualElements: string[]
+  }
+}
+
 export async function sendMessage(
   characterId: string,
   message: string
@@ -31,6 +53,31 @@ export async function sendMessage(
 
   if (!response.ok) {
     throw new Error(`API error: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+/**
+ * Send a message and get video-first response (voice + video generation)
+ * Returns immediately with voice audio, video generates in background
+ */
+export async function sendChatVideo(
+  characterId: string,
+  message: string,
+  evidenceId?: string
+): Promise<ChatVideoResponse> {
+  const response = await fetch(`${API_BASE}/chat-video`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ characterId, message, evidenceId }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || error.error || `API error: ${response.statusText}`)
   }
 
   return response.json()
@@ -207,4 +254,38 @@ export async function isVideoAvailable(): Promise<boolean> {
   } catch {
     return false
   }
+}
+
+// ============================================================
+// VOICE GENERATION API
+// ============================================================
+
+export interface VoiceResponse {
+  audio: string // base64 encoded audio
+  format: string
+  characterId: string
+  voiceName: string
+}
+
+/**
+ * Generate voice audio for text
+ */
+export async function generateVoice(
+  characterId: string,
+  text: string
+): Promise<VoiceResponse> {
+  const response = await fetch(`${API_BASE}/voice`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ characterId, text }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || error.error || 'Voice generation failed')
+  }
+
+  return response.json()
 }

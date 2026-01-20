@@ -290,6 +290,257 @@ app.get('/api/contradictions', (_req, res) => {
   res.json({ contradictions })
 })
 
+// ============================================================
+// COMBINED CHAT + VIDEO ENDPOINT (Video-First Interrogation)
+// ============================================================
+
+/**
+ * Combined chat endpoint that returns:
+ * - Character response (from Claude agent)
+ * - Voice audio (from ElevenLabs) - fast, ~1-3 seconds
+ * - Video generation ID (from Veo) - background generation
+ * - Scene analysis for subtitles/metadata
+ */
+app.post('/api/chat-video', async (req, res) => {
+  try {
+    const { characterId, message, evidenceId } = req.body
+
+    if (!characterId || !message) {
+      return res.status(400).json({ error: 'Missing characterId or message' })
+    }
+
+    const character = CHARACTERS.find((c) => c.id === characterId)
+    if (!character) {
+      return res.status(404).json({ error: 'Character not found' })
+    }
+
+    // Get or create conversation history for this character
+    if (!conversationHistory.has(characterId)) {
+      conversationHistory.set(characterId, [])
+    }
+    const history = conversationHistory.get(characterId)!
+
+    // Track pressure from this confrontation
+    recordConfrontation(characterId)
+
+    // If evidence was presented, track it
+    if (evidenceId) {
+      showEvidenceToCharacter(characterId, evidenceId, message)
+      recordPressureEvidence(characterId, evidenceId)
+    }
+
+    // Check for accusations in the message
+    const messageLower = message.toLowerCase()
+    if (messageLower.includes('you killed') || messageLower.includes('you murdered') ||
+        messageLower.includes('you\'re the killer') || messageLower.includes('you are guilty')) {
+      recordAccusation(characterId, message)
+    }
+
+    // Get current pressure state
+    const pressureState = getPressureState(characterId)
+    const pressureModifier = getPressurePromptModifier(pressureState.level, character.isGuilty)
+
+    // Use the enhanced agent system with tool use
+    const agentResponse = await processAgentMessage(
+      anthropic,
+      character,
+      message,
+      history,
+      pressureModifier
+    )
+
+    // Add messages to history
+    history.push({ role: 'user', content: message })
+    history.push({ role: 'assistant', content: agentResponse.message })
+
+    // Keep history manageable (last 20 exchanges)
+    if (history.length > 40) {
+      history.splice(0, 2)
+    }
+
+    // Track this statement for contradiction detection
+    const statement = addStatement(characterId, character.name, message, agentResponse.message)
+
+    // Check for contradictions with other characters' statements
+    let newContradictions: DetectedContradiction[] = []
+    try {
+      newContradictions = await checkForContradictions(anthropic, statement)
+
+      // Track contradictions for pressure system
+      newContradictions.forEach((contradiction) => {
+        recordContradiction(contradiction.statement1.characterId)
+        recordContradiction(contradiction.statement2.characterId)
+      })
+    } catch (contradictionError) {
+      console.error('Error checking contradictions:', contradictionError)
+    }
+
+    // Get updated pressure state after all tracking
+    const finalPressureState = getPressureState(characterId)
+
+    // === VOICE GENERATION (Fast - 1-3 seconds) ===
+    let voiceAudioBase64: string | undefined
+    const voiceConfig = CHARACTER_VOICES[characterId]
+
+    if (ELEVENLABS_API_KEY && voiceConfig) {
+      try {
+        // Clean text for speech (remove stage directions like *sighs*)
+        const cleanText = agentResponse.message
+          .replace(/\*[^*]+\*/g, '')
+          .replace(/\([^)]+\)/g, '')
+          .trim()
+
+        if (cleanText) {
+          const voiceResponse = await fetch(
+            `${ELEVENLABS_API_URL}/text-to-speech/${voiceConfig.voiceId}`,
+            {
+              method: 'POST',
+              headers: {
+                'Accept': 'audio/mpeg',
+                'Content-Type': 'application/json',
+                'xi-api-key': ELEVENLABS_API_KEY,
+              },
+              body: JSON.stringify({
+                text: cleanText,
+                model_id: 'eleven_monolingual_v1',
+                voice_settings: VOICE_SETTINGS,
+              }),
+            }
+          )
+
+          if (voiceResponse.ok) {
+            const audioBuffer = await voiceResponse.arrayBuffer()
+            voiceAudioBase64 = Buffer.from(audioBuffer).toString('base64')
+          }
+        }
+      } catch (voiceError) {
+        console.error('Voice generation error:', voiceError)
+        // Continue without voice - don't fail the request
+      }
+    }
+
+    // === VIDEO GENERATION (Background - 15-30 seconds) ===
+    let videoGenerationId: string | undefined
+    let analysisResult: {
+      location: string
+      timeOfDay: string
+      characters: string[]
+      actions: string[]
+      objects: string[]
+      mood: string
+      keyVisualElements: string[]
+    } | undefined
+
+    if (isVeoConfigured()) {
+      try {
+        // Analyze the testimony to extract visual elements
+        analysisResult = await analyzeTestimony(
+          anthropic,
+          agentResponse.message,
+          characterId,
+          message
+        )
+
+        // Build the video prompt
+        const videoPrompt = buildVideoPrompt(analysisResult, characterId)
+
+        // Check cache first
+        const cacheKey = generateCacheKey(characterId, videoPrompt.fullPrompt, 'testimony')
+        const cached = getCachedVideo(cacheKey)
+
+        if (cached && cached.videoUrl) {
+          // Return cached video URL directly
+          return res.json({
+            message: agentResponse.message,
+            characterName: character.name,
+            statementId: statement.id,
+            contradictions: newContradictions,
+            toolsUsed: agentResponse.toolsUsed,
+            pressure: {
+              level: finalPressureState.level,
+              confrontations: finalPressureState.confrontations,
+              evidencePresented: finalPressureState.evidencePresented.length,
+              contradictionsExposed: finalPressureState.contradictionsExposed,
+            },
+            voiceAudioBase64,
+            videoUrl: cached.videoUrl,
+            cached: true,
+            analysis: analysisResult,
+          })
+        }
+
+        // Start video generation in background
+        const videoResult = await generateVideo({
+          prompt: videoPrompt.fullPrompt,
+          characterId,
+          testimonyId: `testimony-${Date.now()}`,
+          duration: videoPrompt.duration,
+          aspectRatio: videoPrompt.aspectRatio,
+        })
+
+        if (videoResult.generationId) {
+          videoGenerationId = videoResult.generationId
+        }
+
+        // If video completed immediately (unlikely but possible)
+        if (videoResult.success && videoResult.videoUrl) {
+          cacheVideo(cacheKey, {
+            characterId,
+            testimonyId: videoResult.testimonyId,
+            videoUrl: videoResult.videoUrl,
+            prompt: videoResult.prompt,
+            createdAt: videoResult.generatedAt,
+            type: 'testimony',
+          })
+
+          return res.json({
+            message: agentResponse.message,
+            characterName: character.name,
+            statementId: statement.id,
+            contradictions: newContradictions,
+            toolsUsed: agentResponse.toolsUsed,
+            pressure: {
+              level: finalPressureState.level,
+              confrontations: finalPressureState.confrontations,
+              evidencePresented: finalPressureState.evidencePresented.length,
+              contradictionsExposed: finalPressureState.contradictionsExposed,
+            },
+            voiceAudioBase64,
+            videoUrl: videoResult.videoUrl,
+            cached: false,
+            analysis: analysisResult,
+          })
+        }
+      } catch (videoError) {
+        console.error('Video generation error:', videoError)
+        // Continue without video - don't fail the request
+      }
+    }
+
+    // Return response with voice (immediate) and video generation ID (for polling)
+    res.json({
+      message: agentResponse.message,
+      characterName: character.name,
+      statementId: statement.id,
+      contradictions: newContradictions,
+      toolsUsed: agentResponse.toolsUsed,
+      pressure: {
+        level: finalPressureState.level,
+        confrontations: finalPressureState.confrontations,
+        evidencePresented: finalPressureState.evidencePresented.length,
+        contradictionsExposed: finalPressureState.contradictionsExposed,
+      },
+      voiceAudioBase64,
+      videoGenerationId,
+      analysis: analysisResult,
+    })
+  } catch (error) {
+    console.error('Error in chat-video endpoint:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Failed to process request', details: errorMessage })
+  }
+})
+
 // Get all tracked statements
 app.get('/api/statements', (_req, res) => {
   const statements = getAllStatements()
