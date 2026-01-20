@@ -133,18 +133,23 @@ async function pollVeoOperation(operationName: string): Promise<{
     const data = await response.json()
 
     if (data.done) {
-      console.log('[VEO3] Generation completed!')
-      // Extract video URL from response
+      // Extract video URL from response - try multiple possible paths
       const videoUri =
         data.response?.generateVideoResponse?.generatedSamples?.[0]?.video?.uri ||
-        data.response?.predictions?.[0]?.video?.uri
+        data.response?.predictions?.[0]?.video?.uri ||
+        // Additional paths that Veo 3 might use
+        data.result?.videos?.[0]?.uri ||
+        data.response?.videos?.[0]?.uri ||
+        data.videos?.[0]?.uri ||
+        data.result?.generatedSamples?.[0]?.video?.uri ||
+        data.generatedSamples?.[0]?.video?.uri
 
       if (videoUri) {
         // The URI may need the API key appended for access
         const videoUrl = videoUri.includes('?')
           ? `${videoUri}&key=${GEMINI_API_KEY}`
           : `${videoUri}?key=${GEMINI_API_KEY}`
-        console.log('[VEO3] Video URL ready:', videoUrl.substring(0, 80) + '...')
+        console.log('[VEO3] Video ready')
         return { done: true, videoUrl }
       }
 
@@ -153,6 +158,8 @@ async function pollVeoOperation(operationName: string): Promise<{
         return { done: true, error: data.error.message || 'Generation failed' }
       }
 
+      // Log the response structure if we couldn't find the video URI
+      console.error('[VEO3] No video URI found. Response keys:', Object.keys(data), 'Response structure:', JSON.stringify(data, null, 2).substring(0, 500))
       return { done: true, error: 'No video in response' }
     }
 
@@ -249,14 +256,17 @@ Keep it cinematic and noir-styled.`,
 
         const description = response.text || ''
 
+        // Fallback to text description - mark as failed since there's no actual video
+        // The frontend should gracefully handle this case
         generationQueue.set(generationId, {
           generationId,
-          status: 'completed',
+          status: 'failed',
           progress: 100,
+          error: 'Video generation unavailable (rate limit). Text description generated as fallback.',
         })
 
         return {
-          success: true,
+          success: false, // Changed to false since no video was generated
           generationId,
           characterId: request.characterId,
           testimonyId: request.testimonyId,
@@ -264,6 +274,7 @@ Keep it cinematic and noir-styled.`,
           generatedAt: Date.now(),
           fallback: true,
           videoData: description,
+          error: 'Video generation rate limited - fallback to text description',
         }
       } catch (fallbackError) {
         console.error('Fallback also failed:', fallbackError)
