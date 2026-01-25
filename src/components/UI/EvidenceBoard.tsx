@@ -196,52 +196,116 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
                       </p>
                     </div>
                   )}
-                  {collectedEvidence.map((evidence) => {
-                    const evidenceData = EVIDENCE_DATABASE[evidence.source]
-                    return (
-                      <div
-                        key={evidence.id}
-                        className="p-4 bg-noir-cream/90 text-noir-black rounded-sm shadow-lg transform rotate-[-0.5deg] hover:rotate-0 transition-transform"
-                        style={{
-                          boxShadow: '4px 4px 8px rgba(0,0,0,0.3)',
-                        }}
-                      >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1">
-                            <p className="font-medium" style={{ fontFamily: 'Georgia, serif' }}>
-                              {evidenceData?.name || evidence.description}
+
+                  {/* Evidence Connections Visualization */}
+                  {collectedEvidence.length >= 3 && (
+                    <div className="mb-6 p-4 bg-noir-black/40 border border-noir-gold/20 rounded-sm">
+                      <h4 className="text-noir-gold text-sm mb-3 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>
+                        EVIDENCE CONNECTIONS
+                      </h4>
+                      <div className="flex flex-wrap gap-2 items-center justify-center">
+                        {(() => {
+                          // Find evidence that points to Thomas
+                          const thomasEvidence = collectedEvidence.filter((e) => {
+                            const data = EVIDENCE_DATABASE[e.source]
+                            return data?.pointsTo === 'thomas'
+                          })
+                          if (thomasEvidence.length >= 2) {
+                            return (
+                              <div className="flex items-center gap-2">
+                                {thomasEvidence.map((evidence, idx) => {
+                                  const data = EVIDENCE_DATABASE[evidence.source]
+                                  return (
+                                    <div key={evidence.id} className="flex items-center">
+                                      <div className="px-2 py-1 bg-noir-blood/30 border border-noir-blood/50 rounded text-xs text-noir-cream">
+                                        {data?.name?.split(' ')[0] || evidence.source}
+                                      </div>
+                                      {idx < thomasEvidence.length - 1 && (
+                                        <div className="mx-1 text-noir-gold">→</div>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                                <div className="mx-2 text-noir-gold">=</div>
+                                <div className="px-3 py-1 bg-noir-blood/50 border border-noir-blood rounded text-sm text-noir-cream font-medium">
+                                  Thomas Ashford
+                                </div>
+                              </div>
+                            )
+                          }
+                          return (
+                            <p className="text-noir-smoke text-xs italic">
+                              Gathering evidence... connections will appear as patterns emerge.
                             </p>
-                            <p className="text-sm text-noir-smoke mt-1">
-                              {evidenceData?.description || evidence.source}
-                            </p>
-                            {evidenceData?.hint && (
-                              <p className="text-sm text-amber-800 mt-2 italic" style={{ fontFamily: 'Georgia, serif' }}>
-                                "{evidenceData.hint}"
-                              </p>
-                            )}
-                            {evidenceData?.relatedCharacter && (
-                              <p className="text-xs text-noir-smoke/70 mt-1">
-                                Related to: {getCharacterName(evidenceData.relatedCharacter)}
-                              </p>
-                            )}
-                          </div>
-                          <span
-                            className={`px-2 py-1 text-xs rounded shrink-0 ${
-                              evidence.type === 'testimony'
-                                ? 'bg-blue-900 text-blue-100'
-                                : evidence.type === 'contradiction'
-                                  ? 'bg-red-900 text-red-100'
-                                  : evidence.type === 'physical'
-                                    ? 'bg-green-900 text-green-100'
-                                    : 'bg-amber-900 text-amber-100'
-                            }`}
-                          >
-                            {evidence.type}
-                          </span>
-                        </div>
+                          )
+                        })()}
                       </div>
-                    )
-                  })}
+                    </div>
+                  )}
+
+                  {/* Evidence Grid with visual connection indicators */}
+                  <div className="grid grid-cols-2 gap-4">
+                    {collectedEvidence.map((evidence, index) => {
+                      const evidenceData = EVIDENCE_DATABASE[evidence.source]
+                      const pointsToThomas = evidenceData?.pointsTo === 'thomas'
+                      const relatedToThomas = evidenceData?.relatedCharacter === 'thomas'
+                      const isKeyEvidence = pointsToThomas || relatedToThomas
+                      
+                      return (
+                        <div
+                          key={evidence.id}
+                          className={`p-4 bg-noir-cream/90 text-noir-black rounded-sm shadow-lg transition-all hover:scale-[1.02] ${
+                            isKeyEvidence ? 'ring-2 ring-noir-blood/50' : ''
+                          }`}
+                          style={{
+                            boxShadow: '4px 4px 8px rgba(0,0,0,0.3)',
+                            transform: `rotate(${(index % 2 === 0 ? -1 : 1) * 0.5}deg)`,
+                          }}
+                        >
+                          {/* Pin decoration */}
+                          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-red-600 shadow-sm" />
+                          
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1">
+                              <p className="font-medium" style={{ fontFamily: 'Georgia, serif' }}>
+                                {evidenceData?.name || evidence.description}
+                              </p>
+                              <p className="text-sm text-noir-smoke mt-1">
+                                {evidenceData?.description || evidence.source}
+                              </p>
+                              {evidenceData?.hint && (
+                                <p className="text-sm text-amber-800 mt-2 italic" style={{ fontFamily: 'Georgia, serif' }}>
+                                  "{evidenceData.hint}"
+                                </p>
+                              )}
+                              {/* Connection indicator */}
+                              {isKeyEvidence && (
+                                <div className="mt-2 flex items-center gap-1">
+                                  <span className="w-2 h-2 rounded-full bg-noir-blood" />
+                                  <span className="text-xs text-noir-blood font-medium">
+                                    {pointsToThomas ? 'Points to Thomas' : `Related to ${getCharacterName(evidenceData?.relatedCharacter || '')}`}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <span
+                              className={`px-2 py-1 text-xs rounded shrink-0 ${
+                                evidence.type === 'testimony'
+                                  ? 'bg-blue-900 text-blue-100'
+                                  : evidence.type === 'contradiction'
+                                    ? 'bg-red-900 text-red-100'
+                                    : evidence.type === 'physical'
+                                      ? 'bg-green-900 text-green-100'
+                                      : 'bg-amber-900 text-amber-100'
+                              }`}
+                            >
+                              {evidence.type}
+                            </span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </>
               )}
             </div>

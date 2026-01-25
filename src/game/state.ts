@@ -61,6 +61,12 @@ export interface Message {
   timestamp: number
 }
 
+export interface Psychology {
+  pressureLevel: 1 | 2 | 3 | 4 | 5
+  isLying: boolean
+  nervousTicks: string[]
+}
+
 export interface GameState {
   // World
   currentRoom: string
@@ -86,6 +92,9 @@ export interface GameState {
   accusationAttempts: number
   lastWrongAccusation: string | null // Character ID of last wrong guess
 
+  // Psychology (for cinematic overlay)
+  psychology: Psychology
+
   // Actions
   setCurrentRoom: (room: string) => void
   startConversation: (characterId: string) => void
@@ -96,6 +105,9 @@ export interface GameState {
   addContradiction: (contradiction: Contradiction) => void
   addContradictions: (contradictions: Contradiction[]) => void
   updateCharacterPressure: (characterId: string, pressure: PressureLevel) => void
+  updatePsychology: (updates: Partial<Psychology>) => void
+  resetPsychology: () => void
+  resetGame: () => void
   startGame: () => void
   setTutorialSeen: () => void
   recordAccusationAttempt: (characterId: string, isCorrect: boolean) => void
@@ -114,6 +126,12 @@ const INITIAL_CHARACTERS: Character[] = [
   { id: 'james', name: 'James', role: 'The butler', location: 'kitchen' },
 ]
 
+const INITIAL_PSYCHOLOGY: Psychology = {
+  pressureLevel: 1,
+  isLying: false,
+  nervousTicks: [],
+}
+
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial state
   currentRoom: 'parlor',
@@ -130,6 +148,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   tutorialSeen: false,
   accusationAttempts: 0,
   lastWrongAccusation: null,
+  psychology: INITIAL_PSYCHOLOGY,
 
   // Actions
   setCurrentRoom: (room) => set({ currentRoom: room }),
@@ -206,6 +225,38 @@ export const useGameStore = create<GameState>((set, get) => ({
         c.id === characterId ? { ...c, pressure } : c
       ),
     })),
+
+  updatePsychology: (updates) =>
+    set((state) => ({
+      psychology: {
+        ...state.psychology,
+        ...updates,
+        // Clamp pressure level between 1 and 5
+        pressureLevel: updates.pressureLevel !== undefined
+          ? Math.max(1, Math.min(5, updates.pressureLevel)) as 1 | 2 | 3 | 4 | 5
+          : state.psychology.pressureLevel,
+      },
+    })),
+
+  resetPsychology: () =>
+    set({ psychology: INITIAL_PSYCHOLOGY }),
+
+  resetGame: () =>
+    set({
+      currentRoom: 'parlor',
+      characters: INITIAL_CHARACTERS,
+      currentConversation: null,
+      messages: [],
+      collectedEvidence: [],
+      discoveredEvidenceIds: [],
+      contradictions: [],
+      accusationUnlocked: false,
+      gameComplete: false,
+      gameStarted: false,
+      accusationAttempts: 0,
+      lastWrongAccusation: null,
+      psychology: INITIAL_PSYCHOLOGY,
+    }),
 
   startGame: () => set({ gameStarted: true }),
 

@@ -6,11 +6,12 @@ import { EVIDENCE_DATABASE } from '../../data/evidence'
 interface AccusationModalProps {
   isOpen: boolean
   onClose: () => void
+  onVictory?: () => void
 }
 
 type AccusationStage = 'summary' | 'select' | 'confirm' | 'reveal' | 'result'
 
-export function AccusationModal({ isOpen, onClose }: AccusationModalProps) {
+export function AccusationModal({ isOpen, onClose, onVictory }: AccusationModalProps) {
   const characters = useGameStore((state) => state.characters)
   const collectedEvidence = useGameStore((state) => state.collectedEvidence)
   const accusationAttempts = useGameStore((state) => state.accusationAttempts)
@@ -389,11 +390,16 @@ export function AccusationModal({ isOpen, onClose }: AccusationModalProps) {
                 </>
               )}
               <button
-                onClick={handleClose}
+                onClick={() => {
+                  if (isCorrect && onVictory) {
+                    onVictory()
+                  }
+                  handleClose()
+                }}
                 className="px-8 py-3 bg-noir-gold text-noir-black hover:bg-noir-gold/90 transition-colors tracking-widest"
                 style={{ fontFamily: 'Georgia, serif' }}
               >
-                {isCorrect ? 'CELEBRATE' : 'CONTINUE INVESTIGATING'}
+                {isCorrect ? 'VIEW CASE SUMMARY' : 'CONTINUE INVESTIGATING'}
               </button>
             </div>
           )}

@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ManorScene } from './components/Scene'
 import { InterrogationModal } from './components/Chat'
-import { Header, CharacterList, TitleScreen, EvidenceBoard, AccusationModal, ExaminationModal, TutorialModal, EvidenceNotification } from './components/UI'
+import { Header, CharacterList, TitleScreen, EvidenceBoard, AccusationModal, ExaminationModal, TutorialModal, EvidenceNotification, VictoryScreen } from './components/UI'
 import { useEvidenceNotification } from './components/UI/EvidenceNotification'
+import { WatsonWhisper, WatsonDesk } from './components/Watson'
 import { useGameStore } from './game/state'
+import { useWatsonStore } from './game/watsonState'
 import type { EvidenceData } from './components/Scene/InteractiveObject'
 import { useAudioManager, AudioContext } from './hooks/useAudioManager'
 import { useVoice, VoiceContext } from './hooks/useVoice'
@@ -14,14 +16,58 @@ function App() {
   const currentRoom = useGameStore((state) => state.currentRoom)
   const tutorialSeen = useGameStore((state) => state.tutorialSeen)
 
+  // Watson state
+  const {
+    currentWhisper,
+    isWhisperActive,
+    isDeskOpen,
+    activeTab,
+    dismissWhisper,
+    toggleDesk,
+    closeDesk,
+    expandToDesk,
+    setActiveTab,
+  } = useWatsonStore()
+
   const [evidenceBoardOpen, setEvidenceBoardOpen] = useState(false)
   const [accusationOpen, setAccusationOpen] = useState(false)
   const [examinationOpen, setExaminationOpen] = useState(false)
   const [selectedEvidence, setSelectedEvidence] = useState<EvidenceData | null>(null)
   const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [victoryOpen, setVictoryOpen] = useState(false)
 
   // Evidence notification system
   const { notification, showNotification, dismissNotification } = useEvidenceNotification()
+
+  // Watson keyboard shortcut (W to toggle desk)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger if user is typing
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return
+      }
+
+      // W toggles Watson desk (only when game is started and no modals are open)
+      if (
+        e.key.toLowerCase() === 'w' &&
+        gameStarted &&
+        !evidenceBoardOpen &&
+        !accusationOpen &&
+        !examinationOpen &&
+        !tutorialOpen &&
+        !isWhisperActive // Don't toggle if whisper handles it
+      ) {
+        e.preventDefault()
+        toggleDesk()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [gameStarted, evidenceBoardOpen, accusationOpen, examinationOpen, tutorialOpen, isWhisperActive, toggleDesk])
 
   // Show tutorial when game starts if not seen
   useEffect(() => {
@@ -128,6 +174,12 @@ function App() {
                     <span className="text-noir-smoke mt-1">Examine</span>
                   </div>
                   <div className="h-10 w-px bg-noir-slate/30" />
+                  {/* W for Watson */}
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="px-3 h-6 flex items-center justify-center bg-noir-gold/30 border border-noir-gold/50 rounded text-noir-gold text-[10px]">W</span>
+                    <span className="text-noir-smoke mt-1">Watson</span>
+                  </div>
+                  <div className="h-10 w-px bg-noir-slate/30" />
                   {/* Mouse to rotate */}
                   <div className="flex flex-col items-center gap-1">
                     <span className="text-noir-cream text-[10px]">Click + Drag</span>
@@ -165,16 +217,48 @@ function App() {
           onDismiss={dismissNotification}
         />
 
+        {/* Watson Whisper - subtle hints overlay */}
+        <div className="absolute inset-0 pointer-events-none z-30">
+          <div className="relative w-full h-full pointer-events-auto">
+            <WatsonWhisper
+              hint={currentWhisper}
+              isActive={isWhisperActive}
+              onDismiss={dismissWhisper}
+              onExpandToDesk={expandToDesk}
+            />
+          </div>
+        </div>
+
+        {/* Watson Desk - full investigation interface */}
+        <WatsonDesk
+          isOpen={isDeskOpen}
+          onClose={closeDesk}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+
         {/* Modals */}
         <TutorialModal isOpen={tutorialOpen} onClose={() => setTutorialOpen(false)} />
         <EvidenceBoard isOpen={evidenceBoardOpen} onClose={() => setEvidenceBoardOpen(false)} />
-        <AccusationModal isOpen={accusationOpen} onClose={() => setAccusationOpen(false)} />
+        <AccusationModal 
+          isOpen={accusationOpen} 
+          onClose={() => setAccusationOpen(false)}
+          onVictory={() => setVictoryOpen(true)}
+        />
         <ExaminationModal
           evidence={selectedEvidence}
           isOpen={examinationOpen}
           onClose={handleCloseExamination}
           isAlreadyCollected={isEvidenceCollected}
           onEvidenceCollected={handleEvidenceCollected}
+        />
+        <VictoryScreen
+          isOpen={victoryOpen}
+          onClose={() => setVictoryOpen(false)}
+          onPlayAgain={() => {
+            setVictoryOpen(false)
+            useGameStore.getState().resetGame()
+          }}
         />
         </div>
       </VoiceContext.Provider>
