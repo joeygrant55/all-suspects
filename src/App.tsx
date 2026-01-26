@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { IntroSequence, ManorMap, RoomView, CharacterInterrogation } from './components/FMV'
+import { IntroSequence, CaseBoard, CharacterInterrogation } from './components/FMV'
 import { 
-  Header, 
   TitleScreen, 
   EvidenceBoard, 
   AccusationModal, 
@@ -23,7 +22,6 @@ function App() {
     completeIntro,
     startConversation,
     endConversation,
-    setCurrentRoom,
     setCurrentScreen,
     resetGame,
   } = useGameStore()
@@ -51,25 +49,15 @@ function App() {
   // Voice manager (ElevenLabs)
   const voiceManager = useVoice()
 
-  // Handlers
-  const handleRoomSelect = (room: string) => {
-    setCurrentRoom(room)
-    audioManager.setRoomAmbience(room)
-    audioManager.playSfx('click')
-  }
-
-  const handleCharacterSelect = (characterId: string) => {
+  // Handlers - simplified for CaseBoard flow
+  const handleSelectSuspect = (characterId: string) => {
     startConversation(characterId)
-    audioManager.playSfx('click')
-  }
-
-  const handleReturnToMap = () => {
-    setCurrentScreen('map')
     audioManager.playSfx('click')
   }
 
   const handleCloseInterrogation = () => {
     endConversation()
+    setCurrentScreen('map') // Return to case board
     audioManager.playSfx('click')
   }
 
@@ -87,38 +75,26 @@ function App() {
   return (
     <AudioContext.Provider value={audioManager}>
       <VoiceContext.Provider value={voiceManager}>
-        <div className="h-screen w-screen flex flex-col bg-noir-black">
-          {/* Header - shown on all screens except intro */}
-          {!showIntro && (
-            <Header
-              onOpenEvidence={() => {
-                setEvidenceBoardOpen(true)
-                audioManager.playSfx('click')
-              }}
-              onAccuse={() => {
-                setAccusationOpen(true)
-                audioManager.playSfx('click')
-              }}
-            />
-          )}
-
+        <div className="h-screen w-screen bg-noir-black">
           {/* Main game screens */}
-          <div className="flex-1 relative">
+          <div className="h-full relative">
             {/* Intro sequence */}
             {showIntro && currentScreen === 'intro' && (
               <IntroSequence onComplete={completeIntro} />
             )}
 
-            {/* Manor map */}
+            {/* Case Board - main hub */}
             {!showIntro && currentScreen === 'map' && (
-              <ManorMap onRoomSelect={handleRoomSelect} />
-            )}
-
-            {/* Room view */}
-            {!showIntro && currentScreen === 'room' && (
-              <RoomView
-                onCharacterSelect={handleCharacterSelect}
-                onReturnToMap={handleReturnToMap}
+              <CaseBoard
+                onSelectSuspect={handleSelectSuspect}
+                onOpenEvidence={() => {
+                  setEvidenceBoardOpen(true)
+                  audioManager.playSfx('click')
+                }}
+                onAccuse={() => {
+                  setAccusationOpen(true)
+                  audioManager.playSfx('click')
+                }}
               />
             )}
 
@@ -131,18 +107,14 @@ function App() {
             )}
           </div>
 
-          {/* Watson Whisper - subtle hints overlay */}
-          {!showIntro && (
-            <div className="absolute inset-0 pointer-events-none z-30">
-              <div className="relative w-full h-full pointer-events-auto">
-                <WatsonWhisper
-                  hint={currentWhisper}
-                  isActive={isWhisperActive}
-                  onDismiss={dismissWhisper}
-                  onExpandToDesk={expandToDesk}
-                />
-              </div>
-            </div>
+          {/* Watson Whisper - subtle hints overlay (pointer-events handled by component) */}
+          {!showIntro && isWhisperActive && (
+            <WatsonWhisper
+              hint={currentWhisper}
+              isActive={isWhisperActive}
+              onDismiss={dismissWhisper}
+              onExpandToDesk={expandToDesk}
+            />
           )}
 
           {/* Watson Desk - full investigation interface */}
