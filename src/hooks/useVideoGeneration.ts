@@ -6,7 +6,8 @@
  */
 
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { useVideoState, VideoEntry, GENERATION_PRIORITY } from '../game/videoState'
+import { useVideoState, GENERATION_PRIORITY } from '../game/videoState'
+import type { VideoEntry } from '../game/videoState'
 import { sendChatVideo, type ChatVideoResponse } from '../api/client'
 
 export type GenerationStage =
