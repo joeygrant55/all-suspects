@@ -1,18 +1,10 @@
 import { useState, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
+import type { EvidenceData } from '../../types/evidence'
 
-export interface EvidenceData {
-  id: string
-  name: string
-  description: string
-  detailedDescription: string
-  type: 'physical' | 'document' | 'testimony'
-  relatedCharacter?: string
-  prerequisite?: string // Evidence ID that must be found first
-  hint?: string // Investigative hint for player guidance
-  pointsTo?: string // Hidden field for suspicion tracking
-}
+// Re-export for backward compatibility
+export type { EvidenceData }
 
 interface InteractiveObjectProps {
   position: [number, number, number]

@@ -1,4 +1,4 @@
-import type { EvidenceData } from '../components/Scene/InteractiveObject'
+import type { EvidenceData } from '../types/evidence'
 
 // All discoverable evidence in the game
 export const EVIDENCE_DATABASE: Record<string, EvidenceData> = {
