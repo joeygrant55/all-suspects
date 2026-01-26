@@ -1,59 +1,16 @@
-import { useState, useContext } from 'react'
+import { useContext } from 'react'
 import { useGameStore } from '../../game/state'
 import { AudioContext } from '../../hooks/useAudioManager'
 
 export function TitleScreen() {
   const startGame = useGameStore((state) => state.startGame)
-  const [showIntro, setShowIntro] = useState(false)
-  const [introStep, setIntroStep] = useState(0)
   const audioManager = useContext(AudioContext)
-
-  const introText = [
-    "New Year's Eve, 1929",
-    "Ashford Manor stands silent against the winter sky.",
-    "The champagne has gone flat. The jazz band has stopped playing.",
-    "Edmund Ashford, titan of industry, lies dead in his study.",
-    "The police are hours away through the snow.",
-    "Six guests. Six suspects. Six secrets.",
-    "The truth is in this house. Find it.",
-  ]
 
   const handleStart = () => {
     // Initialize audio on user interaction (required by browsers)
     audioManager?.initializeAudio()
-    setShowIntro(true)
-  }
-
-  const handleIntroAdvance = () => {
-    if (introStep < introText.length - 1) {
-      setIntroStep(introStep + 1)
-    } else {
-      // Start playing music when game begins
-      audioManager?.playMusic()
-      startGame()
-    }
-  }
-
-  if (showIntro) {
-    return (
-      <div
-        className="h-screen w-screen bg-noir-black flex items-center justify-center cursor-pointer"
-        onClick={handleIntroAdvance}
-      >
-        <div className="text-center max-w-2xl px-8">
-          <p
-            className="text-noir-cream text-2xl font-serif leading-relaxed animate-fade-in"
-            style={{
-              fontFamily: 'Georgia, serif',
-              textShadow: '0 0 20px rgba(201, 162, 39, 0.3)',
-            }}
-          >
-            {introText[introStep]}
-          </p>
-          <p className="text-noir-slate text-sm mt-12 animate-pulse">Click to continue...</p>
-        </div>
-      </div>
-    )
+    // Go straight to the cinematic IntroSequence
+    startGame()
   }
 
   return (
