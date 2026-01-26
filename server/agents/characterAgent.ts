@@ -6,12 +6,13 @@
  * - Tool use for "recalling" memories
  * - Cross-character awareness
  * - Dynamic lie tracking and consistency
+ * - Internal monologue system for cinematic presentation
+ * - Ripple effects when evidence is shared
  */
 
 import Anthropic from '@anthropic-ai/sdk'
 import { Character } from '../../mysteries/ashford-affair/characters'
 import {
-  getCharacterMemory,
   getMemorySummary,
   recordQuestionAsked,
   recordEvidencePresented,
@@ -27,9 +28,33 @@ import {
   getInvestigationAwareness,
   getRoleBasedKnowledge,
   getAccusationsAgainst,
+  addGossip,
+  spreadGossip,
 } from './crossReference'
 
-// Tool definitions for character agents
+// Evidence ripple tracking - when evidence is shown, other characters become aware
+export interface EvidenceRipple {
+  evidenceId: string
+  evidenceDescription: string
+  shownTo: string
+  timestamp: number
+  reaction: string
+  spreadTo: string[]
+}
+
+const evidenceRipples: Map<string, EvidenceRipple[]> = new Map()
+
+// Character relationship graph for ripple propagation
+const CHARACTER_RELATIONSHIPS: Record<string, string[]> = {
+  victoria: ['thomas', 'james', 'lillian'],  // Family and close friends
+  thomas: ['victoria', 'eleanor', 'marcus'], // Family and who he talks to
+  eleanor: ['thomas', 'james'],              // Professional relationships
+  marcus: ['victoria', 'lillian', 'thomas'], // Professional and social
+  lillian: ['victoria', 'marcus'],           // Social connections
+  james: ['victoria', 'eleanor'],            // Servants' network
+}
+
+// Tool definitions for character agents - ENHANCED with internal assessment
 const CHARACTER_TOOLS: Anthropic.Tool[] = [
   {
     name: 'recall_memory',
@@ -80,7 +105,150 @@ const CHARACTER_TOOLS: Anthropic.Tool[] = [
       required: ['fact', 'topic'],
     },
   },
+  {
+    name: 'internal_assessment',
+    description:
+      'Privately assess the situation and your position. Use this to think through your strategy, fears, and what the detective might be implying. This is your internal monologue - the detective cannot hear this.',
+    input_schema: {
+      type: 'object' as const,
+      properties: {
+        thought: {
+          type: 'string',
+          description: 'Your private thought about the current situation',
+        },
+        threat_level: {
+          type: 'string',
+          enum: ['safe', 'concerning', 'dangerous', 'critical'],
+          description: 'How threatened you feel by this line of questioning',
+        },
+        strategy: {
+          type: 'string',
+          description: 'Your approach to handle this (deflect, cooperate, redirect, deny)',
+        },
+      },
+      required: ['thought', 'threat_level', 'strategy'],
+    },
+  },
 ]
+
+// Store internal assessments for the UI to display
+export interface InternalMonologue {
+  characterId: string
+  thought: string
+  threatLevel: 'safe' | 'concerning' | 'dangerous' | 'critical'
+  strategy: string
+  timestamp: number
+}
+
+const recentInternalMonologues: Map<string, InternalMonologue[]> = new Map()
+
+/**
+ * Get the most recent internal monologue for a character
+ */
+export function getRecentInternalMonologue(characterId: string): InternalMonologue | null {
+  const monologues = recentInternalMonologues.get(characterId)
+  if (!monologues || monologues.length === 0) return null
+  return monologues[monologues.length - 1]
+}
+
+/**
+ * Record an internal assessment from a character
+ */
+function recordInternalAssessment(
+  characterId: string,
+  thought: string,
+  threatLevel: 'safe' | 'concerning' | 'dangerous' | 'critical',
+  strategy: string
+): void {
+  if (!recentInternalMonologues.has(characterId)) {
+    recentInternalMonologues.set(characterId, [])
+  }
+  
+  const monologues = recentInternalMonologues.get(characterId)!
+  monologues.push({
+    characterId,
+    thought,
+    threatLevel,
+    strategy,
+    timestamp: Date.now(),
+  })
+  
+  // Keep only last 10 monologues per character
+  if (monologues.length > 10) {
+    monologues.shift()
+  }
+}
+
+/**
+ * Process evidence ripple - when evidence is shown to one character, 
+ * nearby characters may become aware
+ */
+export function processEvidenceRipple(
+  characterId: string,
+  evidenceId: string,
+  evidenceDescription: string,
+  characterReaction: string
+): void {
+  // Record this ripple
+  if (!evidenceRipples.has(characterId)) {
+    evidenceRipples.set(characterId, [])
+  }
+  
+  // Get characters who would learn about this
+  const relatedCharacters = CHARACTER_RELATIONSHIPS[characterId] || []
+  
+  const ripple: EvidenceRipple = {
+    evidenceId,
+    evidenceDescription,
+    shownTo: characterId,
+    timestamp: Date.now(),
+    reaction: characterReaction,
+    spreadTo: relatedCharacters,
+  }
+  
+  evidenceRipples.get(characterId)!.push(ripple)
+  
+  // Spread awareness to related characters
+  relatedCharacters.forEach(otherCharId => {
+    addGossip(otherCharId, {
+      aboutCharacterId: characterId,
+      aboutCharacterName: getCharacterNameById(characterId),
+      information: `The detective showed ${getCharacterNameById(characterId)} some evidence (${evidenceDescription}). Word is they reacted... interestingly.`,
+      source: 'rumor',
+      canReference: false, // Shouldn't directly reference rumors
+    })
+  })
+}
+
+/**
+ * Get evidence ripples that have affected a character
+ */
+export function getEvidenceRipplesFor(characterId: string): string[] {
+  const results: string[] = []
+  
+  // Check all ripples to see if this character was in the spread
+  evidenceRipples.forEach((ripples, sourceCharId) => {
+    ripples.forEach(ripple => {
+      if (ripple.spreadTo.includes(characterId)) {
+        results.push(`You've heard the detective showed ${getCharacterNameById(sourceCharId)} something about "${ripple.evidenceDescription}"`)
+      }
+    })
+  })
+  
+  return results
+}
+
+function getCharacterNameById(characterId: string): string {
+  const names: Record<string, string> = {
+    victoria: 'Victoria',
+    thomas: 'Thomas',
+    eleanor: 'Eleanor',
+    marcus: 'Dr. Webb',
+    lillian: 'Lillian',
+    james: 'James',
+  }
+  return names[characterId] || characterId
+}
 
 // Handle tool use results
 async function handleToolUse(
@@ -123,6 +291,37 @@ async function handleToolUse(
       return `Noted: ${toolInput.fact}`
     }
 
+    case 'internal_assessment': {
+      // Record this internal monologue for the UI
+      const threatLevel = toolInput.threat_level as 'safe' | 'concerning' | 'dangerous' | 'critical'
+      recordInternalAssessment(
+        characterId,
+        toolInput.thought,
+        threatLevel,
+        toolInput.strategy
+      )
+      
+      // Return strategic guidance to the character
+      let guidance = `[Internal thought recorded]\n`
+      guidance += `Threat assessment: ${threatLevel}\n`
+      guidance += `Your strategy: ${toolInput.strategy}\n`
+      
+      // Add behavioral hints based on threat level and guilt
+      if (character.isGuilty) {
+        if (threatLevel === 'critical') {
+          guidance += `Warning: You are in serious danger of exposure. Consider whether breaking down might save you.`
+        } else if (threatLevel === 'dangerous') {
+          guidance += `Be very careful here. The detective may be onto something. Stay calm but be ready to redirect.`
+        }
+      } else {
+        if (threatLevel === 'dangerous' || threatLevel === 'critical') {
+          guidance += `Though innocent, you recognize this looks bad. Defend yourself firmly.`
+        }
+      }
+      
+      return guidance
+    }
+
     default:
       return 'Unknown tool'
   }
@@ -132,6 +331,7 @@ export interface AgentResponse {
   message: string
   toolsUsed: string[]
   memoryUpdated: boolean
+  internalMonologue?: InternalMonologue
 }
 
 /**
@@ -146,6 +346,7 @@ export function buildEnhancedSystemPrompt(
   const investigationAwareness = getInvestigationAwareness(character.id)
   const roleKnowledge = getRoleBasedKnowledge(character.id)
   const accusations = getAccusationsAgainst(character.id)
+  const evidenceRipples = getEvidenceRipplesFor(character.id)
 
   let prompt = `You are ${character.name}, ${character.role.toLowerCase()}, in a 1920s murder mystery.
 
@@ -183,6 +384,13 @@ ${Object.entries(character.relationships)
   // Add cross-character awareness
   if (gossipContext) {
     prompt += `\n${gossipContext}\n`
+  }
+
+  // Add evidence ripples - what this character has heard about other interrogations
+  if (evidenceRipples.length > 0) {
+    prompt += `\nWHAT YOU'VE HEARD ABOUT THE INVESTIGATION:\n`
+    prompt += evidenceRipples.map(r => `- ${r}`).join('\n')
+    prompt += `\nYou may be nervous or curious about what evidence the detective has.\n`
   }
 
   // Add investigation awareness
@@ -223,7 +431,12 @@ RULES:
 6. Use period-appropriate language and mannerisms.
 7. Remember: The player is a detective investigating Edmund Ashford's murder.
 
-IMPORTANT: Before answering questions about specific times, locations, or past events, use your tools to check what you've previously said to maintain consistency.`
+IMPORTANT TOOL USAGE:
+- Before answering questions about specific times, locations, or past events, use your tools to check what you've previously said to maintain consistency.
+- Use the 'internal_assessment' tool to process your private thoughts and strategic responses. This helps you maintain a coherent internal state that the player cannot see but influences your behavior.
+- When feeling pressured, use internal_assessment to decide whether to cooperate, deflect, or deny.
+
+Your internal state (fear, strategy, hidden knowledge) should subtly influence your outward responses through word choice, hesitation, and body language cues in your dialogue.`
 
   return prompt
 }
@@ -370,22 +583,36 @@ export async function processAgentMessage(
   // Record this exchange in memory
   recordQuestionAsked(character.id, message, finalMessage)
 
+  // Get the most recent internal monologue if one was recorded during this exchange
+  const internalMonologue = getRecentInternalMonologue(character.id)
+
   return {
     message: finalMessage,
     toolsUsed,
     memoryUpdated: true,
+    internalMonologue: internalMonologue || undefined,
   }
 }
 
 /**
  * Record when evidence is shown to a character
+ * This now triggers a ripple effect - other characters may hear about this
  */
 export function showEvidenceToCharacter(
   characterId: string,
   evidenceId: string,
-  evidenceDescription: string
+  evidenceDescription: string,
+  characterReaction?: string
 ): void {
   recordEvidencePresented(characterId, evidenceId, evidenceDescription)
+  
+  // Trigger ripple effect - news travels in a manor
+  processEvidenceRipple(
+    characterId,
+    evidenceId,
+    evidenceDescription,
+    characterReaction || 'Their reaction was noted.'
+  )
 }
 
 /**
