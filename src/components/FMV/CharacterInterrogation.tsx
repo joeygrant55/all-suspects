@@ -9,6 +9,27 @@ interface CharacterInterrogationProps {
   onClose: () => void
 }
 
+// Evidence notification toast component
+function EvidenceToast({ message, onDismiss }: { message: string; onDismiss: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 3000)
+    return () => clearTimeout(timer)
+  }, [onDismiss])
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -50 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -50 }}
+      className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-noir-gold/90 text-noir-black px-6 py-3 rounded shadow-lg"
+    >
+      <p className="text-sm font-serif flex items-center gap-2">
+        <span>📋</span> {message}
+      </p>
+    </motion.div>
+  )
+}
+
 export function CharacterInterrogation({ characterId, onClose }: CharacterInterrogationProps) {
   const { 
     characters, 
@@ -23,6 +44,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [evidenceToast, setEvidenceToast] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const character = characters.find((c) => c.id === characterId)
@@ -77,6 +99,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
           description: `${character.name}: "${response.message.substring(0, 100)}..."`,
           source: `${characterId}-${response.statementId}`,
         })
+        setEvidenceToast(`Testimony recorded from ${character.name}`)
       }
 
       // Handle contradictions
@@ -175,7 +198,27 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       <div className="absolute top-0 left-0 right-0 h-12 bg-noir-black letterbox-border" />
       <div className="absolute bottom-0 left-0 right-0 h-12 bg-noir-black letterbox-border" />
 
-      {/* Close button */}
+      {/* Evidence toast */}
+      <AnimatePresence>
+        {evidenceToast && (
+          <EvidenceToast 
+            message={evidenceToast} 
+            onDismiss={() => setEvidenceToast(null)} 
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Back button - prominent */}
+      <motion.button
+        onClick={onClose}
+        className="absolute top-4 left-4 z-10 px-4 py-2 flex items-center gap-2 bg-noir-charcoal/90 border border-noir-slate hover:border-noir-gold text-noir-cream transition-colors font-serif text-sm"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        ← Back to Investigation
+      </motion.button>
+
+      {/* Close X button */}
       <motion.button
         onClick={onClose}
         className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-noir-charcoal/80 border border-noir-slate hover:border-noir-gold text-noir-cream transition-colors"
@@ -187,30 +230,30 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
 
       {/* Main layout */}
       <div className="h-full flex flex-col pt-12 pb-12">
-        {/* Character portrait section */}
-        <div className="flex-shrink-0 flex items-center justify-center py-8 border-b border-noir-slate/30">
-          <div className="text-center">
+        {/* Character portrait section - more compact */}
+        <div className="flex-shrink-0 flex items-center justify-center py-4 border-b border-noir-slate/30">
+          <div className="flex items-center gap-6">
             <CharacterPortrait
               characterId={character.id}
               name={character.name}
               role={character.role}
-              size="large"
+              size="medium"
               isActive={true}
             />
 
-            {/* Emotional state indicator */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="mt-4"
-            >
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <span className="text-noir-smoke">Pressure:</span>
-                <div className="flex gap-1">
+            {/* Character info and emotional state */}
+            <div className="text-left">
+              <h2 className="text-noir-cream font-serif text-xl">{character.name}</h2>
+              <p className="text-noir-smoke text-sm italic">{character.role}</p>
+              
+              {/* Pressure meter */}
+              <div className="flex items-center gap-2 mt-2">
+                <span className="text-noir-smoke text-xs">Pressure:</span>
+                <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((level) => (
                     <div
                       key={level}
-                      className={`w-2 h-4 ${
+                      className={`w-2 h-3 ${
                         level <= psychology.pressureLevel
                           ? 'bg-noir-gold'
                           : 'bg-noir-slate'
@@ -224,7 +267,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                   Something feels off...
                 </p>
               )}
-            </motion.div>
+            </div>
           </div>
         </div>
 
