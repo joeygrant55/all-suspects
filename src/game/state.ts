@@ -67,7 +67,13 @@ export interface Psychology {
   nervousTicks: string[]
 }
 
+export type GameScreen = 'intro' | 'map' | 'room' | 'interrogation'
+
 export interface GameState {
+  // UI State
+  currentScreen: GameScreen
+  showIntro: boolean
+
   // World
   currentRoom: string
   rooms: string[]
@@ -96,6 +102,8 @@ export interface GameState {
   psychology: Psychology
 
   // Actions
+  setCurrentScreen: (screen: GameScreen) => void
+  completeIntro: () => void
   setCurrentRoom: (room: string) => void
   startConversation: (characterId: string) => void
   endConversation: () => void
@@ -134,6 +142,8 @@ const INITIAL_PSYCHOLOGY: Psychology = {
 
 export const useGameStore = create<GameState>((set, get) => ({
   // Initial state
+  currentScreen: 'intro',
+  showIntro: true,
   currentRoom: 'parlor',
   rooms: ROOMS,
   characters: INITIAL_CHARACTERS,
@@ -151,11 +161,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   psychology: INITIAL_PSYCHOLOGY,
 
   // Actions
-  setCurrentRoom: (room) => set({ currentRoom: room }),
+  setCurrentScreen: (screen) => set({ currentScreen: screen }),
 
-  startConversation: (characterId) => set({ currentConversation: characterId }),
+  completeIntro: () => set({ showIntro: false, currentScreen: 'map' }),
 
-  endConversation: () => set({ currentConversation: null }),
+  setCurrentRoom: (room) => set({ currentRoom: room, currentScreen: 'room' }),
+
+  startConversation: (characterId) => set({ currentConversation: characterId, currentScreen: 'interrogation' }),
+
+  endConversation: () => set({ currentConversation: null, currentScreen: 'room' }),
 
   addMessage: (message) =>
     set((state) => ({
@@ -243,6 +257,8 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   resetGame: () =>
     set({
+      currentScreen: 'intro',
+      showIntro: true,
       currentRoom: 'parlor',
       characters: INITIAL_CHARACTERS,
       currentConversation: null,
