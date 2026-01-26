@@ -1,6 +1,6 @@
 # All Suspects - CLAUDE.md
 
-A browser-based 3D mystery game where every NPC is an AI agent capable of real conversation, deception, and memory. Features AI-generated video visualization of character testimony using Veo 3.
+A browser-based 3D mystery game where every NPC is an AI agent capable of real conversation, deception, and memory. Features AI-generated video visualization of character testimony using Veo 3 and **real-time voice conversations** with NVIDIA PersonaPlex.
 
 ## Quick Start
 
@@ -13,6 +13,9 @@ npm run build            # Production build
 npm run lint             # Run ESLint
 ```
 
+### Voice Chat (Optional)
+See [PERSONAPLEX.md](./PERSONAPLEX.md) for setup instructions to enable real-time voice conversations with NPCs.
+
 ## Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite
@@ -21,7 +24,8 @@ npm run lint             # Run ESLint
 - **Styling**: Tailwind CSS v4
 - **AI Characters**: Anthropic Claude (claude-sonnet-4)
 - **Video Generation**: Google Veo 3 (via Gemini API)
-- **Voice**: ElevenLabs
+- **Voice TTS**: ElevenLabs (text-to-speech for text chat)
+- **Voice Realtime**: NVIDIA PersonaPlex (full-duplex speech-to-speech) 🆕
 - **Backend**: Express.js
 
 ## Project Structure
@@ -32,7 +36,8 @@ all-suspects/
 │   ├── components/
 │   │   ├── Scene/          # React Three Fiber 3D components
 │   │   ├── UI/             # Header, character list, evidence board
-│   │   ├── Chat/           # Conversation interface with video
+│   │   ├── Chat/           # Conversation interface with video + voice
+│   │   │   └── VoiceChatPanel.tsx  # 🆕 Real-time voice interrogation
 │   │   └── VideoPlayer/    # Video generation components
 │   │       ├── TestimonyVideo.tsx   # Single testimony visualization
 │   │       ├── VideoComparison.tsx  # Side-by-side contradiction view
@@ -40,6 +45,8 @@ all-suspects/
 │   │       └── HighlightReel.tsx    # Investigation summary
 │   ├── api/
 │   │   └── client.ts       # API client for backend
+│   ├── hooks/
+│   │   └── useVoiceChat.ts # 🆕 Voice conversation React hook
 │   ├── game/
 │   │   └── state.ts        # Zustand store
 │   └── App.tsx
@@ -47,6 +54,10 @@ all-suspects/
 │   ├── index.ts            # Express server + API endpoints
 │   ├── contradictionDetector.ts  # Statement analysis
 │   ├── pressureSystem.ts   # Character pressure tracking
+│   ├── voice/              # 🆕 PersonaPlex voice integration
+│   │   ├── personaplex.ts       # Character voice configs + persona builder
+│   │   ├── personaplexClient.ts # WebSocket client
+│   │   └── voiceRoutes.ts       # Express routes + WS handler
 │   ├── agents/
 │   │   ├── characterAgent.ts    # Enhanced Claude agent with tools
 │   │   ├── memoryStore.ts       # Persistent character memory
