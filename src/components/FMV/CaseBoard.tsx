@@ -29,7 +29,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
   const getCharacter = (id: string) => characters.find(c => c.id === id)
 
   return (
-    <div className="fixed inset-0 bg-noir-black overflow-hidden">
+    <div className="fixed inset-0 bg-noir-black overflow-y-auto">
       {/* Cork board background texture */}
       <div 
         className="absolute inset-0"
@@ -49,8 +49,8 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
       {/* Film grain */}
       <div className="absolute inset-0 film-grain pointer-events-none" />
 
-      {/* Header */}
-      <div className="relative z-10 px-6 py-4 border-b border-noir-gold/20">
+      {/* Header - compact */}
+      <div className="relative z-10 px-4 py-2 border-b border-noir-gold/20">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
             <h1 
@@ -101,24 +101,24 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
       </div>
 
       {/* Main case board area */}
-      <div className="relative z-10 flex-1 p-8">
-        <div className="max-w-6xl mx-auto h-full">
+      <div className="relative z-10 flex-1 p-4 pb-20">
+        <div className="max-w-5xl mx-auto">
           
           {/* Section title */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-4">
             <h2 
-              className="text-xl font-serif text-noir-cream/80 tracking-widest uppercase"
+              className="text-lg font-serif text-noir-cream/80 tracking-widest uppercase"
               style={{ fontFamily: 'var(--font-serif)' }}
             >
               — Suspects —
             </h2>
-            <p className="text-noir-smoke text-sm mt-2 italic">
+            <p className="text-noir-smoke text-xs mt-1 italic">
               Click a suspect to begin interrogation
             </p>
           </div>
 
-          {/* Suspect grid */}
-          <div className="grid grid-cols-3 gap-8 max-w-4xl mx-auto">
+          {/* Suspect grid - compact to fit all 6 */}
+          <div className="grid grid-cols-3 gap-3 max-w-4xl mx-auto">
             {SUSPECT_POSITIONS.map(({ id }, index) => {
               const character = getCharacter(id)
               if (!character) return null
@@ -157,8 +157,8 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                     {/* Pushpin */}
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-noir-blood border-2 border-noir-blood/50 shadow-lg z-10" />
                     
-                    {/* Photo area */}
-                    <div className="aspect-[3/4] bg-gradient-to-br from-noir-slate/50 to-noir-charcoal overflow-hidden">
+                    {/* Photo area - smaller for compact grid */}
+                    <div className="aspect-[4/5] bg-gradient-to-br from-noir-slate/50 to-noir-charcoal overflow-hidden">
                       <img 
                         src={getPortraitPath(id)}
                         alt={character.name}
@@ -167,20 +167,20 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                           // Fallback to initials if image fails
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
-                          target.parentElement!.innerHTML = `<span class="text-4xl font-serif text-noir-gold/60 flex items-center justify-center h-full">${character.name.split(' ').map(n => n[0]).join('')}</span>`
+                          target.parentElement!.innerHTML = `<span class="text-3xl font-serif text-noir-gold/60 flex items-center justify-center h-full">${character.name.split(' ').map(n => n[0]).join('')}</span>`
                         }}
                       />
                     </div>
                     
-                    {/* Info strip */}
-                    <div className="p-4 bg-noir-black/50">
+                    {/* Info strip - compact */}
+                    <div className="p-2 bg-noir-black/50">
                       <h3 
-                        className="text-noir-cream font-serif text-lg"
+                        className="text-noir-cream font-serif text-sm"
                         style={{ fontFamily: 'var(--font-serif)' }}
                       >
                         {character.name}
                       </h3>
-                      <p className="text-noir-gold/70 text-sm italic mt-1">
+                      <p className="text-noir-gold/70 text-xs italic">
                         {character.role}
                       </p>
                     </div>
@@ -237,29 +237,27 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
         </div>
       </div>
 
-      {/* Watson hint (if any) */}
-      <div className="absolute bottom-6 left-6 right-6 z-20">
-        <div className="max-w-2xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-amber-100/90 px-6 py-4 shadow-lg"
-            style={{
-              transform: 'rotate(-1deg)',
-              fontFamily: 'var(--font-serif)',
-            }}
-          >
-            <p className="text-amber-900 text-sm">
-              <span className="font-bold">Watson notes:</span>{' '}
-              {collectedEvidence.length === 0
-                ? "Begin by questioning the suspects. Look for inconsistencies in their stories."
-                : contradictions.length > 0
-                  ? "You've found a contradiction! Press the suspects on their conflicting statements."
-                  : "Keep gathering evidence. Something doesn't add up here..."
-              }
-            </p>
-          </motion.div>
-        </div>
+      {/* Watson hint - compact sticky note */}
+      <div className="absolute bottom-4 left-4 z-20">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-amber-100/95 px-4 py-2 shadow-lg max-w-sm"
+          style={{
+            transform: 'rotate(-2deg)',
+            fontFamily: 'var(--font-serif)',
+          }}
+        >
+          <p className="text-amber-900 text-xs">
+            <span className="font-bold">💡 Watson:</span>{' '}
+            {collectedEvidence.length === 0
+              ? "Question the suspects. Look for inconsistencies."
+              : contradictions.length > 0
+                ? "You've found a contradiction! Press them on it."
+                : "Keep gathering evidence..."
+            }
+          </p>
+        </motion.div>
       </div>
     </div>
   )
