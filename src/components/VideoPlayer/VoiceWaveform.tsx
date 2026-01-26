@@ -45,8 +45,9 @@ export function VoiceWaveform({
     const animate = () => {
       if (analyserNode && dataArrayRef.current) {
         // Real audio analysis
-        analyserNode.getByteFrequencyData(dataArrayRef.current)
-        const newBars = [...dataArrayRef.current]
+        const dataArray = dataArrayRef.current
+        analyserNode.getByteFrequencyData(dataArray)
+        const newBars = Array.from(dataArray as unknown as number[])
           .slice(0, 20)
           .map((v) => Math.max(0.1, v / 255))
         setBars(newBars)
