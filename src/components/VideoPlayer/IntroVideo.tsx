@@ -27,7 +27,7 @@ export function IntroVideo({
 }: IntroVideoProps) {
   const [state, setState] = useState<IntroState>('loading')
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [_error, setError] = useState<string | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
@@ -176,7 +176,7 @@ export function IntroVideo({
 }
 
 // Add these animations to your CSS/Tailwind config
-const animationStyles = `
+const _animationStyles = `
 @keyframes slide-left {
   from { transform: translateX(0); }
   to { transform: translateX(-100%); }

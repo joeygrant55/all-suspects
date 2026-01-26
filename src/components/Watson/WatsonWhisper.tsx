@@ -19,7 +19,7 @@ export function WatsonWhisper({
   onDismiss,
   onExpandToDesk,
 }: WatsonWhisperProps) {
-  const dismissTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Auto-dismiss after 5 seconds
   useEffect(() => {

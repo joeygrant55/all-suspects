@@ -3,7 +3,7 @@
  * Visual timeline of events pieced together from statements
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 
 interface TimelineEvent {
   time: string

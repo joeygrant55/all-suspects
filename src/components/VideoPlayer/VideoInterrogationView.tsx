@@ -53,7 +53,7 @@ export function VideoInterrogationView({
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
   const analyserRef = useRef<AnalyserNode | null>(null)
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const pollIntervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Use refs to track current state for polling callback (avoid stale closures)
   const isVoicePlayingRef = useRef(isVoicePlaying)

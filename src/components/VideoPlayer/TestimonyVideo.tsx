@@ -52,7 +52,7 @@ export function TestimonyVideo({
   const [error, setError] = useState<string | null>(null)
   const [analysis, setAnalysis] = useState<VideoGenerationResponse['analysis'] | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
-  const pollInterval = useRef<NodeJS.Timeout | null>(null)
+  const pollInterval = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Generate video on mount or when testimony changes
   useEffect(() => {

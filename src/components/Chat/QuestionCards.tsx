@@ -32,7 +32,7 @@ export function QuestionCards({
     setCardsRevealed([])
     setIsReady(false)
 
-    const timers: NodeJS.Timeout[] = []
+    const timers: ReturnType<typeof setTimeout>[] = []
 
     // Reveal cards one by one
     questions.forEach((_, index) => {

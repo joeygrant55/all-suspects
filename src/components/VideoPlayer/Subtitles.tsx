@@ -26,7 +26,7 @@ export function Subtitles({
 }: SubtitlesProps) {
   const [displayedText, setDisplayedText] = useState('')
   const [currentWordIndex, setCurrentWordIndex] = useState(0)
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Parse text into words (memoized to avoid recalculation)
   const words = useMemo(() => text.split(/\s+/).filter(Boolean), [text])

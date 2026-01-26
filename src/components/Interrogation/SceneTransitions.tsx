@@ -15,7 +15,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { Variants } from 'framer-motion'
+import type { Variants } from 'framer-motion'
 
 // =============================================================================
 // Animation Variants
