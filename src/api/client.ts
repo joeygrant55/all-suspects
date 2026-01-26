@@ -633,3 +633,129 @@ export async function getCachedPortraits(): Promise<Record<string, PortraitResul
 
   return response.json()
 }
+
+// ============================================================
+// ROOM ATMOSPHERE VIDEO API
+// ============================================================
+
+export type RoomId = 'study' | 'parlor' | 'dining' | 'kitchen' | 'hallway' | 'garden'
+export type TimeOfDay = 'night' | 'dawn' | 'dusk'
+export type WeatherCondition = 'clear' | 'rain' | 'storm' | 'fog'
+
+export interface RoomAtmosphereResult {
+  roomId: RoomId
+  videoUrl?: string
+  generationId: string
+  status: 'pending' | 'generating' | 'ready' | 'error'
+  error?: string
+  timeOfDay: TimeOfDay
+  weather: WeatherCondition
+}
+
+export interface RoomInfo {
+  roomId: RoomId
+  name: string
+  description: string
+  keyElements: string[]
+  lightSources: string[]
+  sounds: string[]
+}
+
+/**
+ * Get or generate a room atmosphere video
+ */
+export async function getRoomAtmosphere(
+  roomId: RoomId,
+  timeOfDay?: TimeOfDay,
+  weather?: WeatherCondition,
+  tension?: number
+): Promise<RoomAtmosphereResult> {
+  const params = new URLSearchParams()
+  if (timeOfDay) params.set('time', timeOfDay)
+  if (weather) params.set('weather', weather)
+  if (tension !== undefined) params.set('tension', tension.toString())
+  
+  const url = `${API_BASE}/atmosphere/${roomId}${params.toString() ? '?' + params : ''}`
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || error.error || 'Failed to get atmosphere')
+  }
+
+  return response.json()
+}
+
+/**
+ * Check status of an atmosphere generation
+ */
+export async function checkAtmosphereStatus(
+  roomId: RoomId,
+  timeOfDay?: TimeOfDay,
+  weather?: WeatherCondition
+): Promise<RoomAtmosphereResult | null> {
+  const params = new URLSearchParams()
+  if (timeOfDay) params.set('time', timeOfDay)
+  if (weather) params.set('weather', weather)
+  
+  const response = await fetch(`${API_BASE}/atmosphere/${roomId}/status?${params}`)
+
+  if (!response.ok) {
+    if (response.status === 404) return null
+    throw new Error('Failed to check atmosphere status')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get room information
+ */
+export async function getRoomInfo(roomId: RoomId): Promise<RoomInfo> {
+  const response = await fetch(`${API_BASE}/atmosphere/${roomId}/info`)
+
+  if (!response.ok) {
+    throw new Error('Failed to get room info')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get list of all rooms
+ */
+export async function getAllRooms(): Promise<{
+  rooms: Array<{ id: RoomId; name: string; description: string }>
+  validTimes: TimeOfDay[]
+  validWeather: WeatherCondition[]
+}> {
+  const response = await fetch(`${API_BASE}/atmosphere/rooms/list`)
+
+  if (!response.ok) {
+    throw new Error('Failed to get rooms list')
+  }
+
+  return response.json()
+}
+
+/**
+ * Pre-generate room atmospheres
+ */
+export async function pregenerateAtmospheres(
+  timeOfDay?: TimeOfDay,
+  weather?: WeatherCondition
+): Promise<{ message: string; timeOfDay: string; weather: string; rooms: string[] }> {
+  const response = await fetch(`${API_BASE}/atmosphere/pregenerate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ timeOfDay, weather }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to start pre-generation')
+  }
+
+  return response.json()
+}

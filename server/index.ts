@@ -65,6 +65,7 @@ import {
   importMystery,
 } from './mystery'
 import portraitRoutes from './video/portraitRoutes'
+import atmosphereRoutes from './video/atmosphereRoutes'
 import { analyzeEmotionalState, type StructuredCharacterResponse } from './agents/emotionalOutput'
 
 const app = express()
@@ -1270,6 +1271,9 @@ const PORT = process.env.PORT || 3001
 
 // Portrait video routes
 app.use('/api/portraits', portraitRoutes)
+
+// Room atmosphere routes
+app.use('/api/atmosphere', atmosphereRoutes)
 
 // Start cache cleanup interval
 startCacheCleanup()
