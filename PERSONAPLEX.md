@@ -1,14 +1,39 @@
 # PersonaPlex Integration — Voice-Powered NPCs
 
-All Suspects now supports **real-time voice conversations** with NPCs using NVIDIA PersonaPlex. Players can actually *talk* to suspects, interrupt them, and hear responses in unique character voices.
+All Suspects uses a **hybrid architecture** combining the Anthropic Agent SDK's intelligence with NVIDIA PersonaPlex's natural voice I/O. Players can *talk* to suspects and hear responses in unique character voices, while Claude handles all the thinking, memory, and deception.
 
-## What PersonaPlex Enables
+## Architecture: Hybrid Claude + PersonaPlex
 
-- **Full-duplex conversation** — speak and listen simultaneously, no turn-taking
-- **Natural interruptions** — cut off NPCs mid-sentence like real conversation
-- **6 unique character voices** — each suspect has their own distinct voice
-- **Persona-aware responses** — NPCs stay in character with consistent personalities
-- **Low latency** — feels like talking to a real person
+```
+┌─────────────┐          ┌─────────────┐          ┌─────────────┐
+│   Player    │  audio   │ PersonaPlex │  text    │   Claude    │
+│   Speaks    │ ───────► │ (STT)       │ ───────► │   Agent     │
+└─────────────┘          └─────────────┘          │  + Memory   │
+                                                  │  + Tools    │
+                                                  │  + Lies     │
+┌─────────────┐          ┌─────────────┐          │  + Pressure │
+│   Player    │  audio   │ PersonaPlex │  text    │             │
+│   Hears     │ ◄─────── │ (TTS)       │ ◄─────── └─────────────┘
+└─────────────┘          └─────────────┘
+```
+
+**Why hybrid?** The whole point of All Suspects is showcasing the Agent SDK. We need:
+- Memory persistence across conversations
+- Tool use (recall, check_notes, assess_threat)
+- Cross-character awareness (gossip spreads)
+- Consistent lie maintenance
+- Pressure-based behavior changes
+- Contradiction detection
+
+PersonaPlex handles voice I/O, Claude handles intelligence.
+
+## What You Get
+
+- **Natural voice conversations** — speak to NPCs like real people
+- **Full Agent SDK intelligence** — memory, tools, lies, pressure system
+- **6 unique character voices** — each suspect sounds different
+- **Emotion detection** — UI shows when NPCs are nervous, defensive, etc.
+- **Tool transparency** — see when Claude "recalls memory" or "checks notes"
 
 ## Quick Start
 
@@ -127,14 +152,32 @@ Then use `my_voice.pt` as the `voicePrompt` in character config.
 
 ```
 server/voice/
-├── personaplex.ts       # Voice configs + persona prompt builder
-├── personaplexClient.ts # WebSocket client for Node.js
-└── voiceRoutes.ts       # Express routes + WebSocket handler
+├── personaplex.ts         # Voice configs + persona prompt builder
+├── personaplexClient.ts   # WebSocket client (standalone mode)
+├── voiceRoutes.ts         # Express routes (standalone mode)
+├── hybridVoice.ts         # 🆕 Hybrid voice manager (Claude + PersonaPlex)
+└── hybridWebSocket.ts     # 🆕 WebSocket handler for hybrid flow
 
 src/
-├── hooks/useVoiceChat.ts           # React hook for voice
-└── components/Chat/VoiceChatPanel.tsx  # Voice UI component
+├── hooks/
+│   ├── useVoiceChat.ts         # Basic voice hook (standalone)
+│   └── useHybridVoice.ts       # 🆕 Hybrid hook with SDK features
+└── components/Chat/
+    ├── VoiceChatPanel.tsx      # Basic voice UI
+    └── HybridVoicePanel.tsx    # 🆕 Hybrid UI with emotion/tools
 ```
+
+### Hybrid vs Standalone
+
+- **Hybrid (recommended):** Full Agent SDK + PersonaPlex voice
+  - Use `useHybridVoice` hook
+  - Use `HybridVoicePanel` component
+  - Best for the game experience
+
+- **Standalone:** PersonaPlex only (no Claude)
+  - Use `useVoiceChat` hook
+  - Use `VoiceChatPanel` component
+  - Simpler but loses Agent SDK features
 
 ## Hardware Requirements
 
