@@ -176,7 +176,7 @@ export function IntroVideo({
 }
 
 // Add these animations to your CSS/Tailwind config
-const _animationStyles = `
+export const animationStyles = `
 @keyframes slide-left {
   from { transform: translateX(0); }
   to { transform: translateX(-100%); }
