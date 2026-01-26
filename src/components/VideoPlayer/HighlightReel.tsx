@@ -37,7 +37,7 @@ export function HighlightReel({ isOpen, onClose }: HighlightReelProps) {
   const messages = useGameStore((s) => s.messages)
   const gameComplete = useGameStore((s) => s.gameComplete)
 
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Compile highlights from game state
   useEffect(() => {
