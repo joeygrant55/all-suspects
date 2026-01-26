@@ -116,9 +116,10 @@ export function ChatModal() {
         content: response.message,
       })
 
-      if (response.contradictions?.length > 0) {
-        addContradictions(response.contradictions)
-        setNewContradiction(response.contradictions[0].explanation)
+      const contradictions = response.contradictions
+      if (contradictions && contradictions.length > 0) {
+        addContradictions(contradictions)
+        setNewContradiction(contradictions[0].explanation)
         setTimeout(() => setNewContradiction(null), 6000)
       }
 

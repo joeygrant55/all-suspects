@@ -158,7 +158,7 @@ export function useHybridVoice({
 
     switch (type) {
       case 'session:start': {
-        const { sessionId: sid, characterId, characterName } = data as {
+        const { sessionId: sid, characterId, characterName: _charName } = data as {
           sessionId?: string
           characterId?: string
           characterName?: string
