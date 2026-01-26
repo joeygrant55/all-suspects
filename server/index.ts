@@ -64,6 +64,8 @@ import {
   exportMystery,
   importMystery,
 } from './mystery'
+import portraitRoutes from './video/portraitRoutes'
+import { analyzeEmotionalState, type StructuredCharacterResponse } from './agents/emotionalOutput'
 
 const app = express()
 app.use(cors())
@@ -222,6 +224,23 @@ app.post('/api/chat', async (req, res) => {
     // Get updated pressure state after all tracking
     const finalPressureState = getPressureState(characterId)
 
+    // Analyze emotional state for cinematic portrait selection
+    let emotionalState: Omit<StructuredCharacterResponse, 'dialogue'> | null = null
+    try {
+      const recentContext = history.slice(-6).map(h => `${h.role}: ${h.content}`).join('\n')
+      emotionalState = await analyzeEmotionalState(
+        anthropic,
+        characterId,
+        character.isGuilty,
+        finalPressureState.level,
+        agentResponse.message,
+        message,
+        recentContext
+      )
+    } catch (emotionError) {
+      console.error('Error analyzing emotional state:', emotionError)
+    }
+
     res.json({
       message: agentResponse.message,
       characterName: character.name,
@@ -234,6 +253,14 @@ app.post('/api/chat', async (req, res) => {
         evidencePresented: finalPressureState.evidencePresented.length,
         contradictionsExposed: finalPressureState.contradictionsExposed,
       },
+      // Cinematic: emotional state for portrait selection
+      emotion: emotionalState ? {
+        primary: emotionalState.emotion.primary,
+        intensity: emotionalState.emotion.intensity,
+        tells: emotionalState.emotion.tells,
+        voice: emotionalState.voice,
+        observableHint: emotionalState.observableHint,
+      } : null,
     })
   } catch (error) {
     console.error('Error generating response:', error)
@@ -1240,6 +1267,9 @@ app.post('/api/mystery/clear', async (_req, res) => {
 })
 
 const PORT = process.env.PORT || 3001
+
+// Portrait video routes
+app.use('/api/portraits', portraitRoutes)
 
 // Start cache cleanup interval
 startCacheCleanup()

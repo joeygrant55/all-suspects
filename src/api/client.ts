@@ -9,12 +9,30 @@ export interface PressureData {
   contradictionsExposed: number
 }
 
+export type EmotionalState = 'composed' | 'nervous' | 'defensive' | 'breaking' | 'relieved' | 'hostile'
+
+export interface VoiceModifiers {
+  pace: 'fast' | 'normal' | 'slow'
+  tremor: boolean
+  volume: 'whisper' | 'normal' | 'raised'
+  breaks: boolean
+}
+
+export interface EmotionData {
+  primary: EmotionalState
+  intensity: number
+  tells: string[]
+  voice: VoiceModifiers
+  observableHint?: string
+}
+
 export interface ChatResponse {
   message: string
   characterName: string
   statementId?: string
   contradictions?: Contradiction[]
   pressure?: PressureData
+  emotion?: EmotionData  // New: for cinematic portrait selection
 }
 
 export interface ChatVideoResponse {
@@ -522,6 +540,95 @@ export async function resetWatson(): Promise<{ success: boolean; message: string
 
   if (!response.ok) {
     throw new Error('Failed to reset Watson')
+  }
+
+  return response.json()
+}
+
+// ============================================================
+// CHARACTER PORTRAIT VIDEO API
+// ============================================================
+
+export interface PortraitResult {
+  characterId: string
+  emotionalState: EmotionalState
+  videoUrl?: string
+  generationId: string
+  status: 'pending' | 'generating' | 'ready' | 'error'
+  error?: string
+}
+
+/**
+ * Get or generate a character portrait video
+ */
+export async function getCharacterPortrait(
+  characterId: string,
+  emotionalState: EmotionalState,
+  intensity?: number,
+  context?: string
+): Promise<PortraitResult> {
+  const params = new URLSearchParams()
+  if (intensity !== undefined) params.set('intensity', intensity.toString())
+  if (context) params.set('context', context)
+  
+  const url = `${API_BASE}/portraits/${characterId}/${emotionalState}${params.toString() ? '?' + params : ''}`
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || error.error || 'Failed to get portrait')
+  }
+
+  return response.json()
+}
+
+/**
+ * Check status of a portrait generation
+ */
+export async function checkPortraitStatus(
+  characterId: string,
+  emotionalState: EmotionalState
+): Promise<PortraitResult | null> {
+  const response = await fetch(`${API_BASE}/portraits/${characterId}/${emotionalState}/status`)
+
+  if (!response.ok) {
+    if (response.status === 404) return null
+    throw new Error('Failed to check portrait status')
+  }
+
+  return response.json()
+}
+
+/**
+ * Pre-generate portraits for characters
+ */
+export async function pregeneratePortraits(
+  characters?: string[],
+  states?: EmotionalState[]
+): Promise<{ message: string; characters: string[]; states: string[] }> {
+  const response = await fetch(`${API_BASE}/portraits/pregenerate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ characters, states }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to start pre-generation')
+  }
+
+  return response.json()
+}
+
+/**
+ * Get all cached portraits
+ */
+export async function getCachedPortraits(): Promise<Record<string, PortraitResult>> {
+  const response = await fetch(`${API_BASE}/portraits/cache`)
+
+  if (!response.ok) {
+    throw new Error('Failed to get cached portraits')
   }
 
   return response.json()
