@@ -165,10 +165,44 @@ Cinematic portrait, elderly butler 60s, silver hair impeccably combed, formal bl
 ## Next Steps
 
 1. [x] Create plan document
-2. [ ] Build portrait generator system
-3. [ ] Enhance agent with structured emotional output
-4. [ ] Create portrait video component
-5. [ ] Generate first set of character portraits
-6. [ ] Integrate with interrogation UI
-7. [ ] Add emotional state switching
-8. [ ] Generate room atmospheres
+2. [x] Build portrait generator system
+3. [x] Enhance agent with structured emotional output
+4. [x] Create portrait video component
+5. [ ] Generate first set of character portraits (requires Veo API)
+6. [x] Integrate with interrogation UI (CharacterPortrait in InterrogationExperience)
+7. [x] Add emotional state switching (driven by Agent SDK emotion output)
+8. [x] Generate room atmospheres (roomAtmosphereGenerator + RoomAtmosphere.tsx)
+
+---
+
+## 🚀 Completed This Session (Night Build)
+
+### Phase 1: Interrogation UI Overhaul
+- **InterrogationExperience.tsx** now uses CharacterPortrait component
+- Emotion data from chat responses drives portrait state changes
+- Dynamic question suggestions based on emotional state
+- DialogueBox with typewriter effect
+- PsychologyOverlay showing real-time stress levels
+- Observable tells display and Watson insight hints
+
+### Phase 2: Room Atmosphere System
+- **roomAtmosphereGenerator.ts** - Cinematic prompts for all 6 rooms
+- Support for time of day (night/dawn/dusk) and weather (rain/storm/fog/clear)
+- **RoomAtmosphere.tsx** - Full-bleed video backgrounds
+- Weather overlay effects (rain, lightning, fog)
+- Film grain and vignette effects
+- Cinematic room name transitions
+
+### Phase 3: Enhanced Agent SDK
+- **internal_assessment** tool for character private thoughts
+- Threat level tracking (safe/concerning/dangerous/critical)
+- Evidence ripple system - news travels through the manor
+- CHARACTER_RELATIONSHIPS graph for gossip propagation
+- Internal monologue influences observable behaviors
+
+### Phase 4: Inter-Character Dynamics
+- **backgroundSimulation.ts** - Characters move and talk autonomously
+- Overheard snippets when entering rooms
+- Conversation pairs with tension levels
+- AI-generated background conversations
+- Living world that exists when player isn't watching
