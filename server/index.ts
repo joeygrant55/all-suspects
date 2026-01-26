@@ -67,6 +67,16 @@ import {
 import portraitRoutes from './video/portraitRoutes'
 import atmosphereRoutes from './video/atmosphereRoutes'
 import { analyzeEmotionalState, type StructuredCharacterResponse } from './agents/emotionalOutput'
+import {
+  initializeCharacterLocations,
+  getCharactersInRoom,
+  getRoomPresence,
+  getOverheardSnippet,
+  getAllBackgroundConversations,
+  getManorActivitySummary,
+  generateBackgroundConversation,
+  clearBackgroundSimulation,
+} from './agents/backgroundSimulation'
 
 const app = express()
 app.use(cors())
@@ -1267,6 +1277,127 @@ app.post('/api/mystery/clear', async (_req, res) => {
   }
 })
 
+// ============================================================
+// BACKGROUND SIMULATION ENDPOINTS (Inter-Character Dynamics)
+// ============================================================
+
+/**
+ * GET /api/manor/activity
+ * Get current manor activity summary
+ */
+app.get('/api/manor/activity', (_req, res) => {
+  try {
+    const summary = getManorActivitySummary()
+    res.json(summary)
+  } catch (error) {
+    console.error('[MANOR] Get activity failed:', error)
+    res.status(500).json({ error: 'Failed to get manor activity' })
+  }
+})
+
+/**
+ * GET /api/manor/room/:roomId
+ * Get info about a specific room (who's there, what's happening)
+ */
+app.get('/api/manor/room/:roomId', (req, res) => {
+  try {
+    const { roomId } = req.params
+    const presence = getRoomPresence(roomId)
+    const characters = getCharactersInRoom(roomId)
+    
+    res.json({
+      roomId,
+      characters,
+      presence,
+    })
+  } catch (error) {
+    console.error('[MANOR] Get room failed:', error)
+    res.status(500).json({ error: 'Failed to get room info' })
+  }
+})
+
+/**
+ * GET /api/manor/room/:roomId/enter
+ * Enter a room and potentially overhear something
+ */
+app.get('/api/manor/room/:roomId/enter', (req, res) => {
+  try {
+    const { roomId } = req.params
+    const { snippet, whatHeard } = getOverheardSnippet(roomId)
+    const presence = getRoomPresence(roomId)
+    
+    res.json({
+      roomId,
+      presence,
+      overheard: whatHeard,
+      fullConversation: snippet,
+    })
+  } catch (error) {
+    console.error('[MANOR] Enter room failed:', error)
+    res.status(500).json({ error: 'Failed to enter room' })
+  }
+})
+
+/**
+ * GET /api/manor/conversations
+ * Get all recent background conversations (for debug/review)
+ */
+app.get('/api/manor/conversations', (_req, res) => {
+  try {
+    const conversations = getAllBackgroundConversations()
+    res.json({ conversations })
+  } catch (error) {
+    console.error('[MANOR] Get conversations failed:', error)
+    res.status(500).json({ error: 'Failed to get conversations' })
+  }
+})
+
+/**
+ * POST /api/manor/simulate
+ * Trigger a background conversation between characters in a room
+ */
+app.post('/api/manor/simulate', async (req, res) => {
+  try {
+    const { char1Id, char2Id, roomId, pressureLevel } = req.body
+    
+    if (!char1Id || !char2Id || !roomId) {
+      return res.status(400).json({ error: 'Missing char1Id, char2Id, or roomId' })
+    }
+    
+    const conversation = await generateBackgroundConversation(
+      anthropic,
+      char1Id,
+      char2Id,
+      roomId,
+      pressureLevel || 50
+    )
+    
+    res.json({
+      success: true,
+      conversation,
+    })
+  } catch (error) {
+    console.error('[MANOR] Simulate conversation failed:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Failed to simulate conversation', details: errorMessage })
+  }
+})
+
+/**
+ * POST /api/manor/reset
+ * Reset the background simulation
+ */
+app.post('/api/manor/reset', (_req, res) => {
+  try {
+    clearBackgroundSimulation()
+    initializeCharacterLocations()
+    res.json({ success: true, message: 'Background simulation reset' })
+  } catch (error) {
+    console.error('[MANOR] Reset failed:', error)
+    res.status(500).json({ error: 'Failed to reset simulation' })
+  }
+})
+
 const PORT = process.env.PORT || 3001
 
 // Portrait video routes
@@ -1278,10 +1409,15 @@ app.use('/api/atmosphere', atmosphereRoutes)
 // Start cache cleanup interval
 startCacheCleanup()
 
+// Initialize character locations for background simulation
+initializeCharacterLocations()
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`)
   console.log('Available endpoints:')
   console.log('  POST /api/chat - Chat with a character')
   console.log('  GET /api/characters - List all characters')
   console.log('  POST /api/reset - Reset conversation history')
+  console.log('  GET /api/manor/activity - Get manor activity summary')
+  console.log('  GET /api/manor/room/:id/enter - Enter room and overhear conversations')
 })
