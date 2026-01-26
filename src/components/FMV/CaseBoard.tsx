@@ -22,10 +22,8 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
   const { characters, collectedEvidence, contradictions, accusationUnlocked } = useGameStore()
   const [hoveredSuspect, setHoveredSuspect] = useState<string | null>(null)
 
-  // Get initials for avatar placeholder
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2)
-  }
+  // Get portrait image path
+  const getPortraitPath = (id: string) => `/portraits/${id}.png`
 
   // Get character by ID
   const getCharacter = (id: string) => characters.find(c => c.id === id)
@@ -160,13 +158,18 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-noir-blood border-2 border-noir-blood/50 shadow-lg z-10" />
                     
                     {/* Photo area */}
-                    <div className="aspect-[3/4] bg-gradient-to-br from-noir-slate/50 to-noir-charcoal flex items-center justify-center">
-                      <span 
-                        className="text-4xl font-serif text-noir-gold/60"
-                        style={{ fontFamily: 'var(--font-serif)' }}
-                      >
-                        {getInitials(character.name)}
-                      </span>
+                    <div className="aspect-[3/4] bg-gradient-to-br from-noir-slate/50 to-noir-charcoal overflow-hidden">
+                      <img 
+                        src={getPortraitPath(id)}
+                        alt={character.name}
+                        className="w-full h-full object-cover object-top filter sepia-[0.3] contrast-[1.1]"
+                        onError={(e) => {
+                          // Fallback to initials if image fails
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                          target.parentElement!.innerHTML = `<span class="text-4xl font-serif text-noir-gold/60 flex items-center justify-center h-full">${character.name.split(' ').map(n => n[0]).join('')}</span>`
+                        }}
+                      />
                     </div>
                     
                     {/* Info strip */}

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
 import { CharacterPortrait } from '../UI/CharacterPortrait'
+import { sendMessage, analyzeWithWatson } from '../../api/client'
 
 interface CharacterInterrogationProps {
   characterId: string
@@ -9,13 +10,25 @@ interface CharacterInterrogationProps {
 }
 
 export function CharacterInterrogation({ characterId, onClose }: CharacterInterrogationProps) {
-  const { characters, messages, addMessage, psychology } = useGameStore()
+  const { 
+    characters, 
+    messages, 
+    addMessage, 
+    psychology,
+    updatePsychology,
+    addEvidence,
+    addContradictions,
+    updateCharacterPressure
+  } = useGameStore()
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const character = characters.find((c) => c.id === characterId)
-  const conversationMessages = messages.filter((m) => m.characterId === characterId)
+  const conversationMessages = messages.filter(
+    (m) => m.characterId === characterId || (m.role === 'player' && !m.characterId)
+  ).slice(-20) // Keep last 20 messages for this character
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -23,27 +36,78 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   }, [conversationMessages])
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim() || isTyping) return
-
-    // Add player message
-    addMessage({
-      role: 'player',
-      content: inputValue,
-    })
+    if (!inputValue.trim() || isTyping || !character) return
 
     const question = inputValue
     setInputValue('')
+    setError(null)
+    
+    // Add player message
+    addMessage({
+      role: 'player',
+      content: question,
+      characterId,
+    })
+
     setIsTyping(true)
 
-    // Simulate AI response (replace with actual API call)
-    setTimeout(() => {
+    try {
+      // Call the real AI backend
+      const response = await sendMessage(characterId, question)
+      
+      // Add character response
       addMessage({
         role: 'character',
         characterId,
-        content: `[AI Response to: "${question}"]`,
+        content: response.message,
       })
+
+      // Update pressure if returned
+      if (response.pressure) {
+        updateCharacterPressure(characterId, response.pressure)
+        updatePsychology({ 
+          pressureLevel: Math.min(5, Math.max(1, response.pressure.level)) as 1|2|3|4|5
+        })
+      }
+
+      // Add evidence from conversation
+      if (response.statementId) {
+        addEvidence({
+          type: 'testimony',
+          description: `${character.name}: "${response.message.substring(0, 100)}..."`,
+          source: `${characterId}-${response.statementId}`,
+        })
+      }
+
+      // Handle contradictions
+      if (response.contradictions && response.contradictions.length > 0) {
+        addContradictions(response.contradictions)
+        updatePsychology({ isLying: true })
+      } else {
+        updatePsychology({ isLying: false })
+      }
+
+      // Run Watson analysis in background
+      analyzeWithWatson(
+        characterId,
+        character.name,
+        response.message,
+        question,
+        response.pressure?.level || 0
+      ).catch(console.error) // Don't block on Watson
+
+    } catch (err) {
+      console.error('Chat error:', err)
+      setError('Failed to get response. Please try again.')
+      // Add error message to chat for visibility
+      addMessage({
+        role: 'character',
+        characterId,
+        content: '*clears throat* I... I need a moment. Ask me again.',
+      })
+    } finally {
       setIsTyping(false)
-    }, 1500)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -53,12 +117,50 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     }
   }
 
-  // Suggested questions (context-aware)
-  const suggestedQuestions = [
-    'Where were you at midnight?',
-    'What was your relationship with Charles?',
-    'Did you see anything unusual?',
-  ]
+  // Suggested questions (character-specific)
+  const getSuggestedQuestions = () => {
+    const baseQuestions = [
+      'Where were you at midnight when Charles was killed?',
+      'What was your relationship with Charles Ashford?',
+    ]
+    
+    const characterQuestions: Record<string, string[]> = {
+      victoria: [
+        'How was your marriage to Charles?',
+        'Did you know about the will changes?',
+        'Were you aware of any affairs?',
+      ],
+      thomas: [
+        'What did your father think of your lifestyle?',
+        'Were you in debt to anyone?',
+        'Did you argue with your father recently?',
+      ],
+      eleanor: [
+        'How long have you worked for the Ashfords?',
+        'Did Charles confide in you about anything?',
+        'Did you notice anything unusual in his papers?',
+      ],
+      marcus: [
+        'What was Charles\'s health like?',
+        'Did you prescribe him any medications?',
+        'Were you treating anyone else at the manor?',
+      ],
+      lillian: [
+        'How did you know Charles?',
+        'When did you last see him before the party?',
+        'What brought you to the manor tonight?',
+      ],
+      james: [
+        'Who did you see enter and leave the study?',
+        'Did you hear any arguments?',
+        'Was anything out of place when you did your rounds?',
+      ],
+    }
+    
+    return [...baseQuestions, ...(characterQuestions[characterId] || [])]
+  }
+  
+  const suggestedQuestions = getSuggestedQuestions()
 
   if (!character) {
     return null
@@ -175,6 +277,13 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
 
           <div ref={messagesEndRef} />
         </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="px-8 py-2">
+            <p className="text-noir-blood text-sm text-center">{error}</p>
+          </div>
+        )}
 
         {/* Input area */}
         <div className="flex-shrink-0 px-8 pb-6 space-y-4">

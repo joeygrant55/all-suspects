@@ -30,12 +30,12 @@ const CHARACTER_INITIALS: Record<string, string> = {
 
 // Portrait image paths (relative to public folder)
 const PORTRAIT_PATHS: Record<string, string> = {
-  victoria: '/portraits/victoria.webp',
-  thomas: '/portraits/thomas.webp',
-  eleanor: '/portraits/eleanor.webp',
-  marcus: '/portraits/marcus.webp',
-  lillian: '/portraits/lillian.webp',
-  james: '/portraits/james.webp',
+  victoria: '/portraits/victoria.png',
+  thomas: '/portraits/thomas.png',
+  eleanor: '/portraits/eleanor.png',
+  marcus: '/portraits/marcus.png',
+  lillian: '/portraits/lillian.png',
+  james: '/portraits/james.png',
 }
 
 export function CharacterPortrait({
