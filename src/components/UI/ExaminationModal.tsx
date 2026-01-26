@@ -1,4 +1,4 @@
-import type { EvidenceData } from '../Scene/InteractiveObject'
+import type { EvidenceData } from '../../types/evidence'
 import { useGameStore } from '../../game/state'
 
 interface ExaminationModalProps {
