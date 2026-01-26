@@ -299,21 +299,21 @@ export function InterrogationModal() {
             <span className="text-sm text-noir-smoke">{currentCharacter.role}</span>
 
             {/* Pressure indicator */}
-            {currentCharacter.pressureLevel && currentCharacter.pressureLevel > 0 && (
+            {currentCharacter.pressure?.level && currentCharacter.pressure?.level > 0 && (
               <div className="flex items-center gap-2">
                 <div className="w-20 h-1.5 bg-noir-slate/30 rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-500"
                     style={{
-                      width: `${Math.min(100, currentCharacter.pressureLevel * 20)}%`,
-                      background: currentCharacter.pressureLevel >= 4
+                      width: `${Math.min(100, (currentCharacter.pressure?.level ?? 0) * 20)}%`,
+                      background: (currentCharacter.pressure?.level ?? 0) >= 4
                         ? 'linear-gradient(90deg, #722f37, #b8860b)'
                         : 'linear-gradient(90deg, #c9a227, #d4af37)',
                     }}
                   />
                 </div>
                 <span className="text-xs text-noir-smoke">
-                  {currentCharacter.pressureLevel >= 4 ? 'Nervous' : 'Calm'}
+                  {(currentCharacter.pressure?.level ?? 0) >= 4 ? 'Nervous' : 'Calm'}
                 </span>
               </div>
             )}
@@ -425,7 +425,7 @@ export function InterrogationModal() {
                     characterId={currentConversation}
                     characterName={currentCharacter.name}
                     characterRole={currentCharacter.role}
-                    pressureLevel={currentCharacter.pressureLevel}
+                    pressureLevel={currentCharacter.pressure?.level}
                     isWaiting={true}
                   />
                 </div>

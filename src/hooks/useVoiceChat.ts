@@ -51,7 +51,6 @@ export function useVoiceChat({
   const audioContextRef = useRef<AudioContext | null>(null)
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const processorRef = useRef<ScriptProcessorNode | null>(null)
-  const audioQueueRef = useRef<Float32Array[]>([])
 
   // Connect to PersonaPlex server
   const connect = useCallback(async () => {
@@ -270,7 +269,7 @@ export function useVoiceActivityDetection(
   threshold = 0.01
 ): boolean {
   const [isActive, setIsActive] = useState(false)
-  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const silenceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     if (!audioData) return
