@@ -1,20 +1,32 @@
-import { useState, useEffect, useCallback } from 'react'
-import { ManorScene } from './components/Scene'
-import { InterrogationModal } from './components/Chat'
-import { Header, CharacterList, TitleScreen, EvidenceBoard, AccusationModal, ExaminationModal, TutorialModal, EvidenceNotification, VictoryScreen } from './components/UI'
-import { useEvidenceNotification } from './components/UI/EvidenceNotification'
+import { useState } from 'react'
+import { IntroSequence, ManorMap, RoomView, CharacterInterrogation } from './components/FMV'
+import { 
+  Header, 
+  TitleScreen, 
+  EvidenceBoard, 
+  AccusationModal, 
+  TutorialModal, 
+  VictoryScreen 
+} from './components/UI'
 import { WatsonWhisper, WatsonDesk } from './components/Watson'
 import { useGameStore } from './game/state'
 import { useWatsonStore } from './game/watsonState'
-import type { EvidenceData } from './components/Scene/InteractiveObject'
 import { useAudioManager, AudioContext } from './hooks/useAudioManager'
 import { useVoice, VoiceContext } from './hooks/useVoice'
 
 function App() {
-  const gameStarted = useGameStore((state) => state.gameStarted)
-  const collectedEvidence = useGameStore((state) => state.collectedEvidence)
-  const currentRoom = useGameStore((state) => state.currentRoom)
-  const tutorialSeen = useGameStore((state) => state.tutorialSeen)
+  const {
+    gameStarted,
+    currentScreen,
+    showIntro,
+    currentConversation,
+    completeIntro,
+    startConversation,
+    endConversation,
+    setCurrentRoom,
+    setCurrentScreen,
+    resetGame,
+  } = useGameStore()
 
   // Watson state
   const {
@@ -23,7 +35,6 @@ function App() {
     isDeskOpen,
     activeTab,
     dismissWhisper,
-    toggleDesk,
     closeDesk,
     expandToDesk,
     setActiveTab,
@@ -31,50 +42,8 @@ function App() {
 
   const [evidenceBoardOpen, setEvidenceBoardOpen] = useState(false)
   const [accusationOpen, setAccusationOpen] = useState(false)
-  const [examinationOpen, setExaminationOpen] = useState(false)
-  const [selectedEvidence, setSelectedEvidence] = useState<EvidenceData | null>(null)
   const [tutorialOpen, setTutorialOpen] = useState(false)
   const [victoryOpen, setVictoryOpen] = useState(false)
-
-  // Evidence notification system
-  const { notification, showNotification, dismissNotification } = useEvidenceNotification()
-
-  // Watson keyboard shortcut (W to toggle desk)
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is typing
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLTextAreaElement
-      ) {
-        return
-      }
-
-      // W toggles Watson desk (only when game is started and no modals are open)
-      if (
-        e.key.toLowerCase() === 'w' &&
-        gameStarted &&
-        !evidenceBoardOpen &&
-        !accusationOpen &&
-        !examinationOpen &&
-        !tutorialOpen &&
-        !isWhisperActive // Don't toggle if whisper handles it
-      ) {
-        e.preventDefault()
-        toggleDesk()
-      }
-    }
-
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [gameStarted, evidenceBoardOpen, accusationOpen, examinationOpen, tutorialOpen, isWhisperActive, toggleDesk])
-
-  // Show tutorial when game starts if not seen
-  useEffect(() => {
-    if (gameStarted && !tutorialSeen) {
-      setTutorialOpen(true)
-    }
-  }, [gameStarted, tutorialSeen])
 
   // Audio manager
   const audioManager = useAudioManager()
@@ -82,34 +51,29 @@ function App() {
   // Voice manager (ElevenLabs)
   const voiceManager = useVoice()
 
-  // Update room ambience when room changes
-  useEffect(() => {
-    if (gameStarted && currentRoom) {
-      audioManager.setRoomAmbience(currentRoom)
-    }
-  }, [currentRoom, gameStarted, audioManager])
-
-  const handleExamineEvidence = (evidence: EvidenceData) => {
-    setSelectedEvidence(evidence)
-    setExaminationOpen(true)
-    audioManager.playSfx('evidenceFound')
+  // Handlers
+  const handleRoomSelect = (room: string) => {
+    setCurrentRoom(room)
+    audioManager.setRoomAmbience(room)
+    audioManager.playSfx('click')
   }
 
-  const handleCloseExamination = () => {
-    setExaminationOpen(false)
-    setSelectedEvidence(null)
+  const handleCharacterSelect = (characterId: string) => {
+    startConversation(characterId)
+    audioManager.playSfx('click')
   }
 
-  // Handle evidence collection with notification
-  const handleEvidenceCollected = useCallback((evidenceId: string, evidenceName: string, hint?: string) => {
-    showNotification(evidenceId, evidenceName, hint || '')
-  }, [showNotification])
+  const handleReturnToMap = () => {
+    setCurrentScreen('map')
+    audioManager.playSfx('click')
+  }
 
-  // Check if evidence is already collected
-  const isEvidenceCollected = selectedEvidence
-    ? collectedEvidence.some((e) => e.source === selectedEvidence.id)
-    : false
+  const handleCloseInterrogation = () => {
+    endConversation()
+    audioManager.playSfx('click')
+  }
 
+  // Title screen
   if (!gameStarted) {
     return (
       <AudioContext.Provider value={audioManager}>
@@ -124,142 +88,92 @@ function App() {
     <AudioContext.Provider value={audioManager}>
       <VoiceContext.Provider value={voiceManager}>
         <div className="h-screen w-screen flex flex-col bg-noir-black">
-        {/* Header */}
-        <Header
-          onOpenEvidence={() => {
-            setEvidenceBoardOpen(true)
-            audioManager.playSfx('click')
-          }}
-          onAccuse={() => {
-            setAccusationOpen(true)
-            audioManager.playSfx('click')
-          }}
-        />
+          {/* Header - shown on all screens except intro */}
+          {!showIntro && (
+            <Header
+              onOpenEvidence={() => {
+                setEvidenceBoardOpen(true)
+                audioManager.playSfx('click')
+              }}
+              onAccuse={() => {
+                setAccusationOpen(true)
+                audioManager.playSfx('click')
+              }}
+            />
+          )}
 
-        {/* Main content */}
-        <div className="flex-1 flex overflow-hidden">
-          {/* 3D Scene - Full width */}
+          {/* Main game screens */}
           <div className="flex-1 relative">
-            <ManorScene onExamineEvidence={handleExamineEvidence} />
+            {/* Intro sequence */}
+            {showIntro && currentScreen === 'intro' && (
+              <IntroSequence onComplete={completeIntro} />
+            )}
 
-            {/* Controls hint overlay */}
-            <div
-              className="absolute bottom-4 left-4 pointer-events-none"
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              <div className="bg-noir-black/80 border border-noir-slate/50 rounded px-4 py-3 text-xs">
-                <div className="flex items-center gap-4 text-noir-smoke">
-                  {/* Arrow keys */}
-                  <div className="flex flex-col items-center gap-1">
-                    <div className="flex gap-1">
-                      <span className="w-6 h-6 flex items-center justify-center bg-noir-slate/50 rounded text-noir-cream text-[10px]">▲</span>
-                    </div>
-                    <div className="flex gap-1">
-                      <span className="w-6 h-6 flex items-center justify-center bg-noir-slate/50 rounded text-noir-cream text-[10px]">◀</span>
-                      <span className="w-6 h-6 flex items-center justify-center bg-noir-slate/50 rounded text-noir-cream text-[10px]">▼</span>
-                      <span className="w-6 h-6 flex items-center justify-center bg-noir-slate/50 rounded text-noir-cream text-[10px]">▶</span>
-                    </div>
-                    <span className="text-noir-smoke mt-1">Move</span>
-                  </div>
-                  <div className="h-10 w-px bg-noir-slate/30" />
-                  {/* E to talk */}
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="px-3 h-6 flex items-center justify-center bg-noir-gold/30 border border-noir-gold/50 rounded text-noir-gold text-[10px]">E</span>
-                    <span className="text-noir-smoke mt-1">Talk</span>
-                  </div>
-                  <div className="h-10 w-px bg-noir-slate/30" />
-                  {/* F to examine */}
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="px-3 h-6 flex items-center justify-center bg-green-900/50 border border-green-700/50 rounded text-green-400 text-[10px]">F</span>
-                    <span className="text-noir-smoke mt-1">Examine</span>
-                  </div>
-                  <div className="h-10 w-px bg-noir-slate/30" />
-                  {/* W for Watson */}
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="px-3 h-6 flex items-center justify-center bg-noir-gold/30 border border-noir-gold/50 rounded text-noir-gold text-[10px]">W</span>
-                    <span className="text-noir-smoke mt-1">Watson</span>
-                  </div>
-                  <div className="h-10 w-px bg-noir-slate/30" />
-                  {/* Mouse to rotate */}
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-noir-cream text-[10px]">Click + Drag</span>
-                    <span className="text-noir-smoke mt-1">Rotate</span>
-                  </div>
-                  <div className="h-10 w-px bg-noir-slate/30" />
-                  {/* Scroll to zoom */}
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-noir-cream text-[10px]">Scroll</span>
-                    <span className="text-noir-smoke mt-1">Zoom</span>
-                  </div>
-                </div>
+            {/* Manor map */}
+            {!showIntro && currentScreen === 'map' && (
+              <ManorMap onRoomSelect={handleRoomSelect} />
+            )}
+
+            {/* Room view */}
+            {!showIntro && currentScreen === 'room' && (
+              <RoomView
+                onCharacterSelect={handleCharacterSelect}
+                onReturnToMap={handleReturnToMap}
+              />
+            )}
+
+            {/* Character interrogation */}
+            {!showIntro && currentScreen === 'interrogation' && currentConversation && (
+              <CharacterInterrogation
+                characterId={currentConversation}
+                onClose={handleCloseInterrogation}
+              />
+            )}
+          </div>
+
+          {/* Watson Whisper - subtle hints overlay */}
+          {!showIntro && (
+            <div className="absolute inset-0 pointer-events-none z-30">
+              <div className="relative w-full h-full pointer-events-auto">
+                <WatsonWhisper
+                  hint={currentWhisper}
+                  isActive={isWhisperActive}
+                  onDismiss={dismissWhisper}
+                  onExpandToDesk={expandToDesk}
+                />
               </div>
             </div>
+          )}
 
-            {/* Audio controls */}
-            <AudioControls />
-          </div>
-
-          {/* Right panel - Character list only (narrower) */}
-          <div
-            className="w-72 flex flex-col bg-noir-charcoal border-l border-noir-slate"
-            onWheel={(e) => e.stopPropagation()}
-          >
-            <CharacterList />
-          </div>
-        </div>
-
-        {/* Interrogation Modal - Cinematic overlay */}
-        <InterrogationModal />
-
-        {/* Evidence notification toast */}
-        <EvidenceNotification
-          notification={notification}
-          onDismiss={dismissNotification}
-        />
-
-        {/* Watson Whisper - subtle hints overlay */}
-        <div className="absolute inset-0 pointer-events-none z-30">
-          <div className="relative w-full h-full pointer-events-auto">
-            <WatsonWhisper
-              hint={currentWhisper}
-              isActive={isWhisperActive}
-              onDismiss={dismissWhisper}
-              onExpandToDesk={expandToDesk}
+          {/* Watson Desk - full investigation interface */}
+          {!showIntro && (
+            <WatsonDesk
+              isOpen={isDeskOpen}
+              onClose={closeDesk}
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
             />
-          </div>
-        </div>
+          )}
 
-        {/* Watson Desk - full investigation interface */}
-        <WatsonDesk
-          isOpen={isDeskOpen}
-          onClose={closeDesk}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-        />
+          {/* Modals */}
+          <TutorialModal isOpen={tutorialOpen} onClose={() => setTutorialOpen(false)} />
+          <EvidenceBoard isOpen={evidenceBoardOpen} onClose={() => setEvidenceBoardOpen(false)} />
+          <AccusationModal
+            isOpen={accusationOpen}
+            onClose={() => setAccusationOpen(false)}
+            onVictory={() => setVictoryOpen(true)}
+          />
+          <VictoryScreen
+            isOpen={victoryOpen}
+            onClose={() => setVictoryOpen(false)}
+            onPlayAgain={() => {
+              setVictoryOpen(false)
+              resetGame()
+            }}
+          />
 
-        {/* Modals */}
-        <TutorialModal isOpen={tutorialOpen} onClose={() => setTutorialOpen(false)} />
-        <EvidenceBoard isOpen={evidenceBoardOpen} onClose={() => setEvidenceBoardOpen(false)} />
-        <AccusationModal 
-          isOpen={accusationOpen} 
-          onClose={() => setAccusationOpen(false)}
-          onVictory={() => setVictoryOpen(true)}
-        />
-        <ExaminationModal
-          evidence={selectedEvidence}
-          isOpen={examinationOpen}
-          onClose={handleCloseExamination}
-          isAlreadyCollected={isEvidenceCollected}
-          onEvidenceCollected={handleEvidenceCollected}
-        />
-        <VictoryScreen
-          isOpen={victoryOpen}
-          onClose={() => setVictoryOpen(false)}
-          onPlayAgain={() => {
-            setVictoryOpen(false)
-            useGameStore.getState().resetGame()
-          }}
-        />
+          {/* Audio controls */}
+          {!showIntro && <AudioControls />}
         </div>
       </VoiceContext.Provider>
     </AudioContext.Provider>
@@ -274,7 +188,7 @@ function AudioControls() {
 
   return (
     <div
-      className="absolute bottom-4 right-4"
+      className="absolute bottom-4 right-4 z-20"
       style={{ fontFamily: 'Georgia, serif' }}
     >
       <div className="bg-noir-black/80 border border-noir-slate/50 rounded p-2">
