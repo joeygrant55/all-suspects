@@ -169,7 +169,7 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   startConversation: (characterId) => set({ currentConversation: characterId, currentScreen: 'interrogation' }),
 
-  endConversation: () => set({ currentConversation: null, currentScreen: 'room' }),
+  endConversation: () => set({ currentConversation: null, currentScreen: 'map' }),
 
   addMessage: (message) =>
     set((state) => ({
