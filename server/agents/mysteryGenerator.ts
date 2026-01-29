@@ -195,23 +195,34 @@ Generate the complete MysteryBlueprint JSON now.`
     const sol = raw.solution || {}
     console.log(`[MysteryGenerator] Raw solution keys: ${JSON.stringify(Object.keys(sol))}`)
     
-    // Find the killer ID from various possible fields
-    let killerId = sol.killerId || sol.killer_id || sol.killer
-    if (typeof killerId === 'object' && killerId?.id) killerId = killerId.id
-    if (typeof killerId === 'object' && killerId?.name) killerId = killerId.name.toLowerCase().replace(/\s+/g, '-')
-    if (typeof killerId === 'string' && raw.characters) {
-      // Try to match by name if it's not an ID
-      const byName = raw.characters.find((c: any) => 
-        c.name?.toLowerCase() === killerId?.toLowerCase() ||
-        c.name?.toLowerCase().replace(/\s+/g, '-') === killerId
-      )
-      if (byName) killerId = byName.id
+    // Find the killer from various possible fields
+    let killerRef = sol.killerId || sol.killer_id || sol.killer || sol.murderer || raw.murderer
+    console.log(`[MysteryGenerator] Raw killer ref: ${JSON.stringify(killerRef)?.slice(0, 200)}`)
+    
+    // Unwrap if it's an object
+    if (typeof killerRef === 'object' && killerRef !== null) {
+      killerRef = killerRef.id || killerRef.name || JSON.stringify(killerRef)
     }
     
-    // Fallback: check murderer field, or find guilty character
-    if (!killerId && raw.murderer) {
-      killerId = raw.murderer.id || raw.murderer.name?.toLowerCase().replace(/\s+/g, '-')
+    // Now match to a character
+    let killerId: string | undefined
+    if (typeof killerRef === 'string' && raw.characters) {
+      // Try exact ID match first
+      const byId = raw.characters.find((c: any) => c.id === killerRef)
+      if (byId) {
+        killerId = byId.id
+      } else {
+        // Try name match (case-insensitive, partial)
+        const byName = raw.characters.find((c: any) => 
+          c.name?.toLowerCase() === killerRef.toLowerCase() ||
+          c.name?.toLowerCase().replace(/\s+/g, '-') === killerRef.toLowerCase().replace(/\s+/g, '-') ||
+          killerRef.toLowerCase().includes(c.name?.toLowerCase())
+        )
+        if (byName) killerId = byName.id
+      }
     }
+    
+    // Fallback: find guilty character
     if (!killerId) {
       const guilty = raw.characters?.find((c: any) => c.isGuilty || c.guilty)
       if (guilty) killerId = guilty.id
