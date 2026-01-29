@@ -171,8 +171,9 @@ function App() {
   // Handle mystery generation flow
   const handleGenerateMystery = async (config: { era: string; difficulty: 'easy' | 'medium' | 'hard'; theme?: string }) => {
     setCreatorOpen(false)
-    setLoadingMysteryId(null)
     setBlueprintPreview(null)
+    // Set a temporary loading ID so the loading screen shows immediately
+    setLoadingMysteryId('generating')
 
     try {
       const API_BASE = 'http://localhost:3001'
@@ -222,6 +223,7 @@ function App() {
       }
     } catch (err) {
       console.error('Failed to generate mystery:', err)
+      setLoadingMysteryId(null)
       setCreatorOpen(true) // go back to creator on error
     }
   }

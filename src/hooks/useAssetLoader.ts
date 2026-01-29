@@ -34,7 +34,7 @@ export function useAssetLoader(mysteryId: string | null): AssetLoaderResult {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const poll = useCallback(async () => {
-    if (!mysteryId) return
+    if (!mysteryId || mysteryId === 'generating') return
     try {
       const res = await fetch(`${API_BASE}/api/mystery/${mysteryId}/status`)
       if (!res.ok) return
