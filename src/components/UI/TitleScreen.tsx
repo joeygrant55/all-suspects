@@ -1,16 +1,20 @@
 import { useContext } from 'react'
-import { useGameStore } from '../../game/state'
 import { AudioContext } from '../../hooks/useAudioManager'
 
-export function TitleScreen() {
-  const startGame = useGameStore((state) => state.startGame)
+interface TitleScreenProps {
+  onNewGame?: () => void
+}
+
+export function TitleScreen({ onNewGame }: TitleScreenProps) {
   const audioManager = useContext(AudioContext)
 
   const handleStart = () => {
     // Initialize audio on user interaction (required by browsers)
     audioManager?.initializeAudio()
-    // Go straight to the cinematic IntroSequence
-    startGame()
+    // Show mystery selection screen
+    if (onNewGame) {
+      onNewGame()
+    }
   }
 
   return (

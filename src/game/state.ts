@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import type { LoadedMystery } from './mysteryState'
 
 export interface PressureLevel {
   level: number
@@ -77,6 +78,7 @@ export interface GameState {
   // World
   currentRoom: string
   rooms: string[]
+  lastViewMode: 'suspects' | 'manor' | null
 
   // Characters
   characters: Character[]
@@ -89,6 +91,8 @@ export interface GameState {
   collectedEvidence: Evidence[]
   discoveredEvidenceIds: string[] // Evidence IDs that have been examined
   contradictions: Contradiction[]
+  newEvidenceCount: number // Count of unviewed evidence
+  hasSeenEvidenceBoard: boolean // Whether player has opened the board
 
   // Progress
   accusationUnlocked: boolean
@@ -105,6 +109,7 @@ export interface GameState {
   setCurrentScreen: (screen: GameScreen) => void
   completeIntro: () => void
   setCurrentRoom: (room: string) => void
+  setLastViewMode: (mode: 'suspects' | 'manor') => void
   startConversation: (characterId: string) => void
   endConversation: () => void
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void
@@ -121,6 +126,8 @@ export interface GameState {
   recordAccusationAttempt: (characterId: string, isCorrect: boolean) => void
   isEvidenceDiscovered: (evidenceId: string) => boolean
   isEvidenceCollected: (evidenceId: string) => boolean
+  markEvidenceBoardViewed: () => void
+  initializeFromMystery: (mystery: LoadedMystery) => void
 }
 
 const ROOMS = ['parlor', 'study', 'dining-room', 'garden', 'kitchen', 'hallway']
@@ -146,12 +153,15 @@ export const useGameStore = create<GameState>((set, get) => ({
   showIntro: true,
   currentRoom: 'parlor',
   rooms: ROOMS,
+  lastViewMode: null,
   characters: INITIAL_CHARACTERS,
   currentConversation: null,
   messages: [],
   collectedEvidence: [],
   discoveredEvidenceIds: [],
   contradictions: [],
+  newEvidenceCount: 0,
+  hasSeenEvidenceBoard: false,
   accusationUnlocked: false,
   gameComplete: false,
   gameStarted: false,
@@ -165,7 +175,9 @@ export const useGameStore = create<GameState>((set, get) => ({
 
   completeIntro: () => set({ showIntro: false, currentScreen: 'map' }),
 
-  setCurrentRoom: (room) => set({ currentRoom: room, currentScreen: 'room' }),
+  setCurrentRoom: (room) => set({ currentRoom: room, currentScreen: 'room', lastViewMode: 'manor' }),
+
+  setLastViewMode: (mode) => set({ lastViewMode: mode }),
 
   startConversation: (characterId) => set({ currentConversation: characterId, currentScreen: 'interrogation' }),
 
@@ -195,9 +207,14 @@ export const useGameStore = create<GameState>((set, get) => ({
         timestamp: Date.now(),
       }
       const updatedEvidence = [...state.collectedEvidence, newEvidence]
-      // Unlock accusation at 5 pieces of evidence
-      const accusationUnlocked = updatedEvidence.length >= 5
-      return { collectedEvidence: updatedEvidence, accusationUnlocked }
+      // Unlock accusation at 5 pieces of evidence (counting both room + interrogation evidence)
+      const totalEvidence = updatedEvidence.length + state.discoveredEvidenceIds.length
+      const accusationUnlocked = totalEvidence >= 5
+      return { 
+        collectedEvidence: updatedEvidence, 
+        accusationUnlocked,
+        newEvidenceCount: state.newEvidenceCount + 1
+      }
     }),
 
   markEvidenceDiscovered: (evidenceId) =>
@@ -205,7 +222,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (state.discoveredEvidenceIds.includes(evidenceId)) {
         return state
       }
-      return { discoveredEvidenceIds: [...state.discoveredEvidenceIds, evidenceId] }
+      const updatedDiscovered = [...state.discoveredEvidenceIds, evidenceId]
+      // Unlock accusation at 5 pieces of evidence (counting both room + interrogation evidence)
+      const totalEvidence = updatedDiscovered.length + state.collectedEvidence.length
+      const accusationUnlocked = totalEvidence >= 5
+      return { 
+        discoveredEvidenceIds: updatedDiscovered,
+        accusationUnlocked
+      }
     }),
 
   addContradiction: (contradiction) =>
@@ -260,12 +284,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       currentScreen: 'intro',
       showIntro: true,
       currentRoom: 'parlor',
+      lastViewMode: null,
       characters: INITIAL_CHARACTERS,
       currentConversation: null,
       messages: [],
       collectedEvidence: [],
       discoveredEvidenceIds: [],
       contradictions: [],
+      newEvidenceCount: 0,
+      hasSeenEvidenceBoard: false,
       accusationUnlocked: false,
       gameComplete: false,
       gameStarted: false,
@@ -288,4 +315,33 @@ export const useGameStore = create<GameState>((set, get) => ({
   isEvidenceDiscovered: (evidenceId) => get().discoveredEvidenceIds.includes(evidenceId),
 
   isEvidenceCollected: (evidenceId) => get().collectedEvidence.some((e) => e.source === evidenceId),
+
+  markEvidenceBoardViewed: () =>
+    set({ newEvidenceCount: 0, hasSeenEvidenceBoard: true }),
+
+  initializeFromMystery: (mystery) =>
+    set({
+      // Convert mystery characters to game characters
+      characters: mystery.characters.map((c) => ({
+        id: c.id,
+        name: c.name,
+        role: c.role,
+        location: mystery.rooms[0] || 'parlor', // Default to first room
+      })),
+      rooms: mystery.rooms,
+      currentRoom: mystery.rooms[0] || 'parlor',
+      // Reset other state for a new game
+      currentConversation: null,
+      messages: [],
+      collectedEvidence: [],
+      discoveredEvidenceIds: [],
+      contradictions: [],
+      newEvidenceCount: 0,
+      hasSeenEvidenceBoard: false,
+      accusationUnlocked: false,
+      gameComplete: false,
+      accusationAttempts: 0,
+      lastWrongAccusation: null,
+      psychology: INITIAL_PSYCHOLOGY,
+    }),
 }))

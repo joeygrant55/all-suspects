@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useGameStore } from '../../game/state'
+import { useScoreStore } from '../../game/scoreState'
 import { EVIDENCE_DATABASE } from '../../data/evidence'
 
 interface VictoryScreenProps {
@@ -8,14 +9,17 @@ interface VictoryScreenProps {
   onPlayAgain: () => void
 }
 
-type ScreenPhase = 'reveal' | 'evidence' | 'solution' | 'credits'
+type ScreenPhase = 'reveal' | 'evidence' | 'score' | 'solution' | 'credits'
 
 export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenProps) {
   const [phase, setPhase] = useState<ScreenPhase>('reveal')
   const [showContent, setShowContent] = useState(false)
+  const [shareSuccess, setShareSuccess] = useState(false)
   const collectedEvidence = useGameStore((state) => state.collectedEvidence)
   const contradictions = useGameStore((state) => state.contradictions)
   const accusationAttempts = useGameStore((state) => state.accusationAttempts)
+  const calculateScore = useScoreStore((state) => state.calculateScore)
+  const gameScore = calculateScore()
 
   // Animation sequence
   useEffect(() => {
@@ -35,26 +39,32 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
     return data?.pointsTo === 'thomas' || data?.relatedCharacter === 'thomas'
   })
 
-  // Calculate rating based on performance
-  const getRating = (): { stars: number; title: string } => {
-    const attempts = accusationAttempts
-    const evidenceCount = collectedEvidence.length
-    const contradictionCount = contradictions.length
-
-    if (attempts === 1 && evidenceCount >= 8 && contradictionCount >= 3) {
-      return { stars: 5, title: 'Master Detective' }
-    } else if (attempts === 1 && evidenceCount >= 6) {
-      return { stars: 4, title: 'Senior Inspector' }
-    } else if (attempts <= 2 && evidenceCount >= 5) {
-      return { stars: 3, title: 'Detective' }
-    } else if (attempts <= 3) {
-      return { stars: 2, title: 'Junior Detective' }
-    } else {
-      return { stars: 1, title: 'Rookie' }
-    }
+  // Convert rank to stars (for backwards compatibility with existing UI)
+  const getStarsFromRank = (rank: string): number => {
+    const starMap: Record<string, number> = { S: 5, A: 4, B: 3, C: 2, D: 1, F: 0 }
+    return starMap[rank] || 0
   }
 
-  const rating = getRating()
+  const stars = getStarsFromRank(gameScore.rank)
+
+  // Handle share
+  const handleShare = async () => {
+    const shareText = `🔍 ALL SUSPECTS - The Ashford Affair
+Rank: ${gameScore.rank} (${gameScore.detective_title})
+Score: ${gameScore.totalScore}/1000
+Time: ${gameScore.solveTimeFormatted}
+Evidence: ${collectedEvidence.length}/9 | Contradictions: ${contradictions.length}
+
+Can you do better?`
+
+    try {
+      await navigator.clipboard.writeText(shareText)
+      setShareSuccess(true)
+      setTimeout(() => setShareSuccess(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[60] bg-noir-black">
@@ -129,8 +139,8 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
                     key={i}
                     className={`text-3xl transition-all duration-500`}
                     style={{
-                      opacity: i < rating.stars ? 1 : 0.3,
-                      transform: i < rating.stars ? 'scale(1)' : 'scale(0.8)',
+                      opacity: i < stars ? 1 : 0.3,
+                      transform: i < stars ? 'scale(1)' : 'scale(0.8)',
                       transitionDelay: `${i * 200}ms`,
                     }}
                   >
@@ -142,7 +152,7 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
                 className="text-noir-gold text-lg tracking-widest"
                 style={{ fontFamily: 'Georgia, serif' }}
               >
-                {rating.title}
+                {gameScore.detective_title}
               </p>
             </div>
 
@@ -151,15 +161,167 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
               onClick={() => {
                 setShowContent(false)
                 setTimeout(() => {
-                  setPhase('evidence')
+                  setPhase('score')
                   setTimeout(() => setShowContent(true), 100)
                 }, 500)
               }}
               className="px-8 py-4 bg-noir-gold text-noir-black text-lg tracking-widest hover:bg-noir-gold/90 transition-colors"
               style={{ fontFamily: 'Georgia, serif' }}
             >
-              VIEW CASE SUMMARY
+              VIEW SCORE BREAKDOWN
             </button>
+          </div>
+        )}
+
+        {/* Phase: Score Breakdown */}
+        {phase === 'score' && (
+          <div
+            className={`w-full max-w-3xl transition-all duration-1000 ${
+              showContent ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+            }`}
+          >
+            <h2
+              className="text-3xl text-noir-gold text-center mb-8 tracking-widest"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              FINAL SCORE
+            </h2>
+
+            {/* Big rank display */}
+            <div className="text-center mb-8">
+              <div
+                className="inline-block px-12 py-8 border-4 rounded-sm mb-4"
+                style={{
+                  borderColor: gameScore.rank === 'S' || gameScore.rank === 'A' ? '#c9a227' : '#6b6b6b',
+                  background: 'linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%)',
+                  boxShadow: '0 0 40px rgba(201, 162, 39, 0.2)',
+                }}
+              >
+                <div
+                  className="text-8xl font-bold mb-2"
+                  style={{
+                    fontFamily: 'Georgia, serif',
+                    color: gameScore.rank === 'S' || gameScore.rank === 'A' ? '#c9a227' : '#d4af37',
+                    textShadow: '0 0 30px rgba(201, 162, 39, 0.5)',
+                  }}
+                >
+                  {gameScore.rank}
+                </div>
+                <p className="text-noir-cream text-xl" style={{ fontFamily: 'Georgia, serif' }}>
+                  {gameScore.detective_title}
+                </p>
+              </div>
+              <p className="text-noir-gold text-4xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>
+                {gameScore.totalScore}
+                <span className="text-noir-smoke text-2xl">/1000</span>
+              </p>
+              <p className="text-noir-smoke">Solve Time: {gameScore.solveTimeFormatted}</p>
+            </div>
+
+            {/* Score breakdown */}
+            <div className="bg-noir-charcoal/50 border border-noir-slate/50 rounded-sm p-6 mb-8">
+              <h4 className="text-noir-gold mb-4 text-lg" style={{ fontFamily: 'Georgia, serif' }}>
+                Score Breakdown
+              </h4>
+              <div className="space-y-3">
+                {/* Time bonus */}
+                <div className="flex items-center justify-between text-sm border-b border-noir-slate/30 pb-2">
+                  <span className="text-noir-cream flex items-center gap-2">
+                    <span className="text-lg">⏱</span>
+                    Time Bonus
+                    <span className="text-noir-smoke text-xs">
+                      ({gameScore.solveTimeFormatted})
+                    </span>
+                  </span>
+                  <span className="text-noir-gold font-mono">+{gameScore.timeBonus}</span>
+                </div>
+
+                {/* Evidence bonus */}
+                <div className="flex items-center justify-between text-sm border-b border-noir-slate/30 pb-2">
+                  <span className="text-noir-cream flex items-center gap-2">
+                    <span className="text-lg">📋</span>
+                    Evidence Bonus
+                    <span className="text-noir-smoke text-xs">
+                      ({collectedEvidence.length}/9 found)
+                    </span>
+                  </span>
+                  <span className="text-noir-gold font-mono">+{gameScore.evidenceBonus}</span>
+                </div>
+
+                {/* Efficiency bonus */}
+                <div className="flex items-center justify-between text-sm border-b border-noir-slate/30 pb-2">
+                  <span className="text-noir-cream flex items-center gap-2">
+                    <span className="text-lg">💡</span>
+                    Efficiency Bonus
+                    <span className="text-noir-smoke text-xs">
+                      (questions asked)
+                    </span>
+                  </span>
+                  <span className="text-noir-gold font-mono">+{gameScore.efficiencyBonus}</span>
+                </div>
+
+                {/* Contradiction bonus */}
+                <div className="flex items-center justify-between text-sm border-b border-noir-slate/30 pb-2">
+                  <span className="text-noir-cream flex items-center gap-2">
+                    <span className="text-lg">⚡</span>
+                    Contradiction Bonus
+                    <span className="text-noir-smoke text-xs">
+                      ({contradictions.length} found)
+                    </span>
+                  </span>
+                  <span className="text-noir-gold font-mono">+{gameScore.contradictionBonus}</span>
+                </div>
+
+                {/* Accuracy penalty */}
+                {gameScore.accuracyPenalty < 0 && (
+                  <div className="flex items-center justify-between text-sm border-b border-noir-slate/30 pb-2">
+                    <span className="text-noir-cream flex items-center gap-2">
+                      <span className="text-lg">❌</span>
+                      Wrong Accusations
+                    </span>
+                    <span className="text-noir-blood font-mono">{gameScore.accuracyPenalty}</span>
+                  </div>
+                )}
+
+                {/* Hint penalty */}
+                {gameScore.hintPenalty < 0 && (
+                  <div className="flex items-center justify-between text-sm border-b border-noir-slate/30 pb-2">
+                    <span className="text-noir-cream flex items-center gap-2">
+                      <span className="text-lg">💭</span>
+                      Hints Used
+                    </span>
+                    <span className="text-noir-blood font-mono">{gameScore.hintPenalty}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Share button */}
+            <div className="text-center mb-6">
+              <button
+                onClick={handleShare}
+                className="px-6 py-3 bg-noir-slate/50 border border-noir-gold/50 text-noir-cream hover:bg-noir-slate hover:border-noir-gold transition-colors"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                {shareSuccess ? '✓ Copied to Clipboard!' : '📋 Share Results'}
+              </button>
+            </div>
+
+            <div className="text-center">
+              <button
+                onClick={() => {
+                  setShowContent(false)
+                  setTimeout(() => {
+                    setPhase('evidence')
+                    setTimeout(() => setShowContent(true), 100)
+                  }, 500)
+                }}
+                className="px-8 py-4 bg-noir-gold text-noir-black text-lg tracking-widest hover:bg-noir-gold/90 transition-colors"
+                style={{ fontFamily: 'Georgia, serif' }}
+              >
+                VIEW EVIDENCE SUMMARY
+              </button>
+            </div>
           </div>
         )}
 
@@ -379,13 +541,14 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
                   <span
                     key={i}
                     className="text-2xl"
-                    style={{ opacity: i < rating.stars ? 1 : 0.3 }}
+                    style={{ opacity: i < stars ? 1 : 0.3 }}
                   >
                     ⭐
                   </span>
                 ))}
               </div>
-              <p className="text-noir-gold">{rating.title}</p>
+              <p className="text-noir-gold">{gameScore.detective_title}</p>
+              <p className="text-noir-cream text-sm mt-2">{gameScore.totalScore}/1000 pts</p>
             </div>
 
             {/* Action buttons */}

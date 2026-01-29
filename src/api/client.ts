@@ -1,6 +1,13 @@
 import type { Contradiction } from '../game/state'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+// Use VITE_API_URL for production (Vercel → Railway), otherwise auto-detect for local dev
+const getApiBase = () => {
+  if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
+  const hostname = window.location.hostname
+  return `http://${hostname}:3001/api`
+}
+
+const API_BASE = getApiBase()
 
 export interface PressureData {
   level: number
@@ -33,6 +40,9 @@ export interface ChatResponse {
   contradictions?: Contradiction[]
   pressure?: PressureData
   emotion?: EmotionData  // New: for cinematic portrait selection
+  isFallback?: boolean   // NEW: Indicates API failure, should retry
+  cinematicMoment?: boolean // NEW: Dramatic moment detected
+  videoGenerationId?: string // NEW: Video generation ID for polling
 }
 
 export interface ChatVideoResponse {
@@ -59,14 +69,23 @@ export interface ChatVideoResponse {
 
 export async function sendMessage(
   characterId: string,
-  message: string
+  message: string,
+  tactic?: 'alibi' | 'present_evidence' | 'cross_reference' | 'bluff' | null,
+  evidenceId?: string | null,
+  crossReferenceStatement?: { characterId: string; content: string } | null
 ): Promise<ChatResponse> {
   const response = await fetch(`${API_BASE}/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ characterId, message }),
+    body: JSON.stringify({ 
+      characterId, 
+      message,
+      tactic,
+      evidenceId,
+      crossReferenceStatement
+    }),
   })
 
   if (!response.ok) {

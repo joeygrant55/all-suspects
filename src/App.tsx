@@ -1,17 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { IntroSequence, CaseBoard, CharacterInterrogation } from './components/FMV'
+import { IntroVideo } from './components/VideoPlayer/IntroVideo'
+import { RoomExploration } from './components/FMV/RoomExploration'
 import { 
-  TitleScreen, 
+  TitleScreen,
+  MysterySelect,
   EvidenceBoard, 
   AccusationModal, 
   TutorialModal, 
-  VictoryScreen 
+  VictoryScreen,
+  EvidenceNotification,
+  useEvidenceNotification,
 } from './components/UI'
 import { WatsonWhisper, WatsonDesk } from './components/Watson'
 import { useGameStore } from './game/state'
 import { useWatsonStore } from './game/watsonState'
 import { useAudioManager, AudioContext } from './hooks/useAudioManager'
 import { useVoice, VoiceContext } from './hooks/useVoice'
+import { useScoreTracking } from './hooks/useScoreTracking'
+import { EVIDENCE_DATABASE } from './data/evidence'
 
 function App() {
   const {
@@ -19,12 +26,24 @@ function App() {
     currentScreen,
     showIntro,
     currentConversation,
+    currentRoom,
+    characters,
+    collectedEvidence,
     completeIntro,
     startConversation,
     endConversation,
     setCurrentScreen,
     resetGame,
   } = useGameStore()
+
+  const [mysterySelectOpen, setMysterySelectOpen] = useState(false)
+
+  // Reset mystery select when game is reset
+  useEffect(() => {
+    if (!gameStarted) {
+      setMysterySelectOpen(false)
+    }
+  }, [gameStarted])
 
   // Watson state
   const {
@@ -42,18 +61,56 @@ function App() {
   const [accusationOpen, setAccusationOpen] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
   const [victoryOpen, setVictoryOpen] = useState(false)
+  const [showCharacterIntro, setShowCharacterIntro] = useState<string | null>(null)
+  const [seenIntros, setSeenIntros] = useState<Set<string>>(new Set())
 
   // Audio manager
   const audioManager = useAudioManager()
 
   // Voice manager (ElevenLabs)
   const voiceManager = useVoice()
+  
+  // Score tracking (wires game events to score store)
+  useScoreTracking()
+  
+  // Evidence notification system
+  const { notification, showNotification, dismissNotification } = useEvidenceNotification()
+  
+  // Watch for new evidence and show notifications
+  useEffect(() => {
+    if (collectedEvidence.length > 0) {
+      const latestEvidence = collectedEvidence[collectedEvidence.length - 1]
+      const evidenceData = EVIDENCE_DATABASE[latestEvidence.source]
+      
+      if (evidenceData) {
+        showNotification(
+          latestEvidence.source,
+          evidenceData.name,
+          evidenceData.hint || ''
+        )
+        audioManager.playSfx('evidenceFound')
+      }
+    }
+  }, [collectedEvidence.length]) // Only trigger when count changes
 
   // Handlers - simplified for CaseBoard flow
   const handleSelectSuspect = (characterId: string) => {
-    startConversation(characterId)
     audioManager.playSfx('click')
+    // Show intro video first time, then go straight to interrogation
+    if (!seenIntros.has(characterId)) {
+      setShowCharacterIntro(characterId)
+    } else {
+      startConversation(characterId)
+    }
   }
+
+  const handleIntroComplete = useCallback(() => {
+    if (showCharacterIntro) {
+      setSeenIntros(prev => new Set(prev).add(showCharacterIntro))
+      startConversation(showCharacterIntro)
+      setShowCharacterIntro(null)
+    }
+  }, [showCharacterIntro, startConversation])
 
   const handleCloseInterrogation = () => {
     endConversation()
@@ -61,12 +118,34 @@ function App() {
     audioManager.playSfx('click')
   }
 
-  // Title screen
+  const handleCloseRoom = () => {
+    setCurrentScreen('map') // Return to case board
+    audioManager.playSfx('click')
+  }
+
+  // Room name mapping
+  const getRoomName = (roomId: string) => {
+    const roomNames: Record<string, string> = {
+      study: 'Study',
+      parlor: 'Parlor',
+      'dining-room': 'Dining Room',
+      kitchen: 'Kitchen',
+      hallway: 'Hallway',
+      garden: 'Garden',
+    }
+    return roomNames[roomId] || roomId
+  }
+
+  // Title screen and mystery selection
   if (!gameStarted) {
     return (
       <AudioContext.Provider value={audioManager}>
         <VoiceContext.Provider value={voiceManager}>
-          <TitleScreen />
+          {mysterySelectOpen ? (
+            <MysterySelect />
+          ) : (
+            <TitleScreen onNewGame={() => setMysterySelectOpen(true)} />
+          )}
         </VoiceContext.Provider>
       </AudioContext.Provider>
     )
@@ -98,11 +177,38 @@ function App() {
               />
             )}
 
+            {/* Character intro video */}
+            {showCharacterIntro && (() => {
+              const char = characters.find(c => c.id === showCharacterIntro)
+              return char ? (
+                <IntroVideo
+                  characterId={showCharacterIntro}
+                  characterName={char.name}
+                  characterRole={char.role}
+                  onComplete={handleIntroComplete}
+                  onSkip={handleIntroComplete}
+                />
+              ) : null
+            })()}
+
             {/* Character interrogation */}
-            {!showIntro && currentScreen === 'interrogation' && currentConversation && (
+            {!showIntro && !showCharacterIntro && currentScreen === 'interrogation' && currentConversation && (
               <CharacterInterrogation
                 characterId={currentConversation}
                 onClose={handleCloseInterrogation}
+              />
+            )}
+
+            {/* Room exploration */}
+            {!showIntro && currentScreen === 'room' && (
+              <RoomExploration
+                roomId={currentRoom}
+                roomName={getRoomName(currentRoom)}
+                onBack={handleCloseRoom}
+                onOpenEvidence={() => {
+                  setEvidenceBoardOpen(true)
+                  audioManager.playSfx('click')
+                }}
               />
             )}
           </div>
@@ -124,6 +230,10 @@ function App() {
               onClose={closeDesk}
               activeTab={activeTab}
               onTabChange={setActiveTab}
+              onOpenChat={(characterId, _suggestedQuestion) => {
+                startConversation(characterId)
+                // TODO: Pass suggested question to interrogation if provided
+              }}
             />
           )}
 
@@ -142,6 +252,12 @@ function App() {
               setVictoryOpen(false)
               resetGame()
             }}
+          />
+          
+          {/* Evidence notification - appears when evidence is collected */}
+          <EvidenceNotification
+            notification={notification}
+            onDismiss={dismissNotification}
           />
 
           {/* Audio controls */}

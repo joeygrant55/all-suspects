@@ -3,17 +3,40 @@ import { useGameStore } from '../../game/state'
 import { EVIDENCE_DATABASE } from '../../data/evidence'
 import { VideoComparison } from '../VideoPlayer/VideoComparison'
 import { isVideoAvailable } from '../../api/client'
+import { NeuralMap } from './NeuralMap'
 
 interface EvidenceBoardProps {
   isOpen: boolean
   onClose: () => void
 }
 
+interface BackendPressure {
+  [characterId: string]: {
+    level: number
+    confrontations: number
+    evidencePresented: number
+    contradictionsExposed: number
+  }
+}
+
+interface Statement {
+  id: string
+  characterId: string
+  characterName: string
+  topic: string
+  content: string
+  timestamp: number
+  playerQuestion: string
+}
+
 export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
   const collectedEvidence = useGameStore((state) => state.collectedEvidence)
   const contradictions = useGameStore((state) => state.contradictions)
   const characters = useGameStore((state) => state.characters)
-  const [activeTab, setActiveTab] = useState<'evidence' | 'suspects' | 'timeline'>('evidence')
+  const addContradictions = useGameStore((state) => state.addContradictions)
+  const updateCharacterPressure = useGameStore((state) => state.updateCharacterPressure)
+  
+  const [activeTab, setActiveTab] = useState<'evidence' | 'suspects' | 'statements' | 'timeline' | 'neural-map'>('neural-map')
   const [videoEnabled, setVideoEnabled] = useState(false)
   const [selectedContradiction, setSelectedContradiction] = useState<{
     testimony1: { characterId: string; characterName: string; testimony: string; question: string }
@@ -21,11 +44,80 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
     explanation: string
     type: 'timeline' | 'location' | 'witness' | 'factual' | 'behavioral'
   } | null>(null)
+  
+  const [statements, setStatements] = useState<Statement[]>([])
+  const [isLoading, setIsLoading] = useState(false)
 
   // Check video availability
   useEffect(() => {
     isVideoAvailable().then(setVideoEnabled)
   }, [])
+  
+  // Fetch backend data when Evidence Board opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchBackendData()
+    }
+  }, [isOpen])
+  
+  const fetchBackendData = async () => {
+    setIsLoading(true)
+    try {
+      const apiBase = `http://${window.location.hostname}:3001/api`
+      
+      // Fetch contradictions
+      const contradictionsRes = await fetch(`${apiBase}/contradictions`)
+      if (contradictionsRes.ok) {
+        const data = await contradictionsRes.json()
+        if (data.contradictions && data.contradictions.length > 0) {
+          // Add any new contradictions from backend to game state
+          const formattedContradictions = data.contradictions.map((c: any) => ({
+            id: c.id,
+            statement1: {
+              characterId: c.statement1.characterId,
+              characterName: c.statement1.characterName,
+              content: c.statement1.content,
+              playerQuestion: c.statement1.playerQuestion,
+            },
+            statement2: {
+              characterId: c.statement2.characterId,
+              characterName: c.statement2.characterName,
+              content: c.statement2.content,
+              playerQuestion: c.statement2.playerQuestion,
+            },
+            explanation: c.explanation,
+            severity: c.severity,
+            discoveredAt: c.discoveredAt,
+          }))
+          addContradictions(formattedContradictions)
+        }
+      }
+      
+      // Fetch all statements
+      const statementsRes = await fetch(`${apiBase}/statements`)
+      if (statementsRes.ok) {
+        const data = await statementsRes.json()
+        if (data.statements) {
+          setStatements(data.statements)
+        }
+      }
+      
+      // Fetch pressure states
+      const pressureRes = await fetch(`${apiBase}/pressure`)
+      if (pressureRes.ok) {
+        const data: { pressure: BackendPressure } = await pressureRes.json()
+        // Update character pressure in game state
+        Object.entries(data.pressure).forEach(([characterId, pressure]) => {
+          updateCharacterPressure(characterId, pressure)
+        })
+      }
+      
+    } catch (error) {
+      console.error('Failed to fetch backend data:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Calculate suspicion levels based on collected evidence
   const getSuspicionLevel = (characterId: string): number => {
@@ -142,8 +234,10 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
         {/* Tabs */}
         <div className="relative px-6 py-2 flex gap-4 border-b border-noir-black/20">
           {[
+            { id: 'neural-map', label: 'Neural Map', icon: '🕸️' },
             { id: 'evidence', label: 'Evidence', count: collectedEvidence.length, max: 5 },
             { id: 'suspects', label: 'Suspects', count: characters.length },
+            { id: 'statements', label: 'Testimony', count: statements.length },
             { id: 'timeline', label: 'Timeline' },
           ].map((tab) => (
             <button
@@ -156,6 +250,7 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
               }`}
               style={{ fontFamily: 'Georgia, serif' }}
             >
+              {(tab as any).icon && <span className="mr-1">{(tab as any).icon}</span>}
               {tab.label}
               {tab.count !== undefined && (
                 <span className="ml-1">
@@ -177,6 +272,14 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
 
         {/* Content */}
         <div className="relative p-6 h-[calc(100%-120px)] overflow-y-auto">
+          {/* Loading indicator */}
+          {isLoading && (
+            <div className="absolute top-4 right-4 flex items-center gap-2 bg-noir-black/80 px-3 py-2 rounded border border-noir-gold/30">
+              <div className="w-3 h-3 border-2 border-noir-gold border-t-transparent rounded-full animate-spin" />
+              <span className="text-noir-cream text-xs">Syncing data...</span>
+            </div>
+          )}
+          
           {/* Evidence tab */}
           {activeTab === 'evidence' && (
             <div className="space-y-4">
@@ -465,6 +568,90 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
                     </div>
                   )
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* Statements tab */}
+          {activeTab === 'statements' && (
+            <div className="space-y-4">
+              {statements.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-noir-cream/60 italic">No testimony collected yet.</p>
+                  <p className="text-noir-cream/40 text-sm mt-2">
+                    Question the suspects to gather statements.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Group statements by character */}
+                  {characters.map((character) => {
+                    const charStatements = statements.filter(s => s.characterId === character.id)
+                    if (charStatements.length === 0) return null
+                    
+                    return (
+                      <div key={character.id} className="bg-noir-black/40 border border-noir-slate/30 rounded-sm overflow-hidden">
+                        {/* Character header */}
+                        <div className="px-4 py-2 bg-noir-charcoal/50 border-b border-noir-slate/30 flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div 
+                              className="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-noir-slate/50 border border-noir-gold/30"
+                              style={{ fontFamily: 'Georgia, serif' }}
+                            >
+                              {character.name.charAt(0)}
+                            </div>
+                            <div>
+                              <h4 className="text-noir-cream font-medium text-sm" style={{ fontFamily: 'Georgia, serif' }}>
+                                {character.name}
+                              </h4>
+                              <p className="text-noir-smoke text-xs">{character.role}</p>
+                            </div>
+                          </div>
+                          <span className="text-noir-gold/60 text-xs">
+                            {charStatements.length} statement{charStatements.length > 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        
+                        {/* Statements */}
+                        <div className="p-3 space-y-2 max-h-64 overflow-y-auto">
+                          {charStatements.map((statement) => (
+                            <div key={statement.id} className="bg-noir-charcoal/30 p-3 rounded-sm border-l-2 border-noir-gold/30">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <span className="text-noir-gold text-xs uppercase tracking-wider">
+                                  {statement.topic}
+                                </span>
+                                <span className="text-noir-smoke text-[10px]">
+                                  {new Date(statement.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                              <p className="text-noir-cream/70 text-xs italic mb-2">
+                                Q: "{statement.playerQuestion}"
+                              </p>
+                              <p className="text-noir-cream text-sm">
+                                "{statement.content.length > 200 ? statement.content.slice(0, 200) + '...' : statement.content}"
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Neural Map tab */}
+          {activeTab === 'neural-map' && (
+            <div className="h-full flex flex-col">
+              <div className="mb-4 p-3 bg-noir-gold/10 border border-noir-gold/30 rounded-sm">
+                <p className="text-noir-cream text-sm" style={{ fontFamily: 'Georgia, serif' }}>
+                  <span className="text-noir-gold font-medium">Neural Map:</span> Visualize the connections between the victim, suspects, and evidence. 
+                  Click nodes to explore relationships. Red lines indicate contradictions between suspects.
+                </p>
+              </div>
+              <div className="flex-1 min-h-0">
+                <NeuralMap width={850} height={450} />
               </div>
             </div>
           )}

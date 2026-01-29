@@ -9,6 +9,7 @@ import { CinematicEffects, GoldBorder, ModalBackdrop } from './CinematicEffects'
 import { QuestionCards } from './QuestionCards'
 import { VideoInterrogationView } from '../VideoPlayer/VideoInterrogationView'
 import { CharacterViewport } from '../VideoPlayer/CharacterViewport'
+import { IntroVideo } from '../VideoPlayer/IntroVideo'
 
 // View mode toggle
 type ViewMode = 'video' | 'text'
@@ -21,6 +22,10 @@ export function InterrogationModal() {
   const [hasShownGreeting, setHasShownGreeting] = useState<Set<string>>(new Set())
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [viewMode, setViewMode] = useState<ViewMode>('video')
+
+  // Intro video state
+  const [showIntro, setShowIntro] = useState(false)
+  const [introComplete, setIntroComplete] = useState<Set<string>>(new Set())
 
   // Video-first response state
   const [currentResponse, setCurrentResponse] = useState<{
@@ -118,9 +123,21 @@ export function InterrogationModal() {
     healthCheck().then(setApiConnected)
   }, [])
 
-  // Show greeting when starting a new conversation - with voice!
+  // Trigger intro video when starting a new conversation
   useEffect(() => {
-    if (currentConversation && !hasShownGreeting.has(currentConversation)) {
+    if (currentConversation && !introComplete.has(currentConversation)) {
+      // Show intro video first
+      setShowIntro(true)
+    }
+  }, [currentConversation, introComplete])
+
+  // Show greeting AFTER intro completes - with voice!
+  useEffect(() => {
+    if (
+      currentConversation &&
+      introComplete.has(currentConversation) &&
+      !hasShownGreeting.has(currentConversation)
+    ) {
       const greeting = CHARACTER_GREETINGS[currentConversation]
       if (greeting) {
         addMessage({
@@ -157,7 +174,15 @@ export function InterrogationModal() {
         fetchGreetingVoice()
       }
     }
-  }, [currentConversation, hasShownGreeting, addMessage])
+  }, [currentConversation, introComplete, hasShownGreeting, addMessage])
+
+  // Handle intro video completion/skip
+  const handleIntroComplete = useCallback(() => {
+    if (currentConversation) {
+      setShowIntro(false)
+      setIntroComplete((prev) => new Set([...prev, currentConversation]))
+    }
+  }, [currentConversation])
 
   const handleClose = useCallback(() => {
     voiceManager?.stop()
@@ -263,6 +288,24 @@ export function InterrogationModal() {
 
   // Don't render if no conversation
   if (!currentConversation || !currentCharacter) {
+    return null
+  }
+
+  // Show intro video first
+  if (showIntro) {
+    return (
+      <IntroVideo
+        characterId={currentConversation}
+        characterName={currentCharacter.name}
+        characterRole={currentCharacter.role}
+        onComplete={handleIntroComplete}
+        onSkip={handleIntroComplete}
+      />
+    )
+  }
+
+  // Only show main interrogation UI after intro completes
+  if (!introComplete.has(currentConversation)) {
     return null
   }
 

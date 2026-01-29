@@ -27,11 +27,76 @@ export const PRESSURE_THRESHOLDS = {
 
 // Pressure configuration
 const PRESSURE_CONFIG = {
-  perConfrontation: 5, // Each question adds 5 pressure
+  perConfrontation: 8, // Base pressure per question (increased from 5)
+  perPointedQuestion: 12, // Extra pressure for pointed questions about sensitive topics
+  perDirectAccusation: 20, // Direct accusations or calling out lies
   perEvidencePresented: 15, // Each piece of evidence adds 15
   perContradiction: 20, // Each contradiction adds 20
   decayPerMinute: 2, // Pressure decreases over time when not questioned
   maxPressure: 100,
+}
+
+// Keywords that indicate pointed, aggressive questioning
+const POINTED_QUESTION_KEYWORDS = [
+  // Accusations & skepticism
+  'lie', 'lying', 'liar', 'truth', 'really', 'actually', 'honestly',
+  'convenient', 'suspicious', 'strange', 'odd', 'coincidence',
+  
+  // Confrontational
+  'why did you', 'explain why', 'how could you', 'prove it',
+  'don\'t believe', 'impossible', 'contradict',
+  
+  // Motive & opportunity
+  'motive', 'reason to kill', 'benefit', 'inherit', 'will', 'money',
+  'debt', 'owe', 'financial', 'desperate',
+  
+  // Alibi challenges
+  'alibi', 'where were you', 'what were you doing', 'who saw you',
+  'witness', 'confirm', 'verify',
+  
+  // Relationships & secrets
+  'affair', 'secret', 'hiding', 'relationship with', 'argue', 'fight',
+  'hate', 'angry', 'threatened',
+  
+  // Evidence confrontation
+  'evidence', 'proof', 'found', 'discovered', 'blood', 'weapon',
+  'fingerprint', 'witness saw',
+]
+
+/**
+ * Analyze question aggressiveness and return pressure multiplier
+ */
+function analyzeQuestionAggressiveness(question: string): number {
+  const lowerQuestion = question.toLowerCase()
+  
+  // Direct accusations (highest pressure)
+  if (
+    lowerQuestion.includes('you killed') ||
+    lowerQuestion.includes('you murdered') ||
+    lowerQuestion.includes('you\'re the killer') ||
+    lowerQuestion.includes('you are guilty') ||
+    lowerQuestion.includes('you did it') ||
+    lowerQuestion.includes('you\'re lying')
+  ) {
+    return PRESSURE_CONFIG.perDirectAccusation
+  }
+  
+  // Count pointed keywords
+  const pointedKeywordCount = POINTED_QUESTION_KEYWORDS.filter(keyword =>
+    lowerQuestion.includes(keyword)
+  ).length
+  
+  // Multiple pointed keywords = very aggressive question
+  if (pointedKeywordCount >= 3) {
+    return PRESSURE_CONFIG.perPointedQuestion + 5
+  } else if (pointedKeywordCount >= 2) {
+    return PRESSURE_CONFIG.perPointedQuestion + 3
+  } else if (pointedKeywordCount >= 1) {
+    return PRESSURE_CONFIG.perPointedQuestion
+  }
+  
+  // Casual question - base pressure only
+  return PRESSURE_CONFIG.perConfrontation
 }
 
 // In-memory pressure store
@@ -70,15 +135,26 @@ function applyPressureDecay(state: PressureState): void {
 
 /**
  * Record a confrontation/question to the character
+ * Now analyzes question aggressiveness for dynamic pressure
+ * Supports tactic bonuses from interrogation tactics system
  */
-export function recordConfrontation(characterId: string): PressureState {
+export function recordConfrontation(characterId: string, question?: string, tacticBonus: number = 0): PressureState {
   const state = getPressureState(characterId)
   applyPressureDecay(state)
 
   state.confrontations++
+  
+  // Analyze question to determine pressure impact
+  const basePressure = question
+    ? analyzeQuestionAggressiveness(question)
+    : PRESSURE_CONFIG.perConfrontation
+  
+  // Add tactic bonus (can be negative for failed bluffs)
+  const totalPressure = basePressure + tacticBonus
+  
   state.level = Math.min(
     PRESSURE_CONFIG.maxPressure,
-    state.level + PRESSURE_CONFIG.perConfrontation
+    Math.max(0, state.level + totalPressure) // Don't go below 0
   )
 
   return state

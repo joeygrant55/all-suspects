@@ -19,7 +19,7 @@ export function IntroSequence({ onComplete }: IntroSequenceProps) {
     },
     {
       text: 'At midnight, the clock strikes...',
-      subtext: 'And Charles Ashford is found dead.',
+      subtext: 'And Edmund Ashford is found dead.',
     },
     {
       text: 'You are the detective.',

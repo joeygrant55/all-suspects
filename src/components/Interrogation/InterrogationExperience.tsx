@@ -13,9 +13,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useGameStore } from '../../game/state'
+import { useWatsonStore } from '../../game/watsonState'
 import { useCharacterPortrait } from '../../hooks/useCharacterPortrait'
 import { CharacterPortrait } from './CharacterPortrait'
-import { sendMessage, type EmotionData, type ChatResponse } from '../../api/client'
+import { sendMessage, type EmotionData, type ChatResponse, analyzeWithWatson } from '../../api/client'
 import {
   containerVariants,
   headerVariants,
@@ -146,6 +147,16 @@ export function InterrogationExperience({
   // Get character data from game state
   const characters = useGameStore((state) => state.characters)
   const currentCharacter = characters.find((c) => c.id === characterId)
+  const addContradictions = useGameStore((state) => state.addContradictions)
+  const contradictions = useGameStore((state) => state.contradictions)
+  
+  // Watson state
+  const showWhisper = useWatsonStore((state) => state.showWhisper)
+  const openDesk = useWatsonStore((state) => state.openDesk)
+  
+  // Track last contradiction count to show badge for new ones
+  const [lastContradictionCount, setLastContradictionCount] = useState(0)
+  const hasNewContradictions = contradictions.length > lastContradictionCount
   
   // Portrait state management with emotional tracking
   const {
@@ -183,13 +194,71 @@ export function InterrogationExperience({
           preloadPortrait('breaking')
         }
       }
+      
+      // Process statement through Watson
+      try {
+        const watsonAnalysis = await analyzeWithWatson(
+          characterId,
+          characterName,
+          response.message,
+          question,
+          response.pressure?.level || 0
+        )
+        
+        if (watsonAnalysis.success) {
+          const { newContradictions, observations } = watsonAnalysis.analysis
+          
+          // Store contradictions in game state
+          if (newContradictions && newContradictions.length > 0) {
+            const formattedContradictions = newContradictions.map((c: any) => ({
+              id: c.id,
+              statement1: {
+                characterId: c.statement1.characterId,
+                characterName: c.statement1.characterName,
+                content: c.statement1.content,
+                playerQuestion: '',
+              },
+              statement2: {
+                characterId: c.statement2.characterId,
+                characterName: c.statement2.characterName,
+                content: c.statement2.content,
+                playerQuestion: '',
+              },
+              explanation: c.explanation,
+              severity: c.severity === 'critical' ? 'major' : c.severity,
+              discoveredAt: Date.now(),
+            }))
+            
+            addContradictions(formattedContradictions)
+            
+            // Show Watson whisper for significant contradictions
+            const significantContradictions = newContradictions.filter((c: any) => 
+              c.severity === 'significant' || c.severity === 'critical'
+            )
+            
+            if (significantContradictions.length > 0) {
+              showWhisper(`Detective, I've noticed something... ${significantContradictions[0].explanation}`)
+            }
+          }
+          
+          // Show Watson observation if interesting
+          if (observations && observations.length > 0 && Math.random() < 0.3) {
+            setTimeout(() => {
+              showWhisper(observations[0])
+            }, 3000)
+          }
+        }
+      } catch (watsonError) {
+        console.error('Watson analysis failed:', watsonError)
+        // Non-critical failure - continue without Watson
+      }
     } catch (error) {
       console.error('Failed to get response:', error)
       setCurrentMessage("*clears throat* I'm sorry, I... I need a moment.")
     } finally {
       setIsThinking(false)
     }
-  }, [characterId, isThinking, setEmotion, preloadPortrait])
+  }, [characterId, characterName, isThinking, setEmotion, preloadPortrait, addContradictions, showWhisper])
 
   // Handle custom question submission
   const handleCustomSubmit = useCallback((e: React.FormEvent) => {
@@ -199,9 +268,17 @@ export function InterrogationExperience({
     }
   }, [customQuestion, handleAskQuestion])
 
-  // Handle escape key
+  // Handle escape key and Watson shortcut
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't trigger shortcuts when typing in input
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      ) {
+        return
+      }
+      
       if (e.key === 'Escape' && isOpen && !isExiting) {
         if (showCustomInput) {
           setShowCustomInput(false)
@@ -210,11 +287,18 @@ export function InterrogationExperience({
           handleExit()
         }
       }
+      
+      // 'W' opens Watson's Desk
+      if (e.key.toLowerCase() === 'w' && isOpen && !showCustomInput) {
+        e.preventDefault()
+        openDesk()
+        setLastContradictionCount(contradictions.length)
+      }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isOpen, isExiting, showCustomInput])
+  }, [isOpen, isExiting, showCustomInput, openDesk, contradictions.length])
 
   // Focus custom input when shown
   useEffect(() => {
@@ -287,14 +371,43 @@ export function InterrogationExperience({
               </div>
             </div>
 
-            {/* Scene Info */}
-            <div className="text-center">
-              <p className="text-noir-gold font-serif text-sm tracking-widest uppercase">
-                Interrogation
-              </p>
-              <p className="text-noir-ash text-xs mt-1">
-                Round {roundNumber}
-              </p>
+            {/* Scene Info + Watson Button */}
+            <div className="flex items-center gap-4">
+              <div className="text-center">
+                <p className="text-noir-gold font-serif text-sm tracking-widest uppercase">
+                  Interrogation
+                </p>
+                <p className="text-noir-ash text-xs mt-1">
+                  Round {roundNumber}
+                </p>
+              </div>
+              
+              {/* Watson Notes Button */}
+              <motion.button
+                onClick={() => {
+                  openDesk()
+                  setLastContradictionCount(contradictions.length)
+                }}
+                className="group relative flex items-center gap-2 px-4 py-2 rounded border border-noir-gold/30 hover:border-noir-gold/60 transition-colors duration-300 bg-noir-charcoal/50"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                title="Open Watson's Investigation Notes"
+              >
+                <span className="text-noir-gold text-lg font-serif">W</span>
+                <span className="text-noir-cream group-hover:text-noir-gold text-sm transition-colors">
+                  Watson's Notes
+                </span>
+                {hasNewContradictions && (
+                  <motion.span
+                    className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: 'spring', stiffness: 500, damping: 15 }}
+                  >
+                    !
+                  </motion.span>
+                )}
+              </motion.button>
             </div>
 
             {/* Exit Button */}

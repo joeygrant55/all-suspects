@@ -48,6 +48,7 @@ export function VideoInterrogationView({
   const [progress, setProgress] = useState(0)
   const [isVoicePlaying, setIsVoicePlaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [_pollAttempts, setPollAttempts] = useState(0)
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -58,6 +59,9 @@ export function VideoInterrogationView({
   // Use refs to track current state for polling callback (avoid stale closures)
   const isVoicePlayingRef = useRef(isVoicePlaying)
   const playbackStateRef = useRef(playbackState)
+  
+  // Constants
+  const MAX_POLL_ATTEMPTS = 120 // 120 attempts × 3s = 6 minutes
 
   // Keep refs in sync with state
   useEffect(() => {
@@ -191,7 +195,24 @@ export function VideoInterrogationView({
   useEffect(() => {
     if (!videoGenerationId || videoUrl) return
 
+    // Reset poll attempts when starting new poll
+    setPollAttempts(0)
+
     pollIntervalRef.current = setInterval(async () => {
+      setPollAttempts((prev) => {
+        const nextAttempt = prev + 1
+
+        // Check for timeout
+        if (nextAttempt > MAX_POLL_ATTEMPTS) {
+          clearInterval(pollIntervalRef.current!)
+          setError('Video generation timed out after 6 minutes')
+          setPlaybackState('error')
+          return prev
+        }
+
+        return nextAttempt
+      })
+
       try {
         const status = await checkVideoStatus(videoGenerationId)
 
@@ -205,6 +226,7 @@ export function VideoInterrogationView({
           const currentPlaybackState = playbackStateRef.current
 
           clearInterval(pollIntervalRef.current!)
+          setPollAttempts(0)
           setVideoUrl(status.videoUrl)
           setProgress(100)
           onVideoReady?.(status.videoUrl)
@@ -215,10 +237,13 @@ export function VideoInterrogationView({
           }
         } else if (status.status === 'failed') {
           clearInterval(pollIntervalRef.current!)
-          console.warn('Video generation failed:', status.error || 'Unknown error')
+          setPollAttempts(0)
+          setError('Video generation failed: ' + (status.error || 'Unknown error'))
+          setPlaybackState('error')
         }
       } catch (err) {
         console.error('Error polling video status:', err)
+        // Don't fail on network errors, keep retrying until timeout
       }
     }, 3000)
 
@@ -227,7 +252,7 @@ export function VideoInterrogationView({
         clearInterval(pollIntervalRef.current)
       }
     }
-  }, [videoGenerationId, videoUrl, onVideoReady, transitionToVideo])
+  }, [videoGenerationId, videoUrl, onVideoReady, transitionToVideo, MAX_POLL_ATTEMPTS])
 
   // Handle voice finished - transition to video if ready
   useEffect(() => {
@@ -256,8 +281,19 @@ export function VideoInterrogationView({
 
   const handleRetry = useCallback(() => {
     setError(null)
-    startPlayback()
-  }, [startPlayback])
+    setPollAttempts(0)
+    
+    // If we have voice, fall back to voice-only and restart polling
+    if (voiceAudioBase64) {
+      setPlaybackState('voice-only')
+      setProgress(30)
+      // Polling will restart automatically due to useEffect dependency on playbackState
+    } else {
+      // No voice, just go back to loading
+      setPlaybackState('loading')
+      setProgress(20)
+    }
+  }, [voiceAudioBase64])
 
   const handleReplay = useCallback(() => {
     if (videoRef.current && videoUrl) {
@@ -306,9 +342,9 @@ export function VideoInterrogationView({
               wordsPerSecond={3}
             />
             {videoGenerationId && !videoUrl && (
-              <div className="absolute top-4 right-4 flex items-center gap-2 text-noir-smoke text-xs">
-                <div className="w-2 h-2 rounded-full bg-noir-gold/50 animate-pulse" />
-                <span>Video generating...</span>
+              <div className="absolute top-4 right-4 flex items-center gap-2 bg-noir-black/80 px-3 py-2 rounded-full border border-noir-gold/30">
+                <span className="text-lg animate-spin" style={{ display: 'inline-block' }}>🎬</span>
+                <span className="text-noir-cream/80 text-xs font-medium">Generating video...</span>
               </div>
             )}
           </>
@@ -394,19 +430,35 @@ export function VideoInterrogationView({
       case 'error':
         return (
           <div className="w-full h-full flex flex-col items-center justify-center bg-noir-black">
-            <div className="text-noir-blood text-4xl mb-3">!</div>
-            <p className="text-noir-cream/80 text-sm text-center">
-              Playback failed
+            <div className="text-noir-blood text-4xl mb-3">⚠️</div>
+            <p className="text-noir-cream/80 text-sm text-center font-serif">
+              Video Generation Issue
             </p>
-            <p className="text-noir-cream/50 text-xs text-center mt-1">
+            <p className="text-noir-cream/50 text-xs text-center mt-1 max-w-sm">
               {error}
             </p>
-            <button
-              onClick={handleRetry}
-              className="mt-4 px-4 py-2 bg-noir-gold/20 text-noir-gold text-sm rounded hover:bg-noir-gold/30 transition-colors"
-            >
-              Retry
-            </button>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleRetry}
+                className="px-4 py-2 bg-noir-gold/20 text-noir-gold text-sm rounded border border-noir-gold/30 hover:bg-noir-gold/30 transition-colors"
+              >
+                Retry Video
+              </button>
+              {voiceAudioBase64 && (
+                <button
+                  onClick={() => {
+                    setError(null)
+                    setPlaybackState('voice-only')
+                    if (voiceAudioBase64) {
+                      playVoice(voiceAudioBase64)
+                    }
+                  }}
+                  className="px-4 py-2 bg-noir-slate/30 text-noir-cream/80 text-sm rounded border border-noir-slate/30 hover:bg-noir-slate/50 transition-colors"
+                >
+                  Voice Only
+                </button>
+              )}
+            </div>
           </div>
         )
     }

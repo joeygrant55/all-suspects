@@ -170,7 +170,7 @@ ELEVENLABS_API_KEY=sk_...         # Optional - Voice synthesis
 **Victim**: Edmund Ashford (industrialist)
 **Suspects**: 6 characters, each with secrets and motives
 **Killer**: Thomas Ashford (son) - about to be disinherited
-**Method**: Poisoned champagne + blunt force
+**Method**: Poisoned champagne (arsenic from rat poison)
 
 ## Development Status
 

@@ -3,6 +3,7 @@ import express from 'express'
 import cors from 'cors'
 import Anthropic from '@anthropic-ai/sdk'
 import { CHARACTERS, WORLD_STATE } from '../mysteries/ashford-affair/characters'
+import { EVIDENCE_DATABASE } from '../src/data/evidence'
 import {
   addStatement,
   checkForContradictions,
@@ -41,6 +42,8 @@ import {
   generateImage,
   getGenerationStatus,
   isVeoConfigured,
+  pregenerateIntroductions,
+  findPregenVideo,
 } from './video/veoClient'
 import {
   analyzeTestimony,
@@ -55,10 +58,11 @@ import {
   clearVideoCache,
   startCacheCleanup,
 } from './video/videoCache'
-import { getWatson, resetWatson } from './watson'
+import { getWatson, resetWatson } from './watson/watsonAgent'
 import {
   generateMystery,
   getCurrentMystery,
+  getMysteryById,
   saveMystery,
   clearCurrentMystery,
   exportMystery,
@@ -157,10 +161,40 @@ RULES:
 Remember: The player is a detective investigating Edmund Ashford's murder. They will try to catch you in lies or contradictions.`
 }
 
-// Chat endpoint - Enhanced with Agent SDK features
+// Helper: Retry with exponential backoff
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 2,
+  baseDelay: number = 1000
+): Promise<T> {
+  let lastError: Error | unknown
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      console.log(`[RETRY] Attempt ${attempt + 1}/${maxRetries + 1} failed:`, error instanceof Error ? error.message : 'Unknown error')
+      
+      // Don't retry on last attempt
+      if (attempt < maxRetries) {
+        const delay = baseDelay * Math.pow(2, attempt) // Exponential backoff
+        console.log(`[RETRY] Waiting ${delay}ms before retry...`)
+        await new Promise(resolve => setTimeout(resolve, delay))
+      }
+    }
+  }
+  
+  // All retries failed
+  throw lastError
+}
+
+// Chat endpoint - Enhanced with Agent SDK features + Retry Logic + Interrogation Tactics
 app.post('/api/chat', async (req, res) => {
+  const startTime = Date.now()
+  
   try {
-    const { characterId, message, evidenceId } = req.body
+    const { characterId, message, evidenceId, tactic, crossReferenceStatement } = req.body
 
     if (!characterId || !message) {
       return res.status(400).json({ error: 'Missing characterId or message' })
@@ -177,8 +211,34 @@ app.post('/api/chat', async (req, res) => {
     }
     const history = conversationHistory.get(characterId)!
 
-    // Track pressure from this confrontation
-    recordConfrontation(characterId)
+    // Detect if this is the first question to this character
+    const isFirstQuestion = history.length === 0
+    
+    if (isFirstQuestion) {
+      console.log(`[FIRST QUESTION] Character: ${characterId} - Using extended timeout and retry logic`)
+    }
+
+    // Track pressure from this confrontation with tactic-specific bonuses
+    let tacticPressureBonus = 0
+    
+    // Apply tactic-specific pressure bonuses
+    switch (tactic) {
+      case 'alibi':
+        tacticPressureBonus = 5
+        break
+      case 'present_evidence':
+        tacticPressureBonus = 15
+        break
+      case 'cross_reference':
+        tacticPressureBonus = 20
+        break
+      case 'bluff':
+        // Bluff is risky - will be evaluated later based on how close to truth
+        tacticPressureBonus = 0 // Will be adjusted after AI response
+        break
+    }
+    
+    recordConfrontation(characterId, message, tacticPressureBonus)
 
     // If evidence was presented, track it
     if (evidenceId) {
@@ -195,69 +255,200 @@ app.post('/api/chat', async (req, res) => {
 
     // Get current pressure state
     const pressureState = getPressureState(characterId)
-    const pressureModifier = getPressurePromptModifier(pressureState.level, character.isGuilty)
+    let pressureModifier = getPressurePromptModifier(pressureState.level, character.isGuilty)
+    
+    // Build tactic-specific prompt modifiers
+    let tacticPrompt = ''
+    if (tactic === 'alibi') {
+      tacticPrompt = `\n\nDETECTIVE TACTIC: The detective is asking for detailed alibi information. Provide specific timeline details, locations, and who you were with. If you're guilty, you must construct a believable lie with specific details. If innocent but hiding something, be defensive but truthful about your location.`
+    } else if (tactic === 'present_evidence') {
+      const evidenceData = EVIDENCE_DATABASE[evidenceId]
+      tacticPrompt = `\n\nDETECTIVE TACTIC: The detective is showing you physical evidence: "${evidenceData?.name || 'evidence'}". React to seeing this evidence. If it implicates you, show fear/defensiveness. If it's irrelevant to you, show confusion or offer explanations. The detective is watching your reaction closely.`
+    } else if (tactic === 'cross_reference') {
+      const otherCharName = characters.find(c => c.id === crossReferenceStatement?.characterId)?.name || 'another suspect'
+      tacticPrompt = `\n\nDETECTIVE TACTIC: The detective is confronting you with what ${otherCharName} said: "${crossReferenceStatement?.content}". This directly contradicts or challenges your story. You must either explain the discrepancy, admit to lying, or accuse the other person of lying. This is HIGH PRESSURE.`
+    } else if (tactic === 'bluff') {
+      tacticPrompt = `\n\nDETECTIVE TACTIC: The detective is BLUFFING - claiming to have evidence or knowledge they may not actually possess. If their bluff is close to the truth (something you actually did), you should show panic or slip up. If their bluff is completely wrong, you might become confident and call them out on it, or be confused. Evaluate how close their bluff is to reality.`
+    }
+    
+    pressureModifier = pressureModifier + tacticPrompt
 
-    // Use the enhanced agent system with tool use
-    const agentResponse = await processAgentMessage(
-      anthropic,
-      character,
-      message,
-      history,
-      pressureModifier
-    )
-
-    // Add messages to history
-    history.push({ role: 'user', content: message })
-    history.push({ role: 'assistant', content: agentResponse.message })
-
-    // Keep history manageable (last 20 exchanges)
-    if (history.length > 40) {
-      history.splice(0, 2)
+    // Use retry logic with exponential backoff (up to 2 retries)
+    let agentResponse
+    let isFallback = false
+    
+    try {
+      agentResponse = await withRetry(
+        async () => {
+          return await processAgentMessage(
+            anthropic,
+            character,
+            message,
+            history,
+            pressureModifier
+          )
+        },
+        2, // Max 2 retries (3 total attempts)
+        isFirstQuestion ? 2000 : 1000 // Longer delay for first question
+      )
+    } catch (apiError) {
+      // All retries failed - use fallback response
+      console.error('[API FAILURE] All retries exhausted, using fallback:', apiError)
+      isFallback = true
+      agentResponse = {
+        message: `*${character.name} pauses, seemingly lost in thought*\n\nI... I need a moment to collect my thoughts. Perhaps you could ask me that again?`,
+        toolsUsed: []
+      }
     }
 
-    // Track this statement for contradiction detection
-    const statement = addStatement(characterId, character.name, message, agentResponse.message)
+    // Add messages to history (only if not a fallback)
+    if (!isFallback) {
+      history.push({ role: 'user', content: message })
+      history.push({ role: 'assistant', content: agentResponse.message })
 
-    // Check for contradictions with other characters' statements
+      // Keep history manageable (last 20 exchanges)
+      if (history.length > 40) {
+        history.splice(0, 2)
+      }
+    }
+
+    // Track this statement for contradiction detection (only if not fallback)
+    let statement
     let newContradictions: DetectedContradiction[] = []
-    try {
-      newContradictions = await checkForContradictions(anthropic, statement)
+    
+    if (!isFallback) {
+      statement = addStatement(characterId, character.name, message, agentResponse.message)
 
-      // Track contradictions for pressure system
-      newContradictions.forEach((contradiction) => {
-        recordContradiction(contradiction.statement1.characterId)
-        recordContradiction(contradiction.statement2.characterId)
-      })
-    } catch (contradictionError) {
-      console.error('Error checking contradictions:', contradictionError)
+      // Check for contradictions with other characters' statements
+      try {
+        newContradictions = await checkForContradictions(anthropic, statement)
+
+        // Track contradictions for pressure system
+        newContradictions.forEach((contradiction) => {
+          recordContradiction(contradiction.statement1.characterId)
+          recordContradiction(contradiction.statement2.characterId)
+        })
+      } catch (contradictionError) {
+        console.error('Error checking contradictions:', contradictionError)
+      }
+    }
+
+    // Evaluate bluff effectiveness (if bluff tactic was used)
+    if (tactic === 'bluff' && !isFallback) {
+      // Simple heuristic: if the response shows panic/fear/defensiveness, the bluff was close to truth
+      const responseLower = agentResponse.message.toLowerCase()
+      const panicWords = ['what', 'how did you', 'that\'s not', 'you can\'t', 'impossible', 'where did', 'i swear', 'i didn\'t', '*nervous', '*panic', '*sweat', '*pale']
+      const confidentWords = ['nonsense', 'ridiculous', 'absurd', 'wrong', 'lying', 'proof', 'show me', 'don\'t have']
+      
+      const panicCount = panicWords.filter(w => responseLower.includes(w)).length
+      const confidentCount = confidentWords.filter(w => responseLower.includes(w)).length
+      
+      if (panicCount > confidentCount) {
+        // Bluff was close to truth - add pressure
+        tacticPressureBonus = 10
+        console.log('[BLUFF] Effective! Adding +10 pressure')
+      } else {
+        // Bluff was obviously wrong - suspect gets cocky, reduce pressure
+        tacticPressureBonus = -5
+        console.log('[BLUFF] Failed! Reducing -5 pressure')
+      }
+      
+      // Apply bluff pressure adjustment
+      recordConfrontation(characterId, message, tacticPressureBonus)
     }
 
     // Get updated pressure state after all tracking
     const finalPressureState = getPressureState(characterId)
 
-    // Analyze emotional state for cinematic portrait selection
+    // Analyze emotional state for cinematic portrait selection (only if not fallback)
     let emotionalState: Omit<StructuredCharacterResponse, 'dialogue'> | null = null
-    try {
-      const recentContext = history.slice(-6).map(h => `${h.role}: ${h.content}`).join('\n')
-      emotionalState = await analyzeEmotionalState(
-        anthropic,
+    if (!isFallback) {
+      try {
+        const recentContext = history.slice(-6).map(h => `${h.role}: ${h.content}`).join('\n')
+        emotionalState = await analyzeEmotionalState(
+          anthropic,
+          characterId,
+          character.isGuilty,
+          finalPressureState.level,
+          agentResponse.message,
+          message,
+          recentContext
+        )
+      } catch (emotionError) {
+        console.error('Error analyzing emotional state:', emotionError)
+      }
+    }
+
+    const responseTime = Date.now() - startTime
+    console.log(`[RESPONSE TIME] ${characterId}: ${responseTime}ms${isFallback ? ' (FALLBACK)' : ''}`)
+
+    // Detect cinematic moments and trigger video generation
+    let cinematicMoment = false
+    let videoGenerationId: string | undefined
+    
+    if (!isFallback) {
+      try {
+      const { detectCinematicMoment, shouldGenerateVideo } = await import('./video/cinematicDetection')
+      const { analyzeTestimony, buildVideoPrompt } = await import('./video/promptBuilder')
+      const { generateVideo } = await import('./video/veoClient')
+      
+      const detection = detectCinematicMoment(
         characterId,
-        character.isGuilty,
-        finalPressureState.level,
         agentResponse.message,
         message,
-        recentContext
+        pressureState.level, // Previous pressure
+        finalPressureState.level, // Current pressure
+        newContradictions.length > 0,
+        history.length / 2 // Approximate message count
       )
-    } catch (emotionError) {
-      console.error('Error analyzing emotional state:', emotionError)
+      
+      console.log(`[CINEMATIC DETECTION] ${characterId}: ${detection.confidence}% - ${detection.reason || 'Not cinematic'}`)
+      
+      if (shouldGenerateVideo(detection)) {
+        cinematicMoment = true
+        
+        try {
+          // Analyze testimony for video prompt
+          const analysis = await analyzeTestimony(
+            anthropic,
+            agentResponse.message,
+            characterId,
+            message
+          )
+          
+          // Build video prompt
+          const videoPrompt = buildVideoPrompt(analysis, characterId, false)
+          
+          // Generate video in background (non-blocking)
+          const videoResult = await generateVideo({
+            prompt: videoPrompt.fullPrompt,
+            characterId,
+            testimonyId: statement?.id || `cinematic-${Date.now()}`,
+            duration: 5,
+            aspectRatio: '16:9',
+          })
+          
+          if (videoResult.success || videoResult.generationId) {
+            videoGenerationId = videoResult.generationId
+            console.log(`[CINEMATIC VIDEO] Started generation: ${videoGenerationId}`)
+          }
+        } catch (videoError) {
+          console.error('[CINEMATIC VIDEO] Generation failed:', videoError)
+          // Non-critical - continue without video
+        }
+      }
+      } catch (cinematicError) {
+        console.error('[CINEMATIC DETECTION ERROR]', cinematicError)
+      }
     }
 
     res.json({
       message: agentResponse.message,
       characterName: character.name,
-      statementId: statement.id,
+      statementId: statement?.id,
       contradictions: newContradictions,
-      toolsUsed: agentResponse.toolsUsed, // New: show what tools the agent used
+      toolsUsed: agentResponse.toolsUsed,
+      isFallback, // NEW: Flag to indicate this is a fallback response
       pressure: {
         level: finalPressureState.level,
         confrontations: finalPressureState.confrontations,
@@ -272,6 +463,9 @@ app.post('/api/chat', async (req, res) => {
         voice: emotionalState.voice,
         observableHint: emotionalState.observableHint,
       } : null,
+      // Cinematic video generation
+      cinematicMoment,
+      videoGenerationId,
     })
   } catch (error) {
     console.error('Error generating response:', error)
@@ -367,8 +561,8 @@ app.post('/api/chat-video', async (req, res) => {
     }
     const history = conversationHistory.get(characterId)!
 
-    // Track pressure from this confrontation
-    recordConfrontation(characterId)
+    // Track pressure from this confrontation (now analyzes question aggressiveness)
+    recordConfrontation(characterId, message)
 
     // If evidence was presented, track it
     if (evidenceId) {
@@ -808,6 +1002,25 @@ app.post('/api/video/introduction', async (req, res) => {
       return res.status(503).json({
         error: 'Video service not configured',
         message: 'Gemini API key not set.',
+      })
+    }
+
+    // Check if we have a pre-generated video ready
+    const pregen = findPregenVideo(characterId)
+    if (pregen && pregen !== 'pending') {
+      console.log(`[VEO3] Serving pre-generated intro video for ${characterId}`)
+      return res.json({
+        success: true,
+        cached: true,
+        videoUrl: pregen,
+      })
+    }
+    if (pregen === 'pending') {
+      // Video is still generating — tell client to poll
+      return res.json({
+        success: false,
+        pending: true,
+        message: 'Introduction video is still generating. Try again in a few seconds.',
       })
     }
 
@@ -1277,6 +1490,100 @@ app.post('/api/mystery/clear', async (_req, res) => {
   }
 })
 
+/**
+ * List all available mysteries (hardcoded + generated)
+ * Returns metadata only for the mystery selection screen
+ */
+app.get('/api/mysteries', async (_req, res) => {
+  try {
+    // Import the registry from the frontend
+    // For now, return hardcoded list
+    // TODO: In the future, also include generated mysteries from the store
+    const mysteries = [
+      {
+        id: 'ashford-affair',
+        title: 'The Ashford Affair',
+        subtitle: 'New Year\'s Eve, 1929 — Ashford Manor',
+        era: '1920s',
+        difficulty: 'medium',
+        isGenerated: false,
+      },
+      {
+        id: 'hollywood-premiere',
+        title: 'Shadows Over Sunset',
+        subtitle: 'March 15th, 1947 — The Palladium Theatre',
+        era: '1940s',
+        difficulty: 'medium',
+        isGenerated: false,
+      },
+    ]
+    res.json({ mysteries })
+  } catch (error) {
+    console.error('[MYSTERY] List failed:', error)
+    res.status(500).json({ error: 'Failed to list mysteries' })
+  }
+})
+
+/**
+ * Get a specific mystery by ID
+ * Returns the full mystery data needed to initialize the game
+ * For hardcoded mysteries, loads from the mystery files
+ * For generated mysteries, loads from the store
+ */
+app.get('/api/mystery/:id', async (req, res) => {
+  try {
+    const { id } = req.params
+
+    // Check if it's a hardcoded mystery
+    if (id === 'ashford-affair' || id === 'hollywood-premiere') {
+      // For hardcoded mysteries, the frontend registry will handle loading
+      // We just return a minimal response indicating it should be loaded client-side
+      res.json({
+        success: true,
+        mysteryId: id,
+        loadClientSide: true,
+        message: 'Load this mystery from the client-side registry',
+      })
+    } else {
+      // For generated mysteries, load from the store
+      const mystery = await getMysteryById(id)
+      if (!mystery) {
+        return res.status(404).json({ error: 'Mystery not found' })
+      }
+
+      // Convert GeneratedMystery to LoadedMystery format
+      // This is a simplified conversion - in production you'd want to fully map the structure
+      res.json({
+        mystery: {
+          id: mystery.id,
+          title: `Case ${mystery.id}`,
+          worldState: {
+            timeOfDeath: mystery.victim.lastKnownAlive.time,
+            victim: mystery.victim.name,
+            location: mystery.setting.location,
+            weather: 'Clear evening',
+            guestList: mystery.suspects.map(s => s.name),
+            publicKnowledge: mystery.timeline
+              .filter(t => t.isPublicKnowledge)
+              .map(t => t.description),
+          },
+          characters: mystery.suspects,
+          greetings: {}, // TODO: Generate greetings from character profiles
+          evidence: {}, // TODO: Convert evidence array to record
+          evidenceByRoom: {},
+          evidenceDialogueUnlocks: {},
+          rooms: [...new Set(mystery.timeline.map(t => t.location))],
+          killerId: mystery.killer.characterId,
+        },
+      })
+    }
+  } catch (error) {
+    console.error('[MYSTERY] Get by ID failed:', error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    res.status(500).json({ error: 'Failed to get mystery', details: errorMessage })
+  }
+})
+
 // ============================================================
 // BACKGROUND SIMULATION ENDPOINTS (Inter-Character Dynamics)
 // ============================================================
@@ -1412,12 +1719,21 @@ startCacheCleanup()
 // Initialize character locations for background simulation
 initializeCharacterLocations()
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server running on http://0.0.0.0:${PORT}`)
   console.log('Available endpoints:')
   console.log('  POST /api/chat - Chat with a character')
   console.log('  GET /api/characters - List all characters')
   console.log('  POST /api/reset - Reset conversation history')
   console.log('  GET /api/manor/activity - Get manor activity summary')
   console.log('  GET /api/manor/room/:id/enter - Enter room and overhear conversations')
+
+  // Pre-generate character introduction videos in the background
+  // Wait 5 seconds after server starts to avoid startup congestion
+  setTimeout(() => {
+    pregenerateIntroductions().catch(error => {
+      console.error('[SERVER] Failed to pre-generate introductions:', error)
+      // Don't crash the server - this is background work
+    })
+  }, 5000)
 })
