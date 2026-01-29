@@ -15,7 +15,12 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { MysteryBlueprint } from '../../shared/types/MysteryBlueprint'
 
-const anthropic = new Anthropic()
+// Lazy init — must wait for dotenv to load process.env
+let _anthropic: Anthropic | null = null
+function getAnthropic() {
+  if (!_anthropic) _anthropic = new Anthropic()
+  return _anthropic
+}
 
 export interface MysteryRequest {
   era?: string          // '1920s', '1970s', '2050s', 'Victorian', etc.
@@ -100,14 +105,18 @@ For each character, include:
 
 Generate the complete MysteryBlueprint JSON now.`
 
-  const response = await anthropic.messages.create({
+  console.log('[MysteryGenerator] Calling Claude...')
+  const startMs = Date.now()
+  const response = await getAnthropic().messages.create({
     model: 'claude-sonnet-4-20250514',
-    max_tokens: 8000,
+    max_tokens: 12000,
     messages: [
       { role: 'user', content: userPrompt }
     ],
     system: MYSTERY_GENERATOR_PROMPT,
   })
+  const elapsed = ((Date.now() - startMs) / 1000).toFixed(1)
+  console.log(`[MysteryGenerator] Claude responded in ${elapsed}s: ${response.usage?.output_tokens} tokens, stop=${response.stop_reason}`)
 
   const content = response.content[0]
   if (content.type !== 'text') {
@@ -117,13 +126,140 @@ Generate the complete MysteryBlueprint JSON now.`
   // Parse and validate the blueprint
   let blueprint: MysteryBlueprint
   try {
-    // Strip any markdown code fences if present
     let jsonText = content.text.trim()
+    
+    // Strip markdown code fences
     if (jsonText.startsWith('```')) {
       jsonText = jsonText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
     }
+    
+    // Try to find JSON object if there's preamble text
+    const jsonStart = jsonText.indexOf('{')
+    const jsonEnd = jsonText.lastIndexOf('}')
+    if (jsonStart > 0 && jsonEnd > jsonStart) {
+      jsonText = jsonText.slice(jsonStart, jsonEnd + 1)
+    }
+
+    console.log(`[MysteryGenerator] Parsing ${jsonText.length} chars of JSON...`)
     blueprint = JSON.parse(jsonText)
+    console.log(`[MysteryGenerator] Top-level keys: ${JSON.stringify(Object.keys(blueprint))}`)
+    
+    // Auto-unwrap if Claude nested under a key
+    if (!blueprint.title && Object.keys(blueprint).length === 1) {
+      const key = Object.keys(blueprint)[0]
+      console.log(`[MysteryGenerator] Unwrapping from key: ${key}`)
+      blueprint = (blueprint as any)[key]
+    }
+
+    // Normalize field names — Claude may use different keys than our schema
+    const raw = blueprint as any
+    
+    // suspects → characters
+    if (!raw.characters && raw.suspects) {
+      raw.characters = raw.suspects
+      delete raw.suspects
+    }
+    
+    // Ensure characters have required fields
+    if (raw.characters) {
+      raw.characters = raw.characters.map((c: any, i: number) => ({
+        id: c.id || c.name?.toLowerCase().replace(/\s+/g, '-') || `suspect-${i}`,
+        name: c.name,
+        role: c.role || c.occupation || c.description || 'Suspect',
+        personality: c.personality || c.temperament || '',
+        background: c.background || c.backstory || '',
+        motive: c.motive || '',
+        alibi: c.alibi || '',
+        isGuilty: c.isGuilty || c.guilty || false,
+        relationships: c.relationships || [],
+        secretKnowledge: c.secretKnowledge || c.secrets || [],
+        artPrompt: c.artPrompt || '',
+        ...c,
+      }))
+    }
+    
+    // Normalize solution — Claude may structure this many ways
+    const sol = raw.solution || {}
+    console.log(`[MysteryGenerator] Raw solution keys: ${JSON.stringify(Object.keys(sol))}`)
+    
+    // Find the killer ID from various possible fields
+    let killerId = sol.killerId || sol.killer_id || sol.killer
+    if (typeof killerId === 'object' && killerId?.id) killerId = killerId.id
+    if (typeof killerId === 'object' && killerId?.name) killerId = killerId.name.toLowerCase().replace(/\s+/g, '-')
+    if (typeof killerId === 'string' && raw.characters) {
+      // Try to match by name if it's not an ID
+      const byName = raw.characters.find((c: any) => 
+        c.name?.toLowerCase() === killerId?.toLowerCase() ||
+        c.name?.toLowerCase().replace(/\s+/g, '-') === killerId
+      )
+      if (byName) killerId = byName.id
+    }
+    
+    // Fallback: check murderer field, or find guilty character
+    if (!killerId && raw.murderer) {
+      killerId = raw.murderer.id || raw.murderer.name?.toLowerCase().replace(/\s+/g, '-')
+    }
+    if (!killerId) {
+      const guilty = raw.characters?.find((c: any) => c.isGuilty || c.guilty)
+      if (guilty) killerId = guilty.id
+    }
+    
+    raw.solution = {
+      killerId,
+      method: sol.method || sol.weapon || sol.causeOfDeath || raw.murderer?.method || '',
+      motive: sol.motive || raw.murderer?.motive || raw.motive || '',
+      explanation: sol.explanation || sol.summary || sol.narrative || '',
+    }
+    console.log(`[MysteryGenerator] Resolved killer: ${killerId}`)
+    
+    // Normalize victim
+    if (!raw.victim || typeof raw.victim === 'string') {
+      const victimName = typeof raw.victim === 'string' ? raw.victim : raw.victim?.name || 'Unknown'
+      raw.victim = {
+        name: victimName,
+        ...(typeof raw.victim === 'object' ? raw.victim : {}),
+      }
+    }
+    
+    // Normalize locations
+    if (raw.locations) {
+      raw.locations = raw.locations.map((l: any, i: number) => ({
+        id: l.id || l.name?.toLowerCase().replace(/\s+/g, '-') || `location-${i}`,
+        name: l.name,
+        description: l.description || '',
+        evidence: l.evidence || [],
+        artPrompt: l.artPrompt || '',
+        ...l,
+      }))
+    }
+    
+    // Normalize evidence
+    if (raw.evidence) {
+      raw.evidence = raw.evidence.map((e: any, i: number) => ({
+        id: e.id || e.name?.toLowerCase().replace(/\s+/g, '-') || `evidence-${i}`,
+        name: e.name || e.title || `Evidence ${i + 1}`,
+        description: e.description || '',
+        location: e.location || e.foundIn || e.room || raw.locations?.[0]?.id || 'unknown',
+        artPrompt: e.artPrompt || '',
+        ...e,
+      }))
+    }
+    
+    // Ensure id
+    if (!raw.id) {
+      raw.id = `mystery-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+    }
+    
+    // Mark the killer as guilty if not already
+    if (raw.solution?.killerId && raw.characters) {
+      const killer = raw.characters.find((c: any) => c.id === raw.solution.killerId)
+      if (killer) killer.isGuilty = true
+    }
+    
+    blueprint = raw
+    console.log(`[MysteryGenerator] Normalized: "${blueprint.title}" with ${blueprint.characters?.length} characters`)
   } catch (e) {
+    console.error('[MysteryGenerator] Raw response:', content.text.slice(0, 500))
     throw new Error(`Failed to parse mystery blueprint: ${e}`)
   }
 
@@ -194,11 +330,21 @@ function validateBlueprint(blueprint: MysteryBlueprint): void {
 
   if (!blueprint.id) errors.push('Missing id')
   if (!blueprint.title) errors.push('Missing title')
-  if (!blueprint.characters?.length) errors.push('No characters')
-  if (!blueprint.locations?.length) errors.push('No locations')
-  if (!blueprint.evidence?.length) errors.push('No evidence')
-  if (!blueprint.solution?.killerId) errors.push('No solution/killer')
   if (!blueprint.victim) errors.push('No victim')
+
+  // Critical fields — bail early if missing
+  if (!blueprint.characters?.length) {
+    throw new Error('Blueprint validation failed: No characters array')
+  }
+  if (!blueprint.locations?.length) {
+    throw new Error('Blueprint validation failed: No locations array')
+  }
+  if (!blueprint.evidence?.length) {
+    throw new Error('Blueprint validation failed: No evidence array')
+  }
+  if (!blueprint.solution?.killerId) {
+    throw new Error('Blueprint validation failed: No solution/killer')
+  }
 
   // Verify killer exists in characters
   const killerExists = blueprint.characters.some(c => c.id === blueprint.solution.killerId)
@@ -206,12 +352,19 @@ function validateBlueprint(blueprint: MysteryBlueprint): void {
 
   // Verify guilty flag matches
   const guiltyChars = blueprint.characters.filter(c => c.isGuilty)
-  if (guiltyChars.length !== 1) errors.push(`Expected 1 guilty character, found ${guiltyChars.length}`)
+  if (guiltyChars.length === 0) {
+    // Auto-fix: mark the killer as guilty
+    const killer = blueprint.characters.find(c => c.id === blueprint.solution.killerId)
+    if (killer) killer.isGuilty = true
+  }
 
-  // Verify evidence locations exist
+  // Verify evidence locations exist (soft check — log but don't fail)
   for (const ev of blueprint.evidence) {
     const locExists = blueprint.locations.some(l => l.id === ev.location) || ev.location === 'conversation'
-    if (!locExists) errors.push(`Evidence ${ev.id} references unknown location ${ev.location}`)
+    if (!locExists) {
+      console.warn(`[Validator] Evidence ${ev.id} references unknown location ${ev.location} — assigning to first location`)
+      ev.location = blueprint.locations[0].id
+    }
   }
 
   if (errors.length > 0) {

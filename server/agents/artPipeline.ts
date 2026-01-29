@@ -20,7 +20,8 @@ import * as path from 'path'
 import type { MysteryBlueprint } from '../../shared/types/MysteryBlueprint'
 import { generateArtPrompts } from './mysteryGenerator'
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
+// Lazy — dotenv may not have loaded yet at import time
+function getGeminiKey() { return process.env.GEMINI_API_KEY || '' }
 
 interface ArtAsset {
   id: string
@@ -197,14 +198,13 @@ async function processQueue(state: PipelineState): Promise<void> {
  * Generate a single image using Gemini (Nano Banana Pro)
  */
 async function generateImage(prompt: string, outputPath: string): Promise<void> {
-  const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY })
+  const ai = new GoogleGenAI({ apiKey: getGeminiKey() })
 
   const response = await ai.models.generateContent({
     model: 'gemini-2.0-flash-preview-image-generation',
     contents: prompt,
     config: {
       responseModalities: ['image', 'text'],
-      responseMimeType: 'image/png',
     },
   })
 
