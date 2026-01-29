@@ -257,7 +257,9 @@ Generate the complete MysteryBlueprint JSON now.`
       }))
     }
     
-    // Normalize evidence
+    // Normalize evidence — Claude may use clues, evidence, items, etc.
+    if (!raw.evidence && raw.clues) { raw.evidence = raw.clues; delete raw.clues }
+    if (!raw.evidence && raw.items) { raw.evidence = raw.items; delete raw.items }
     if (raw.evidence) {
       raw.evidence = raw.evidence.map((e: any, i: number) => ({
         id: e.id || e.name?.toLowerCase().replace(/\s+/g, '-') || `evidence-${i}`,
