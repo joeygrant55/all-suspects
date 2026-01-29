@@ -173,6 +173,20 @@ Generate the complete MysteryBlueprint JSON now.`
       blueprint = (blueprint as any)[key]
     }
 
+    // Extract title from metadata if not at top level
+    const raw0 = blueprint as any
+    if (!raw0.title && raw0.metadata?.title) {
+      raw0.title = raw0.metadata.title
+      raw0.subtitle = raw0.subtitle || raw0.metadata.subtitle
+      raw0.description = raw0.description || raw0.metadata.description
+      raw0.era = raw0.era || raw0.metadata.era
+      raw0.difficulty = raw0.difficulty || raw0.metadata.difficulty
+    }
+    // Extract from setting if still no title
+    if (!raw0.title && raw0.setting?.title) {
+      raw0.title = raw0.setting.title
+    }
+
     // Normalize field names — Claude may use different keys than our schema
     const raw = blueprint as any
     
@@ -266,9 +280,51 @@ Generate the complete MysteryBlueprint JSON now.`
       }))
     }
     
-    // Normalize evidence — Claude may use clues, evidence, items, etc.
+    // Normalize evidence — Claude may use clues, evidence, items, keyEvidence, etc.
     if (!raw.evidence && raw.clues) { raw.evidence = raw.clues; delete raw.clues }
     if (!raw.evidence && raw.items) { raw.evidence = raw.items; delete raw.items }
+    
+    // Extract evidence from locations if not at top level
+    if (!raw.evidence || !Array.isArray(raw.evidence) || raw.evidence.length === 0) {
+      const extracted: any[] = []
+      
+      // Check solution.keyEvidence
+      if (Array.isArray(raw.solution?.keyEvidence)) {
+        extracted.push(...raw.solution.keyEvidence.map((e: any, i: number) => 
+          typeof e === 'string' ? { name: e, description: e, type: 'physical' } : e
+        ))
+      }
+      
+      // Check locations for embedded evidence
+      if (raw.locations) {
+        for (const loc of raw.locations) {
+          const locId = loc.id || loc.name?.toLowerCase().replace(/\s+/g, '-')
+          const items = loc.evidence || loc.clues || loc.items || []
+          for (const item of (Array.isArray(items) ? items : [])) {
+            if (typeof item === 'string') {
+              extracted.push({ name: item, description: item, location: locId, type: 'physical' })
+            } else {
+              extracted.push({ ...item, location: item.location || locId })
+            }
+          }
+        }
+      }
+      
+      // Check redHerrings  
+      if (Array.isArray(raw.redHerrings)) {
+        for (const rh of raw.redHerrings) {
+          if (typeof rh === 'object' && rh.name) {
+            extracted.push({ ...rh, type: rh.type || 'physical' })
+          }
+        }
+      }
+      
+      if (extracted.length > 0) {
+        raw.evidence = extracted
+        console.log(`[MysteryGenerator] Extracted ${extracted.length} evidence items from nested sources`)
+      }
+    }
+    
     if (raw.evidence) {
       raw.evidence = raw.evidence.map((e: any, i: number) => ({
         id: e.id || e.name?.toLowerCase().replace(/\s+/g, '-') || `evidence-${i}`,
