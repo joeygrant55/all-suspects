@@ -9,7 +9,9 @@
     "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "tsx server/index.ts",
+    "build:server": "tsc -b"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.71.2",
