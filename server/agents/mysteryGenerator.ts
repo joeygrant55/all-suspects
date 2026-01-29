@@ -365,7 +365,12 @@ Generate the complete MysteryBlueprint JSON now.`
  * These prompts are optimized for Nano Banana Pro / Gemini image generation
  */
 export function generateArtPrompts(blueprint: MysteryBlueprint) {
-  const { setting, characters, locations, evidence } = blueprint
+  const rawSetting = (blueprint as any).setting
+  const setting = typeof rawSetting === 'object' ? rawSetting : { location: rawSetting || 'unknown', atmosphere: 'dark noir', weather: 'cold night' }
+  if (!setting.atmosphere) setting.atmosphere = 'dark noir'
+  if (!setting.weather) setting.weather = 'a dark night'
+  if (!setting.location) setting.location = 'unknown location'
+  const { characters, locations, evidence } = blueprint
 
   const prompts: {
     portraits: Record<string, { calm: string; nervous: string; breaking: string }>
