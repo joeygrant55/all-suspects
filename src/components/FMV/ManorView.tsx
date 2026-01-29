@@ -7,36 +7,40 @@ interface ManorViewProps {
   onSelectSuspect: (characterId: string) => void
 }
 
+// Room image mapping
+const ROOM_IMAGES: Record<string, string> = {
+  study: '/rooms/study.webp',
+  parlor: '/rooms/parlor.webp',
+  'dining-room': '/rooms/library.webp',
+  kitchen: '/rooms/kitchen.webp',
+  hallway: '/rooms/servants.webp',
+  garden: '/rooms/garden.webp',
+}
+
 // Room metadata
 const ROOM_DATA = {
   study: {
     name: 'Study',
-    icon: '📚',
     description: 'Crime scene - where Edmund was found',
   },
   parlor: {
     name: 'Parlor',
-    icon: '🛋️',
     description: 'The family gathering room',
   },
   'dining-room': {
     name: 'Dining Room',
-    icon: '🍽️',
     description: 'The formal dining hall',
   },
   kitchen: {
     name: 'Kitchen',
-    icon: '🔪',
     description: 'Servants\' domain',
   },
   hallway: {
     name: 'Hallway',
-    icon: '🚪',
     description: 'The main corridor',
   },
   garden: {
     name: 'Garden',
-    icon: '⛲',
     description: 'Outside by the fountain',
   },
 }
@@ -45,48 +49,58 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
   const { discoveredEvidenceIds, characters, setCurrentRoom } = useGameStore()
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null)
 
-  // Get undiscovered evidence count for a room
   const getUndiscoveredCount = (roomId: string) => {
     const roomEvidence = EVIDENCE_BY_ROOM[roomId] || []
     return roomEvidence.filter(id => !discoveredEvidenceIds.includes(id)).length
   }
 
-  // Check if room is fully explored
   const isRoomComplete = (roomId: string) => {
     return getUndiscoveredCount(roomId) === 0
   }
 
-  // Get characters in a room
   const getCharactersInRoom = (roomId: string) => {
     return characters.filter(c => c.location === roomId)
   }
 
-  // Get portrait image path
   const getPortraitPath = (id: string) => `/portraits/${id}.png`
 
   return (
     <div className="fixed inset-0 bg-noir-black overflow-hidden flex flex-col">
-      {/* Background texture */}
-      <div 
-        className="absolute inset-0"
+      {/* Manor exterior background */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
         style={{
-          background: 'linear-gradient(145deg, #1a1510 0%, #0d0a08 50%, #1a1510 100%)',
+          backgroundImage: 'url(/ui/manor-exterior.png)',
+          opacity: 0.3,
         }}
       />
-      
-      <div 
-        className="absolute inset-0 opacity-30"
+      {/* Dark overlay on top of exterior */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
+
+      {/* Floor plan texture overlay */}
+      <div
+        className="absolute inset-0 bg-center bg-no-repeat"
+        style={{
+          backgroundImage: 'url(/ui/manor-floorplan.png)',
+          backgroundSize: 'contain',
+          opacity: 0.15,
+          mixBlendMode: 'overlay',
+        }}
+      />
+
+      {/* Film grain */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-20"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
         }}
       />
-
       <div className="absolute inset-0 film-grain pointer-events-none" />
 
       {/* Main manor area */}
       <div className="relative z-10 flex-1 flex flex-col justify-center p-4 overflow-hidden">
         <div className="max-w-4xl mx-auto w-full">
-          
+
           {/* Section title */}
           <div className="text-center mb-12">
             <h2
@@ -108,6 +122,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
               const isComplete = isRoomComplete(id)
               const totalEvidence = (EVIDENCE_BY_ROOM[id] || []).length
               const charactersHere = getCharactersInRoom(id)
+              const roomImage = ROOM_IMAGES[id]
 
               return (
                 <motion.button
@@ -123,10 +138,10 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                   whileTap={{ scale: 0.97 }}
                 >
                   {/* Room card */}
-                  <div 
-                    className={`relative bg-noir-charcoal/80 border-2 transition-all duration-300 p-4 md:p-6 aspect-square flex flex-col items-center justify-center ${
-                      isHovered 
-                        ? 'border-noir-gold shadow-lg shadow-noir-gold/20' 
+                  <div
+                    className={`relative overflow-hidden border-2 transition-all duration-300 p-3 md:p-4 aspect-square flex flex-col items-center justify-center ${
+                      isHovered
+                        ? 'border-noir-gold shadow-lg shadow-noir-gold/30'
                         : isComplete
                           ? 'border-green-700/50'
                           : undiscovered > 0
@@ -134,39 +149,60 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                             : 'border-noir-slate/30'
                     }`}
                     style={{
+                      background: 'linear-gradient(180deg, rgba(26,21,16,0.9) 0%, rgba(13,10,8,0.95) 100%)',
                       transform: isHovered ? 'rotate(-1deg)' : 'rotate(0deg)',
                     }}
                   >
                     {/* Pushpin */}
                     <div className="absolute -top-2 md:-top-3 left-1/2 -translate-x-1/2 w-4 h-4 md:w-5 md:h-5 rounded-full bg-noir-blood border-2 border-noir-blood/50 shadow-lg z-10" />
-                    
-                    {/* Room icon */}
-                    <div 
-                      className="text-4xl md:text-6xl mb-2 md:mb-3 transition-transform"
+
+                    {/* Room image thumbnail */}
+                    <div
+                      className="relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 mb-2 md:mb-3 flex-shrink-0 transition-all duration-300"
                       style={{
-                        textShadow: isHovered ? '0 0 20px rgba(201, 162, 39, 0.5)' : 'none',
-                        transform: isHovered ? 'scale(1.1)' : 'scale(1)',
+                        borderColor: isHovered ? 'rgba(201, 162, 39, 0.8)' : 'rgba(201, 162, 39, 0.3)',
+                        boxShadow: isHovered ? '0 0 15px rgba(201, 162, 39, 0.3)' : 'none',
                       }}
                     >
-                      {room.icon}
+                      <img
+                        src={roomImage}
+                        alt={room.name}
+                        className="w-full h-full object-cover transition-all duration-300"
+                        style={{
+                          filter: isHovered
+                            ? 'sepia(0.2) contrast(1.1) brightness(1.1)'
+                            : 'sepia(0.5) contrast(1.05) brightness(0.8)',
+                        }}
+                      />
+                      {/* Vignette overlay on room image */}
+                      <div className="absolute inset-0 rounded-lg" style={{
+                        boxShadow: 'inset 0 0 15px rgba(0,0,0,0.6)',
+                      }} />
                     </div>
-                    
+
                     {/* Room name */}
-                    <h3 
-                      className="text-noir-cream font-serif text-sm md:text-base mb-1"
-                      style={{ fontFamily: 'var(--font-serif)' }}
+                    <h3
+                      className="text-noir-cream font-serif text-sm md:text-base mb-0.5 transition-colors duration-300"
+                      style={{
+                        fontFamily: 'var(--font-serif)',
+                        color: isHovered ? '#c9a227' : undefined,
+                        textShadow: isHovered ? '0 0 10px rgba(201, 162, 39, 0.4)' : 'none',
+                      }}
                     >
                       {room.name}
                     </h3>
-                    
-                    {/* Room description */}
-                    <p className="text-noir-smoke text-[10px] md:text-xs italic text-center mb-2">
+
+                    {/* Room description - visible on hover */}
+                    <p
+                      className="text-noir-smoke text-[10px] md:text-xs italic text-center mb-1.5 transition-opacity duration-300"
+                      style={{ opacity: isHovered ? 1 : 0.5 }}
+                    >
                       {room.description}
                     </p>
 
                     {/* Character thumbnails */}
                     {charactersHere.length > 0 && (
-                      <div className="flex flex-wrap gap-1 justify-center mb-2">
+                      <div className="flex flex-wrap gap-1 justify-center mb-1.5">
                         {charactersHere.map((character) => (
                           <button
                             key={character.id}
@@ -201,7 +237,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                     {/* Evidence counter */}
                     {totalEvidence > 0 && (
                       <div className={`mt-auto px-2 py-1 text-xs rounded ${
-                        isComplete 
+                        isComplete
                           ? 'bg-green-900/50 text-green-300 border border-green-700'
                           : undiscovered > 0
                             ? 'bg-noir-gold/20 text-noir-gold border border-noir-gold/30'
