@@ -108,7 +108,7 @@ Generate the complete MysteryBlueprint JSON now.`
   console.log('[MysteryGenerator] Calling Claude...')
   const startMs = Date.now()
   const response = await getAnthropic().messages.create({
-    model: 'claude-sonnet-4-20250514',
+    model: 'claude-opus-4-20250514',
     max_tokens: 12000,
     messages: [
       { role: 'user', content: userPrompt }
