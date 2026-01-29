@@ -154,7 +154,16 @@ Generate the complete MysteryBlueprint JSON now.`
     }
 
     console.log(`[MysteryGenerator] Parsing ${jsonText.length} chars of JSON...`)
-    blueprint = JSON.parse(jsonText)
+    try {
+      blueprint = JSON.parse(jsonText)
+    } catch (parseErr) {
+      // Try to repair malformed JSON
+      console.warn(`[MysteryGenerator] JSON parse failed, attempting repair...`)
+      const { jsonrepair } = await import('jsonrepair')
+      const repaired = jsonrepair(jsonText)
+      blueprint = JSON.parse(repaired)
+      console.log(`[MysteryGenerator] JSON repair succeeded!`)
+    }
     console.log(`[MysteryGenerator] Top-level keys: ${JSON.stringify(Object.keys(blueprint))}`)
     
     // Auto-unwrap if Claude nested under a key
