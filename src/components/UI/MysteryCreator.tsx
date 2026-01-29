@@ -1,0 +1,270 @@
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+
+const ERAS = [
+  { id: '1920s', label: '1920s Noir', icon: '🎷', color: '#c9a227', desc: 'Speakeasies, jazz, and shadows' },
+  { id: '1940s', label: '1940s Hollywood', icon: '🎬', color: '#e5533d', desc: 'Glamour, scandal, and silver screens' },
+  { id: '1970s', label: '1970s Disco', icon: '🪩', color: '#e879f9', desc: 'Glitter, secrets, and groove' },
+  { id: 'victorian', label: 'Victorian Gothic', icon: '🕯️', color: '#94a3b8', desc: 'Fog, gaslight, and dark manors' },
+  { id: '2050s', label: '2050s Space Station', icon: '🚀', color: '#38bdf8', desc: 'Isolation, tech, and zero gravity' },
+  { id: 'custom', label: 'Custom...', icon: '✏️', color: '#a78bfa', desc: 'Describe your own setting' },
+]
+
+const DIFFICULTIES = [
+  { id: 'easy' as const, label: 'Easy', desc: 'Clear clues, obvious suspects. Great for beginners.', color: '#4ade80' },
+  { id: 'medium' as const, label: 'Medium', desc: 'Red herrings and complex alibis. A proper challenge.', color: '#fbbf24' },
+  { id: 'hard' as const, label: 'Hard', desc: 'Everyone lies. Nothing is as it seems. Good luck.', color: '#ef4444' },
+]
+
+interface MysteryCreatorProps {
+  onGenerate: (config: { era: string; difficulty: 'easy' | 'medium' | 'hard'; theme?: string }) => void
+  onBack: () => void
+}
+
+export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
+  const [step, setStep] = useState(1)
+  const [era, setEra] = useState('')
+  const [customEra, setCustomEra] = useState('')
+  const [difficulty, setDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
+  const [theme, setTheme] = useState('')
+
+  const handleGenerate = () => {
+    onGenerate({
+      era: era === 'custom' ? customEra : era,
+      difficulty,
+      theme: theme || undefined,
+    })
+  }
+
+  const canProceed = step === 1 ? (era && (era !== 'custom' || customEra.trim())) : true
+
+  return (
+    <div className="h-screen w-screen bg-noir-black flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Film grain */}
+      <div className="absolute inset-0 film-grain pointer-events-none" />
+      
+      {/* Vignette */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.8) 100%)',
+        }}
+      />
+
+      {/* Corner decorations */}
+      <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-noir-gold opacity-30" />
+      <div className="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-noir-gold opacity-30" />
+      <div className="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-noir-gold opacity-30" />
+      <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-noir-gold opacity-30" />
+
+      {/* Step indicator */}
+      <div className="relative z-10 flex items-center gap-3 mb-8">
+        {[1, 2, 3].map((s) => (
+          <div key={s} className="flex items-center gap-3">
+            <div
+              className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs transition-all duration-300 ${
+                s === step
+                  ? 'border-noir-gold text-noir-gold bg-noir-gold/10'
+                  : s < step
+                    ? 'border-noir-gold/50 text-noir-gold/50 bg-noir-gold/5'
+                    : 'border-noir-slate text-noir-slate'
+              }`}
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              {s}
+            </div>
+            {s < 3 && <div className={`w-12 h-px ${s < step ? 'bg-noir-gold/50' : 'bg-noir-slate/30'}`} />}
+          </div>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        {/* Step 1: Era */}
+        {step === 1 && (
+          <motion.div
+            key="era"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="relative z-10 text-center max-w-4xl w-full px-8"
+          >
+            <h2
+              className="text-4xl font-bold tracking-wider mb-2 text-noir-gold"
+              style={{ fontFamily: 'Georgia, serif', textShadow: '0 0 40px rgba(201,162,39,0.4)' }}
+            >
+              CHOOSE YOUR ERA
+            </h2>
+            <p className="text-noir-smoke text-sm tracking-[0.2em] mb-10" style={{ fontFamily: 'Georgia, serif' }}>
+              Every era has its own darkness
+            </p>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+              {ERAS.map((e) => (
+                <motion.button
+                  key={e.id}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setEra(e.id)}
+                  className={`group relative p-6 border-2 transition-all duration-300 text-left ${
+                    era === e.id
+                      ? 'border-noir-gold bg-noir-gold/10'
+                      : 'border-noir-slate/40 hover:border-noir-slate bg-noir-black/50'
+                  }`}
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  <div className="text-3xl mb-3">{e.icon}</div>
+                  <div className="text-lg font-bold mb-1" style={{ color: era === e.id ? e.color : '#f5f0e8' }}>
+                    {e.label}
+                  </div>
+                  <div className="text-xs text-noir-smoke">{e.desc}</div>
+                  {era === e.id && (
+                    <motion.div
+                      layoutId="era-selected"
+                      className="absolute inset-0 border-2 border-noir-gold pointer-events-none"
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                    />
+                  )}
+                </motion.button>
+              ))}
+            </div>
+
+            {/* Custom era input */}
+            <AnimatePresence>
+              {era === 'custom' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="mb-8"
+                >
+                  <input
+                    type="text"
+                    value={customEra}
+                    onChange={(e) => setCustomEra(e.target.value)}
+                    placeholder="e.g., 1890s Wild West, Medieval Castle, Cyberpunk Tokyo..."
+                    className="w-full max-w-lg bg-noir-black border-2 border-noir-slate/50 focus:border-noir-gold text-noir-cream px-4 py-3 text-sm outline-none transition-colors"
+                    style={{ fontFamily: 'Georgia, serif' }}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
+
+        {/* Step 2: Difficulty */}
+        {step === 2 && (
+          <motion.div
+            key="difficulty"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="relative z-10 text-center max-w-3xl w-full px-8"
+          >
+            <h2
+              className="text-4xl font-bold tracking-wider mb-2 text-noir-gold"
+              style={{ fontFamily: 'Georgia, serif', textShadow: '0 0 40px rgba(201,162,39,0.4)' }}
+            >
+              HOW SHARP ARE YOU?
+            </h2>
+            <p className="text-noir-smoke text-sm tracking-[0.2em] mb-10" style={{ fontFamily: 'Georgia, serif' }}>
+              Choose your level of deception
+            </p>
+
+            <div className="flex flex-col gap-4 mb-8">
+              {DIFFICULTIES.map((d) => (
+                <motion.button
+                  key={d.id}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setDifficulty(d.id)}
+                  className={`relative p-6 border-2 transition-all duration-300 text-left flex items-center gap-6 ${
+                    difficulty === d.id
+                      ? 'border-noir-gold bg-noir-gold/10'
+                      : 'border-noir-slate/40 hover:border-noir-slate bg-noir-black/50'
+                  }`}
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  <div
+                    className="text-3xl font-bold w-16 text-center"
+                    style={{ color: d.color }}
+                  >
+                    {d.id === 'easy' ? 'I' : d.id === 'medium' ? 'II' : 'III'}
+                  </div>
+                  <div>
+                    <div className="text-lg font-bold text-noir-cream mb-1">{d.label}</div>
+                    <div className="text-sm text-noir-smoke">{d.desc}</div>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3: Theme */}
+        {step === 3 && (
+          <motion.div
+            key="theme"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.3 }}
+            className="relative z-10 text-center max-w-2xl w-full px-8"
+          >
+            <h2
+              className="text-4xl font-bold tracking-wider mb-2 text-noir-gold"
+              style={{ fontFamily: 'Georgia, serif', textShadow: '0 0 40px rgba(201,162,39,0.4)' }}
+            >
+              ANY SPECIAL REQUESTS?
+            </h2>
+            <p className="text-noir-smoke text-sm tracking-[0.2em] mb-10" style={{ fontFamily: 'Georgia, serif' }}>
+              Optional — guide the mystery architect
+            </p>
+
+            <textarea
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              placeholder={`"I want a love triangle gone wrong"\n"Make it extra spooky"\n"Include a secret society"\n"The victim was beloved by everyone"`}
+              rows={4}
+              className="w-full bg-noir-black border-2 border-noir-slate/50 focus:border-noir-gold text-noir-cream px-4 py-3 text-sm outline-none transition-colors resize-none mb-10"
+              style={{ fontFamily: 'Georgia, serif' }}
+            />
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handleGenerate}
+              className="px-12 py-4 bg-noir-gold text-noir-black text-lg font-bold tracking-widest hover:bg-opacity-90 transition-all duration-300"
+              style={{ fontFamily: 'Georgia, serif' }}
+            >
+              ✨ GENERATE MYSTERY
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Navigation */}
+      <div className="relative z-10 flex items-center gap-4 mt-8">
+        <button
+          onClick={() => (step > 1 ? setStep(step - 1) : onBack())}
+          className="px-6 py-2 border border-noir-slate text-noir-slate text-sm tracking-wider hover:border-noir-gold hover:text-noir-gold transition-all duration-300"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          ← {step > 1 ? 'BACK' : 'CANCEL'}
+        </button>
+
+        {step < 3 && (
+          <button
+            onClick={() => setStep(step + 1)}
+            disabled={!canProceed}
+            className="px-6 py-2 border border-noir-gold text-noir-gold text-sm tracking-wider hover:bg-noir-gold hover:text-noir-black transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed"
+            style={{ fontFamily: 'Georgia, serif' }}
+          >
+            NEXT →
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}

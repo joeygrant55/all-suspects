@@ -3,7 +3,11 @@ import { useMysteryStore } from '../../game/mysteryState'
 import { useGameStore } from '../../game/state'
 import { getAvailableMysteries } from '../../mysteries/registry'
 
-export function MysterySelect() {
+interface MysterySelectProps {
+  onCreateNew?: () => void
+}
+
+export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const {
     availableMysteries,
@@ -159,8 +163,9 @@ export function MysterySelect() {
 
           {/* Generate New Mystery Card */}
           <div
-            className="group relative bg-gradient-to-br from-noir-black to-noir-charcoal border-2 border-noir-gold p-6"
+            className="group relative bg-gradient-to-br from-noir-black to-noir-charcoal border-2 border-noir-gold p-6 cursor-pointer"
             style={{ fontFamily: 'Georgia, serif' }}
+            onClick={() => onCreateNew ? onCreateNew() : handleGenerateMystery()}
           >
             {/* Decorative corners */}
             <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-noir-gold" />
@@ -177,32 +182,37 @@ export function MysterySelect() {
                   Generate a unique, never-before-seen case crafted by AI
                 </p>
 
-                {/* Difficulty selector */}
-                <div className="mb-6">
-                  <label className="block text-noir-smoke text-xs mb-2 tracking-wider">
-                    DIFFICULTY
-                  </label>
-                  <div className="flex gap-2">
-                    {(['easy', 'medium', 'hard'] as const).map((diff) => (
-                      <button
-                        key={diff}
-                        onClick={() => setSelectedDifficulty(diff)}
-                        className={`flex-1 py-2 text-xs tracking-wider transition-all duration-300 ${
-                          selectedDifficulty === diff
-                            ? 'bg-noir-gold text-noir-black'
-                            : 'border border-noir-slate text-noir-smoke hover:border-noir-gold'
-                        }`}
-                      >
-                        {diff.toUpperCase()}
-                      </button>
-                    ))}
+                {!onCreateNew && (
+                  /* Difficulty selector - only shown in legacy mode */
+                  <div className="mb-6">
+                    <label className="block text-noir-smoke text-xs mb-2 tracking-wider">
+                      DIFFICULTY
+                    </label>
+                    <div className="flex gap-2">
+                      {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                        <button
+                          key={diff}
+                          onClick={(e) => { e.stopPropagation(); setSelectedDifficulty(diff) }}
+                          className={`flex-1 py-2 text-xs tracking-wider transition-all duration-300 ${
+                            selectedDifficulty === diff
+                              ? 'bg-noir-gold text-noir-black'
+                              : 'border border-noir-slate text-noir-smoke hover:border-noir-gold'
+                          }`}
+                        >
+                          {diff.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Generate button */}
               <button
-                onClick={handleGenerateMystery}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onCreateNew ? onCreateNew() : handleGenerateMystery()
+                }}
                 disabled={isGenerating}
                 className="w-full py-3 bg-noir-gold text-noir-black text-sm font-bold tracking-wider hover:bg-opacity-90 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -211,6 +221,8 @@ export function MysterySelect() {
                     <span className="inline-block w-4 h-4 border-2 border-noir-black border-t-transparent rounded-full animate-spin" />
                     GENERATING...
                   </span>
+                ) : onCreateNew ? (
+                  'CREATE NEW MYSTERY →'
                 ) : (
                   'GENERATE MYSTERY'
                 )}

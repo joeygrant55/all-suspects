@@ -86,6 +86,10 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 
+// Mystery generation API
+import mysteryRouter from './agents/mysteryApi'
+app.use('/api/mystery', mysteryRouter)
+
 // Initialize Anthropic client
 const anthropic = new Anthropic()
 

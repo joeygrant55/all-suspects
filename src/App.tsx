@@ -5,6 +5,8 @@ import { RoomExploration } from './components/FMV/RoomExploration'
 import { 
   TitleScreen,
   MysterySelect,
+  MysteryCreator,
+  MysteryLoading,
   EvidenceBoard, 
   AccusationModal, 
   TutorialModal, 
@@ -14,6 +16,7 @@ import {
 } from './components/UI'
 import { WatsonWhisper, WatsonDesk } from './components/Watson'
 import { useGameStore } from './game/state'
+import { useMysteryStore } from './game/mysteryState'
 import { useWatsonStore } from './game/watsonState'
 import { useAudioManager, AudioContext } from './hooks/useAudioManager'
 import { useVoice, VoiceContext } from './hooks/useVoice'
@@ -37,11 +40,19 @@ function App() {
   } = useGameStore()
 
   const [mysterySelectOpen, setMysterySelectOpen] = useState(false)
+  const [creatorOpen, setCreatorOpen] = useState(false)
+  const [loadingMysteryId, setLoadingMysteryId] = useState<string | null>(null)
+  const [blueprintPreview, setBlueprintPreview] = useState<{
+    title: string; setting?: string; era?: string; suspectCount?: number
+  } | null>(null)
 
   // Reset mystery select when game is reset
   useEffect(() => {
     if (!gameStarted) {
       setMysterySelectOpen(false)
+      setCreatorOpen(false)
+      setLoadingMysteryId(null)
+      setBlueprintPreview(null)
     }
   }, [gameStarted])
 
@@ -157,13 +168,90 @@ function App() {
     return roomNames[roomId] || roomId
   }
 
+  // Handle mystery generation flow
+  const handleGenerateMystery = async (config: { era: string; difficulty: 'easy' | 'medium' | 'hard'; theme?: string }) => {
+    setCreatorOpen(false)
+    setLoadingMysteryId(null)
+    setBlueprintPreview(null)
+
+    try {
+      const API_BASE = 'http://localhost:3001'
+      const res = await fetch(`${API_BASE}/api/mystery/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      })
+      const data = await res.json()
+      if (data.success && data.mysteryId) {
+        setLoadingMysteryId(data.mysteryId)
+        // Poll for blueprint
+        const pollBlueprint = async () => {
+          try {
+            const bpRes = await fetch(`${API_BASE}/api/mystery/${data.mysteryId}/blueprint`)
+            if (bpRes.ok) {
+              const bp = await bpRes.json()
+              if (bp && bp.title) {
+                setBlueprintPreview({
+                  title: bp.title,
+                  setting: bp.setting?.location,
+                  era: bp.era,
+                  suspectCount: bp.characters?.length,
+                })
+                return true
+              }
+            }
+          } catch { /* retry */ }
+          return false
+        }
+        // Poll every 2s until blueprint ready
+        const interval = setInterval(async () => {
+          const done = await pollBlueprint()
+          if (done) clearInterval(interval)
+        }, 2000)
+        // Also try immediately
+        await pollBlueprint()
+      }
+    } catch (err) {
+      console.error('Failed to generate mystery:', err)
+      setCreatorOpen(true) // go back to creator on error
+    }
+  }
+
+  const initializeFromMystery = useGameStore((s) => s.initializeFromMystery)
+  const startGame = useGameStore((s) => s.startGame)
+
+  const handleEnterGeneratedMystery = async () => {
+    if (!loadingMysteryId) return
+    try {
+      await useMysteryStore.getState().loadMystery(loadingMysteryId)
+      const mystery = useMysteryStore.getState().activeMystery
+      if (mystery) {
+        initializeFromMystery(mystery)
+        startGame()
+      }
+    } catch (err) {
+      console.error('Failed to enter mystery:', err)
+    }
+  }
+
   // Title screen and mystery selection
   if (!gameStarted) {
     return (
       <AudioContext.Provider value={audioManager}>
         <VoiceContext.Provider value={voiceManager}>
-          {mysterySelectOpen ? (
-            <MysterySelect />
+          {loadingMysteryId ? (
+            <MysteryLoading
+              mysteryId={loadingMysteryId}
+              blueprint={blueprintPreview}
+              onEnter={handleEnterGeneratedMystery}
+            />
+          ) : creatorOpen ? (
+            <MysteryCreator
+              onGenerate={handleGenerateMystery}
+              onBack={() => setCreatorOpen(false)}
+            />
+          ) : mysterySelectOpen ? (
+            <MysterySelect onCreateNew={() => { setMysterySelectOpen(false); setCreatorOpen(true) }} />
           ) : (
             <TitleScreen onNewGame={() => setMysterySelectOpen(true)} />
           )}
