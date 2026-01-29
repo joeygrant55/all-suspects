@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { type PortraitMood, getPortraitPath } from '../../utils/portraitMood'
 
 interface CharacterPortraitProps {
   characterId: string
@@ -6,6 +7,7 @@ interface CharacterPortraitProps {
   role: string
   size?: 'small' | 'medium' | 'large'
   isActive?: boolean
+  mood?: PortraitMood
 }
 
 // Character-specific colors for their silhouettes
@@ -28,29 +30,39 @@ const CHARACTER_INITIALS: Record<string, string> = {
   james: 'J',
 }
 
-// Portrait image paths (relative to public folder)
-const PORTRAIT_PATHS: Record<string, string> = {
-  victoria: '/portraits/victoria.png',
-  thomas: '/portraits/thomas.png',
-  eleanor: '/portraits/eleanor.png',
-  marcus: '/portraits/marcus.png',
-  lillian: '/portraits/lillian.png',
-  james: '/portraits/james.png',
-}
-
 export function CharacterPortrait({
   characterId,
   name,
   role,
   size = 'medium',
   isActive = false,
+  mood = 'calm',
 }: CharacterPortraitProps) {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [imageError, setImageError] = useState(false)
+  // Track previous portrait for crossfade
+  const [displayedMood, setDisplayedMood] = useState<PortraitMood>(mood)
+  const [fadingOut, setFadingOut] = useState(false)
+  const prevMoodRef = useRef<PortraitMood>(mood)
+
+  // Crossfade when mood changes
+  useEffect(() => {
+    if (mood !== prevMoodRef.current) {
+      setFadingOut(true)
+      const timer = setTimeout(() => {
+        setDisplayedMood(mood)
+        setImageLoaded(false)
+        setImageError(false)
+        setFadingOut(false)
+        prevMoodRef.current = mood
+      }, 250) // half of the 0.5s transition
+      return () => clearTimeout(timer)
+    }
+  }, [mood])
 
   const colors = CHARACTER_COLORS[characterId] || { primary: '#2d2d2d', accent: '#c9a227' }
   const initials = CHARACTER_INITIALS[characterId] || name.charAt(0)
-  const portraitPath = PORTRAIT_PATHS[characterId]
+  const portraitPath = getPortraitPath(characterId, displayedMood)
 
   const sizeClasses = {
     small: 'w-12 h-12',
@@ -86,14 +98,17 @@ export function CharacterPortrait({
           }}
         />
 
-        {/* AI-generated portrait image */}
+        {/* AI-generated portrait image with mood crossfade */}
         {showImage && (
           <img
+            key={displayedMood}
             src={portraitPath}
-            alt={`Portrait of ${name}`}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
+            alt={`Portrait of ${name} (${displayedMood})`}
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              opacity: imageLoaded && !fadingOut ? 1 : 0,
+              transition: 'opacity 0.5s ease-in-out',
+            }}
             onLoad={() => setImageLoaded(true)}
             onError={() => setImageError(true)}
           />

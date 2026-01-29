@@ -286,6 +286,21 @@ export function InterrogationModal() {
     )
   }, [])
 
+  // Map character locations to room background images
+  const getRoomBackground = (character: typeof currentCharacter) => {
+    if (!character) return null
+    const locationMap: Record<string, string> = {
+      parlor: '/rooms/parlor.webp',
+      study: '/rooms/study.webp',
+      garden: '/rooms/garden.webp',
+      kitchen: '/rooms/kitchen.webp',
+      library: '/rooms/library.webp',
+      'dining-room': '/rooms/parlor.webp',
+      hallway: '/rooms/servants.webp',
+    }
+    return locationMap[character.location] || null
+  }
+
   // Don't render if no conversation
   if (!currentConversation || !currentCharacter) {
     return null
@@ -323,6 +338,20 @@ export function InterrogationModal() {
           boxShadow: '0 0 60px rgba(0, 0, 0, 0.8), 0 0 100px rgba(201, 162, 39, 0.1)',
         }}
       >
+        {/* Room background layer */}
+        {getRoomBackground(currentCharacter) && (
+          <div
+            className="absolute inset-0 z-0 transition-opacity duration-1000 ease-in-out"
+            style={{
+              backgroundImage: `url(${getRoomBackground(currentCharacter)})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center',
+              opacity: 0.15,
+              filter: 'sepia(0.4) contrast(1.1) brightness(0.6)',
+            }}
+          />
+        )}
+
         {/* Cinematic effects layer */}
         <CinematicEffects showGrain={true} showVignette={true} />
 

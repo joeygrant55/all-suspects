@@ -181,17 +181,22 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
 
   return (
     <div className="fixed inset-0 bg-noir-black overflow-hidden flex flex-col">
-      {/* Cork board background texture */}
+      {/* Cork board background image */}
       <div 
         className="absolute inset-0"
         style={{
-          background: 'linear-gradient(145deg, #1a1510 0%, #0d0a08 50%, #1a1510 100%)',
+          backgroundImage: 'url(/ui/case-board-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.35,
         }}
       />
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-noir-black/60" />
       
       {/* Subtle texture overlay */}
       <div 
-        className="absolute inset-0 opacity-30"
+        className="absolute inset-0 opacity-20"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
         }}
@@ -199,6 +204,15 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
 
       {/* Film grain */}
       <div className="absolute inset-0 film-grain pointer-events-none" />
+
+      {/* Decorative red string SVG connecting suspects */}
+      <svg className="absolute inset-0 z-[1] pointer-events-none" width="100%" height="100%">
+        <line x1="25%" y1="35%" x2="50%" y2="35%" stroke="#8b1a1a" strokeWidth="1" opacity="0.3" />
+        <line x1="50%" y1="35%" x2="75%" y2="35%" stroke="#8b1a1a" strokeWidth="1" opacity="0.25" />
+        <line x1="25%" y1="70%" x2="50%" y2="35%" stroke="#8b1a1a" strokeWidth="1" opacity="0.2" />
+        <line x1="75%" y1="35%" x2="50%" y2="70%" stroke="#8b1a1a" strokeWidth="1" opacity="0.25" />
+        <line x1="25%" y1="35%" x2="75%" y2="70%" stroke="#8b1a1a" strokeWidth="1" opacity="0.15" />
+      </svg>
 
       {/* Header - compact */}
       <div className="relative z-10 px-4 py-2 border-b border-noir-gold/20 flex-shrink-0">
@@ -359,23 +373,35 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {/* Suspect card */}
+                  {/* Suspect card - Polaroid style */}
                   <div 
-                    className={`relative bg-noir-charcoal/80 border-2 transition-all duration-300 h-full flex flex-col ${
+                    className={`relative transition-all duration-300 h-full flex flex-col ${
                       isHovered 
-                        ? 'border-noir-gold shadow-lg shadow-noir-gold/20' 
-                        : hasContradiction
-                          ? 'border-noir-blood/50'
-                          : questioned
-                            ? 'border-noir-gold/40'
-                            : 'border-noir-slate/30'
+                        ? 'shadow-xl shadow-noir-gold/30' 
+                        : 'shadow-lg shadow-black/50'
                     }`}
                     style={{
-                      transform: isHovered ? 'rotate(-1deg)' : 'rotate(0deg)',
+                      transform: isHovered ? 'rotate(0deg) scale(1.02)' : `rotate(${[-2, 1.5, -1, 2.5, -1.5, 1][index]}deg)`,
+                      background: '#f5f0e8',
+                      padding: '6px 6px 28px 6px',
+                      border: hasContradiction 
+                        ? '2px solid rgba(139, 26, 26, 0.6)' 
+                        : isHovered 
+                          ? '2px solid rgba(201, 162, 39, 0.5)' 
+                          : questioned 
+                            ? '2px solid rgba(201, 162, 39, 0.25)' 
+                            : '2px solid rgba(200, 195, 180, 0.3)',
                     }}
                   >
-                    {/* Pushpin */}
-                    <div className="absolute -top-2 md:-top-3 left-1/2 -translate-x-1/2 w-4 h-4 md:w-5 md:h-5 rounded-full bg-noir-blood border-2 border-noir-blood/50 shadow-lg z-10" />
+                    {/* Brass pin */}
+                    <div 
+                      className="absolute -top-2 md:-top-3 left-1/2 -translate-x-1/2 w-4 h-4 md:w-5 md:h-5 rounded-full z-10 border-2"
+                      style={{
+                        background: 'radial-gradient(circle at 35% 35%, #d4a843, #8b6914, #5c4a0e)',
+                        borderColor: '#8b6914',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                      }}
+                    />
                     
                     {/* Photo area - fills available height */}
                     <div className="flex-1 min-h-0 bg-gradient-to-br from-noir-slate/50 to-noir-charcoal overflow-hidden relative">
@@ -402,15 +428,15 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                       )}
                     </div>
                     
-                    {/* Info strip - very compact */}
-                    <div className="p-1.5 md:p-2 bg-noir-black/50">
+                    {/* Info strip - polaroid caption */}
+                    <div className="absolute bottom-0 left-0 right-0 px-2 py-0.5" style={{ background: '#f5f0e8' }}>
                       <h3 
-                        className="text-noir-cream font-serif text-xs md:text-sm truncate"
-                        style={{ fontFamily: 'var(--font-serif)' }}
+                        className="text-xs md:text-sm truncate"
+                        style={{ fontFamily: 'var(--font-serif)', color: '#2a2218' }}
                       >
                         {character.name}
                       </h3>
-                      <p className="text-noir-gold/70 text-[10px] md:text-xs italic truncate">
+                      <p className="text-[10px] md:text-xs italic truncate" style={{ color: '#6b5c3e' }}>
                         {character.role}
                       </p>
                     </div>

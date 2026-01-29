@@ -11,6 +11,8 @@ export function TitleScreen({ onNewGame }: TitleScreenProps) {
   const handleStart = () => {
     // Initialize audio on user interaction (required by browsers)
     audioManager?.initializeAudio()
+    audioManager?.toggleMusic() // Enable music (starts disabled due to autoplay policy)
+    audioManager?.playSfx('click')
     // Show mystery selection screen
     if (onNewGame) {
       onNewGame()
@@ -19,6 +21,22 @@ export function TitleScreen({ onNewGame }: TitleScreenProps) {
 
   return (
     <div className="h-screen w-screen bg-noir-black flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Background image */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'url(/ui/title-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.4,
+        }}
+      />
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 bg-noir-black/60 pointer-events-none" />
+
+      {/* Film grain */}
+      <div className="absolute inset-0 film-grain pointer-events-none" />
+
       {/* Vignette overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
@@ -41,15 +59,22 @@ export function TitleScreen({ onNewGame }: TitleScreenProps) {
       {/* Title */}
       <div className="relative z-10 text-center">
         <h1
-          className="text-7xl font-bold tracking-wider mb-2"
+          className="text-7xl md:text-8xl font-bold tracking-[0.25em] mb-2"
           style={{
-            fontFamily: 'Georgia, serif',
+            fontFamily: 'Georgia, "Playfair Display", serif',
             color: '#c9a227',
-            textShadow: '0 0 40px rgba(201, 162, 39, 0.5), 0 0 80px rgba(201, 162, 39, 0.3)',
+            textShadow: '0 0 40px rgba(201, 162, 39, 0.5), 0 0 80px rgba(201, 162, 39, 0.3), 0 2px 4px rgba(0,0,0,0.8)',
+            letterSpacing: '0.25em',
           }}
         >
           ALL SUSPECTS
         </h1>
+        <div
+          className="text-noir-cream/70 text-base md:text-lg tracking-[0.2em] italic mb-4"
+          style={{ fontFamily: 'Georgia, serif' }}
+        >
+          Everyone has a secret. Nobody is innocent.
+        </div>
         <div
           className="text-noir-cream text-xl tracking-[0.3em] mb-12"
           style={{ fontFamily: 'Georgia, serif' }}

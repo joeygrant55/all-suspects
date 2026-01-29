@@ -6,6 +6,7 @@ import { sendMessage, analyzeWithWatson, checkVideoStatus } from '../../api/clie
 import { EVIDENCE_DATABASE } from '../../data/evidence'
 import { useVoiceContext } from '../../hooks/useVoice'
 import { CinematicMoment, CinematicGenerating } from './CinematicMoment'
+import { getMoodFromPressure } from '../../utils/portraitMood'
 
 type InterrogationTactic = 'alibi' | 'present_evidence' | 'cross_reference' | 'bluff' | null
 
@@ -122,6 +123,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   const [lastQuestion, setLastQuestion] = useState<string | null>(null)
   const [showRetry, setShowRetry] = useState(false)
   const [pressureIncreased, setPressureIncreased] = useState(false)
+  const [rawPressure, setRawPressure] = useState(0) // 0-100 scale for portrait mood
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const conversationRef = useRef<HTMLDivElement>(null)
   const retryTimeoutRef = useRef<number | null>(null)
@@ -255,6 +257,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       // Update pressure if returned
       if (response.pressure) {
         updateCharacterPressure(characterId, response.pressure)
+        setRawPressure(response.pressure.level)
         // Convert 0-100 scale to 1-5 scale with better responsiveness
         // Thresholds: 0-15=1, 16-35=2, 36-60=3, 61-80=4, 81+=5
         let convertedLevel: 1|2|3|4|5 = 1
@@ -517,6 +520,16 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
 
   return (
     <div className="fixed inset-0 bg-noir-black z-50">
+      {/* Interrogation room atmospheric background */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'url(/ui/interrogation-bg.png)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          opacity: 0.12,
+        }}
+      />
       {/* Film grain */}
       <div className="absolute inset-0 film-grain pointer-events-none" />
 
@@ -609,6 +622,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 role={character.role}
                 size="medium"
                 isActive={true}
+                mood={getMoodFromPressure(rawPressure)}
               />
               {/* Voice playing indicator */}
               {isPlaying && (

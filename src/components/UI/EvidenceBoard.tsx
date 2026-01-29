@@ -197,9 +197,19 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
           border: '8px solid #1a1510',
         }}
       >
-        {/* Cork texture overlay */}
+        {/* Cork board texture background */}
         <div
-          className="absolute inset-0 opacity-30"
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: `url("/evidence/board.webp")`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            filter: 'sepia(0.3) brightness(0.8)',
+          }}
+        />
+        {/* Additional noise overlay for depth */}
+        <div
+          className="absolute inset-0 opacity-15"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
           }}
@@ -369,6 +379,16 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
                           <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-red-600 shadow-sm" />
                           
                           <div className="flex items-start justify-between gap-4">
+                            {/* Evidence artwork */}
+                            {evidenceData?.image && (
+                              <div className="w-16 h-16 shrink-0 rounded-sm overflow-hidden border border-noir-black/20 shadow-inner">
+                                <img
+                                  src={evidenceData.image}
+                                  alt={evidenceData.name}
+                                  className="w-full h-full object-cover filter sepia-[0.2] contrast-[1.1]"
+                                />
+                              </div>
+                            )}
                             <div className="flex-1">
                               <p className="font-medium" style={{ fontFamily: 'Georgia, serif' }}>
                                 {evidenceData?.name || evidence.description}

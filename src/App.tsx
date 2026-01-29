@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useContext } from 'react'
 import { IntroSequence, CaseBoard, CharacterInterrogation } from './components/FMV'
 import { IntroVideo } from './components/VideoPlayer/IntroVideo'
 import { RoomExploration } from './components/FMV/RoomExploration'
@@ -69,6 +69,24 @@ function App() {
 
   // Voice manager (ElevenLabs)
   const voiceManager = useVoice()
+
+  // Play jazz ambient music on title screen and case board
+  useEffect(() => {
+    if (!gameStarted || currentScreen === 'map') {
+      audioManager.playMusic()
+    } else if (currentScreen === 'interrogation' || currentScreen === 'room') {
+      // Keep music playing but it's managed by the hook's volume
+    }
+  }, [gameStarted, currentScreen])
+
+  // Set room ambience based on current room when exploring
+  useEffect(() => {
+    if (currentScreen === 'room') {
+      audioManager.setRoomAmbience(currentRoom)
+    } else {
+      audioManager.setRoomAmbience(null)
+    }
+  }, [currentScreen, currentRoom])
   
   // Score tracking (wires game events to score store)
   useScoreTracking()
@@ -97,9 +115,11 @@ function App() {
   const handleSelectSuspect = (characterId: string) => {
     audioManager.playSfx('click')
     // Show intro video first time, then go straight to interrogation
+    audioManager.playSfx('doorOpen')
     if (!seenIntros.has(characterId)) {
       setShowCharacterIntro(characterId)
     } else {
+      audioManager.playSfx('conversationStart')
       startConversation(characterId)
     }
   }
@@ -107,10 +127,11 @@ function App() {
   const handleIntroComplete = useCallback(() => {
     if (showCharacterIntro) {
       setSeenIntros(prev => new Set(prev).add(showCharacterIntro))
+      audioManager.playSfx('conversationStart')
       startConversation(showCharacterIntro)
       setShowCharacterIntro(null)
     }
-  }, [showCharacterIntro, startConversation])
+  }, [showCharacterIntro, startConversation, audioManager])
 
   const handleCloseInterrogation = () => {
     endConversation()
@@ -270,7 +291,7 @@ function App() {
 
 // Audio controls component
 function AudioControls() {
-  const audioManager = useAudioManager()
+  const audioManager = useContext(AudioContext)!
   const voiceManager = useVoice()
   const [expanded, setExpanded] = useState(false)
 
