@@ -105,9 +105,13 @@ For each character, include:
 
 Generate the complete MysteryBlueprint JSON now.`
 
-  console.log('[MysteryGenerator] Calling Claude...')
+  console.log('[MysteryGenerator] Calling Claude Opus (streaming)...')
   const startMs = Date.now()
-  const response = await getAnthropic().messages.create({
+  
+  // Use streaming — required for Opus which can take >10 minutes
+  let fullText = ''
+  let outputTokens = 0
+  const stream = getAnthropic().messages.stream({
     model: 'claude-opus-4-20250514',
     max_tokens: 12000,
     messages: [
@@ -115,12 +119,21 @@ Generate the complete MysteryBlueprint JSON now.`
     ],
     system: MYSTERY_GENERATOR_PROMPT,
   })
+  
+  for await (const event of stream) {
+    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+      fullText += event.delta.text
+    }
+  }
+  
+  const finalMessage = await stream.finalMessage()
+  outputTokens = finalMessage.usage?.output_tokens || 0
   const elapsed = ((Date.now() - startMs) / 1000).toFixed(1)
-  console.log(`[MysteryGenerator] Claude responded in ${elapsed}s: ${response.usage?.output_tokens} tokens, stop=${response.stop_reason}`)
+  console.log(`[MysteryGenerator] Claude responded in ${elapsed}s: ${outputTokens} tokens, stop=${finalMessage.stop_reason}`)
 
-  const content = response.content[0]
-  if (content.type !== 'text') {
-    throw new Error('Unexpected response type from Claude')
+  const content = { type: 'text' as const, text: fullText }
+  if (!fullText) {
+    throw new Error('Empty response from Claude')
   }
 
   // Parse and validate the blueprint
