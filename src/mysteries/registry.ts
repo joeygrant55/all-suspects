@@ -89,12 +89,13 @@ export async function loadMysteryById(id: string): Promise<LoadedMystery | null>
       }
 
     default:
-      // Try loading from API (generated mystery)
+      // Try loading generated mystery from API
       try {
-        const response = await fetch(`http://localhost:3001/api/mystery/${id}`)
+        const response = await fetch(`http://localhost:3001/api/mystery/${id}/blueprint`)
         if (response.ok) {
-          const data = await response.json()
-          return data.mystery
+          const blueprint = await response.json()
+          const { adaptBlueprint } = await import('./blueprintAdapter')
+          return adaptBlueprint(blueprint)
         }
       } catch (error) {
         console.error('Error loading mystery from API:', error)

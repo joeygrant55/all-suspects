@@ -182,9 +182,18 @@ function App() {
         body: JSON.stringify(config),
       })
       const data = await res.json()
-      if (data.success && data.mysteryId) {
+      if (data.mysteryId) {
         setLoadingMysteryId(data.mysteryId)
-        // Poll for blueprint
+        // Blueprint comes with the response — set it immediately
+        if (data.blueprint) {
+          setBlueprintPreview({
+            title: data.blueprint.title,
+            setting: data.blueprint.setting?.location || data.blueprint.setting,
+            era: data.blueprint.era,
+            suspectCount: data.blueprint.characters?.length,
+          })
+        }
+        // Also try polling in case the blueprint wasn't in the response
         const pollBlueprint = async () => {
           try {
             const bpRes = await fetch(`${API_BASE}/api/mystery/${data.mysteryId}/blueprint`)

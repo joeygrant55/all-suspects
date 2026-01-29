@@ -1,0 +1,615 @@
+{
+  "title": "Death at the Blue Moon",
+  "setting": "The Blue Moon Jazz Club, Chicago, 1926",
+  "difficulty": "easy",
+  "victim": {
+    "name": "Vincent 'Vinny' Marconi",
+    "age": 42,
+    "occupation": "Jazz Club Owner",
+    "background": "Vincent Marconi owned the Blue Moon Jazz Club, one of Chicago's premier speakeasies. Behind his charming facade, he was deeply involved in bootlegging operations and had numerous enemies. He was known for his volatile temper and tendency to blackmail those who crossed him.",
+    "secrets": [
+      "Was blackmailing several patrons with compromising photographs",
+      "Owed substantial money to dangerous loan sharks",
+      "Was planning to sell the club and skip town with the profits",
+      "Had been watering down the expensive whiskey and pocketing the difference"
+    ]
+  },
+  "characters": [
+    {
+      "id": "ruby-valentine",
+      "name": "Ruby Valentine",
+      "role": "Jazz Singer",
+      "personality": "Confident, flirtatious, but harbors deep insecurities about her past",
+      "background": "",
+      "motive": "Vincent was blackmailing her about her past as a pickpocket and threatened to ruin her career",
+      "alibi": "Claims she was in her dressing room preparing for her second set",
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Has a criminal past as a pickpocket in New York",
+        "Was having an affair with Tommy despite being engaged to a wealthy businessman",
+        "Stole Vincent's blackmail photos from his safe earlier that evening"
+      ],
+      "artPrompt": "",
+      "age": 28,
+      "occupation": "Jazz Singer",
+      "description": "The club's star performer, a sultry redhead with a smoky voice and sharp wit",
+      "secrets": [
+        "Has a criminal past as a pickpocket in New York",
+        "Was having an affair with Tommy despite being engaged to a wealthy businessman",
+        "Stole Vincent's blackmail photos from his safe earlier that evening"
+      ],
+      "speechPattern": "Uses 1920s slang, flirtatious but can turn cold quickly",
+      "pressureProfile": {
+        "weakness": "Becomes defensive when her past is mentioned",
+        "triggerTopics": [
+          "her criminal past",
+          "the blackmail photos",
+          "her affair with Tommy"
+        ],
+        "crackingPoint": "If confronted with evidence of her theft from the safe"
+      },
+      "knowledgeAboutOthers": {
+        "Tommy Chen": "Knows he's been skimming money and that Vincent suspected him",
+        "Margaret Thornton": "Saw her arguing with Vincent about investments last week",
+        "Detective Murphy": "Knows he takes bribes and has gambling debts",
+        "Professor Blackwood": "Suspects he's not really a professor, saw him casing the office"
+      },
+      "systemPrompt": "You are Ruby Valentine, a jazz singer in 1920s Chicago. You're confident and flirtatious, using period slang like 'bee's knees' and 'cat's pajamas.' You have a criminal past as a pickpocket that you're desperately trying to hide. Vincent was blackmailing you about this past. You're also having an affair with Tommy Chen. You stole blackmail photos from Vincent's safe earlier tonight. When pressed about your past or the theft, become defensive and try to deflect. Use your charm first, but if cornered about hard evidence, you might break down. Never immediately admit to anything serious.",
+      "greeting": "Well hello there, sugar. Ruby Valentine's the name, and singing's my game. Such a terrible business about poor Vinny, ain't it?"
+    },
+    {
+      "id": "tommy-chen",
+      "name": "Tommy Chen",
+      "role": "Bartender",
+      "personality": "Quiet, methodical, but has a violent past he's trying to escape",
+      "background": "",
+      "motive": "Vincent discovered he was skimming money from the till and threatened to fire him and have him arrested",
+      "alibi": "Says he was cleaning glasses in the bar area",
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Has been systematically stealing money from the club for months",
+        "Is having an affair with Ruby Valentine",
+        "Served time in prison for assault before working at the club",
+        "Knows about Vincent's bootlegging connections"
+      ],
+      "artPrompt": "",
+      "age": 35,
+      "occupation": "Bartender",
+      "description": "A skilled bartender with a mysterious past, known for his elaborate cocktails and quiet demeanor",
+      "secrets": [
+        "Has been systematically stealing money from the club for months",
+        "Is having an affair with Ruby Valentine",
+        "Served time in prison for assault before working at the club",
+        "Knows about Vincent's bootlegging connections"
+      ],
+      "speechPattern": "Formal, measured speech, avoids contractions when nervous",
+      "pressureProfile": {
+        "weakness": "Gets agitated when his honesty is questioned",
+        "triggerTopics": [
+          "the missing money",
+          "his criminal record",
+          "his relationship with Ruby"
+        ],
+        "crackingPoint": "When confronted with evidence of his theft pattern"
+      },
+      "knowledgeAboutOthers": {
+        "Ruby Valentine": "Knows about her criminal past and that she stole something from Vincent's office",
+        "Margaret Thornton": "Overheard her threatening Vincent about business matters",
+        "Detective Murphy": "Saw him taking an envelope from Vincent last month",
+        "Professor Blackwood": "Noticed he asks too many questions about the club's operations"
+      },
+      "systemPrompt": "You are Tommy Chen, a bartender in 1920s Chicago. You speak formally and precisely, avoiding contractions when nervous. You've been stealing money from the club and Vincent found out. You're also having an affair with Ruby. You have a violent past (prison for assault) that you're trying to leave behind. When questioned about money or your past, become increasingly formal and defensive. You're methodical and observant - you notice things about the other patrons. Don't admit to theft easily, but if presented with clear evidence, you might reluctantly confess.",
+      "greeting": "Good evening. I am Tommy Chen, head bartender here at the Blue Moon. This is indeed a tragic evening for all of us."
+    },
+    {
+      "id": "margaret-thornton",
+      "name": "Margaret Thornton",
+      "role": "Wealthy Socialite",
+      "personality": "Sophisticated, condescending, but desperate to maintain appearances",
+      "background": "",
+      "motive": "Vincent was about to expose her illegal stock manipulation scheme to the authorities",
+      "alibi": "Claims she was in the powder room touching up her makeup",
+      "isGuilty": true,
+      "relationships": [],
+      "secretKnowledge": [
+        "Running an illegal stock manipulation scheme",
+        "Lost most of her family fortune in bad investments",
+        "Was being blackmailed by Vincent about her financial crimes",
+        "Desperately needs money to maintain her social status"
+      ],
+      "artPrompt": "",
+      "age": 45,
+      "occupation": "Wealthy Socialite",
+      "description": "An elegant woman from Chicago's high society, known for her sharp business sense and colder personality",
+      "secrets": [
+        "Running an illegal stock manipulation scheme",
+        "Lost most of her family fortune in bad investments",
+        "Was being blackmailed by Vincent about her financial crimes",
+        "Desperately needs money to maintain her social status"
+      ],
+      "speechPattern": "Formal, educated, uses sophisticated vocabulary but becomes clipped when angry",
+      "pressureProfile": {
+        "weakness": "Cannot stand having her social status questioned",
+        "triggerTopics": [
+          "her financial situation",
+          "stock manipulation",
+          "her reputation"
+        ],
+        "crackingPoint": "If her bankruptcy and crimes are exposed publicly"
+      },
+      "knowledgeAboutOthers": {
+        "Ruby Valentine": "Knows she has a criminal background",
+        "Tommy Chen": "Suspects he's stealing from the club",
+        "Detective Murphy": "Knows he's corrupt and takes bribes",
+        "Professor Blackwood": "Recognizes him from a previous con job years ago"
+      },
+      "systemPrompt": "You are Margaret Thornton, a wealthy socialite in 1920s Chicago. You speak with refined, educated language and look down on others. However, you're secretly broke and running illegal stock schemes. Vincent was blackmailing you about this. You're desperate to maintain your social status and reputation. When your finances or schemes are questioned, become icy and condescending. You have knowledge of high society and business. Only admit to wrongdoing if absolutely cornered with irrefutable evidence.",
+      "greeting": "I am Mrs. Margaret Thornton. I hardly see why my presence here tonight should be of interest to anyone, given the... unfortunate circumstances."
+    },
+    {
+      "id": "detective-patrick-murphy",
+      "name": "Detective Patrick Murphy",
+      "role": "Chicago Police Detective",
+      "personality": "Gruff, cynical, but shows flashes of his former integrity",
+      "background": "",
+      "motive": "Vincent knew about his corruption and was threatening to expose him to Internal Affairs",
+      "alibi": "Claims he was outside smoking a cigarette and making rounds",
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Takes bribes from bootleggers and criminals",
+        "Has massive gambling debts to dangerous people",
+        "Vincent was blackmailing him about his corruption",
+        "Was supposed to raid the club but warned Vincent in advance for money"
+      ],
+      "artPrompt": "",
+      "age": 52,
+      "occupation": "Chicago Police Detective",
+      "description": "A veteran cop with a drinking problem and mounting gambling debts",
+      "secrets": [
+        "Takes bribes from bootleggers and criminals",
+        "Has massive gambling debts to dangerous people",
+        "Vincent was blackmailing him about his corruption",
+        "Was supposed to raid the club but warned Vincent in advance for money"
+      ],
+      "speechPattern": "Street-smart, uses police jargon, becomes defensive when cornered",
+      "pressureProfile": {
+        "weakness": "Becomes angry when his integrity as a cop is questioned",
+        "triggerTopics": [
+          "police corruption",
+          "gambling debts",
+          "bribes"
+        ],
+        "crackingPoint": "When confronted with evidence of taking bribes"
+      },
+      "knowledgeAboutOthers": {
+        "Ruby Valentine": "Knows she has a criminal record in New York",
+        "Tommy Chen": "Recognizes him from old arrest records",
+        "Margaret Thornton": "Knows she's under investigation for securities fraud",
+        "Professor Blackwood": "Suspects he's running some kind of con game"
+      },
+      "systemPrompt": "You are Detective Patrick Murphy, a corrupt Chicago cop in the 1920s. You speak with street-smart language and police jargon. You take bribes and have gambling debts. Vincent was blackmailing you about your corruption. You're cynical and defensive, especially about your integrity as a cop. When corruption is mentioned, become aggressive and try to turn the questioning around. You know things about everyone due to your police connections. Only admit to corruption if presented with overwhelming evidence.",
+      "greeting": "Detective Patrick Murphy, Chicago PD. I was just checking the perimeter when this whole mess started. Real tragedy, this."
+    },
+    {
+      "id": "professor-elias-blackwood",
+      "name": "Professor Elias Blackwood",
+      "role": "University Professor (claims)",
+      "personality": "Educated facade hiding a street-smart criminal mind",
+      "background": "",
+      "motive": "Vincent discovered his real identity and threatened to expose him as a wanted con man",
+      "alibi": "Claims he was in the library area reading and didn't hear anything",
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Not actually a professor - he's a con artist named Eddie Kowalski",
+        "Was casing the club for a potential robbery",
+        "Has outstanding warrants in three states",
+        "Vincent recognized him from a wanted poster"
+      ],
+      "artPrompt": "",
+      "age": 39,
+      "occupation": "University Professor (claims)",
+      "description": "A well-dressed man claiming to be a literature professor, but actually a con artist studying the club for a heist",
+      "secrets": [
+        "Not actually a professor - he's a con artist named Eddie Kowalski",
+        "Was casing the club for a potential robbery",
+        "Has outstanding warrants in three states",
+        "Vincent recognized him from a wanted poster"
+      ],
+      "speechPattern": "Overly formal and academic, but slips into street language when stressed",
+      "pressureProfile": {
+        "weakness": "His fake academic persona falls apart under scrutiny",
+        "triggerTopics": [
+          "his academic credentials",
+          "his real identity",
+          "his criminal past"
+        ],
+        "crackingPoint": "When his true identity as Eddie Kowalski is revealed"
+      },
+      "knowledgeAboutOthers": {
+        "Ruby Valentine": "Noticed she's skilled at reading people, suggests criminal background",
+        "Tommy Chen": "Observed him skimming money from the register",
+        "Margaret Thornton": "Recognizes her from a previous con he ran years ago",
+        "Detective Murphy": "Can tell he's a dirty cop from experience"
+      },
+      "systemPrompt": "You are pretending to be Professor Elias Blackwood, but you're actually Eddie Kowalski, a con artist. You speak in an overly formal, academic manner, but slip into street language when stressed. You were casing the club for a robbery when Vincent recognized you from a wanted poster. You're intelligent and observant from years of running cons. When your academic credentials are questioned, become flustered and your facade starts to crack. If your real identity is discovered, you might try to negotiate or make a deal.",
+      "greeting": "Ah, good evening. Professor Elias Blackwood, University of Chicago Literature Department. I was simply here enjoying the... cultural atmosphere when this dreadful incident occurred."
+    }
+  ],
+  "locations": [
+    {
+      "id": "vincent's-office",
+      "name": "Vincent's Office",
+      "description": "A small, cluttered office behind the main stage area. Contains a desk, filing cabinets, and a wall safe.",
+      "evidence": [
+        "bloodstained_letter_opener",
+        "safe_with_broken_lock",
+        "threatening_letter"
+      ],
+      "artPrompt": ""
+    },
+    {
+      "id": "main-bar-area",
+      "name": "Main Bar Area",
+      "description": "The heart of the club with a long mahogany bar, brass fixtures, and shelves of bootleg liquor.",
+      "evidence": [
+        "cash_register_records",
+        "whiskey_bottle_evidence"
+      ],
+      "artPrompt": ""
+    },
+    {
+      "id": "backstage-dressing-room",
+      "name": "Backstage Dressing Room",
+      "description": "Ruby's private dressing room with mirrors, costumes, and makeup supplies.",
+      "evidence": [
+        "blackmail_photos",
+        "ruby_alibi_witness"
+      ],
+      "artPrompt": ""
+    },
+    {
+      "id": "library-corner",
+      "name": "Library Corner",
+      "description": "A quiet reading area with bookshelves and comfortable chairs, popular with sophisticated patrons.",
+      "evidence": [
+        "professors_fake_credentials",
+        "newspaper_clipping"
+      ],
+      "artPrompt": ""
+    },
+    {
+      "id": "private-dining-room",
+      "name": "Private Dining Room",
+      "description": "An exclusive area where Vincent conducted business meetings and stored important documents.",
+      "evidence": [
+        "business_ledger",
+        "margaret_investment_documents"
+      ],
+      "artPrompt": ""
+    },
+    {
+      "id": "back-alley",
+      "name": "Back Alley",
+      "description": "The narrow alley behind the club where deliveries are made and staff take smoke breaks.",
+      "evidence": [
+        "murphy_gambling_debt_note",
+        "bloody_gloves",
+        "witness_testimony_alley"
+      ],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "bloodstained_letter_opener",
+      "name": "Bloodstained Letter Opener",
+      "description": "An ornate silver letter opener found on Vincent's desk, covered in blood with fingerprints.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "physical",
+      "significance": "The murder weapon. Has Tommy Chen's fingerprints on it - he used it earlier to open mail when Vincent asked him to help with paperwork.",
+      "revealedBy": [
+        "examining Vincent's desk"
+      ]
+    },
+    {
+      "id": "safe_with_broken_lock",
+      "name": "Broken Safe",
+      "description": "Vincent's wall safe has been broken into, with scratches around the lock and contents scattered.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "physical",
+      "significance": "Ruby broke into it to steal the blackmail photos. The break-in happened before the murder.",
+      "revealedBy": [
+        "examining the office thoroughly"
+      ]
+    },
+    {
+      "id": "blackmail_photos",
+      "name": "Blackmail Photographs",
+      "description": "Hidden photos of Ruby's criminal activities in New York, found stuffed in her makeup case.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "document",
+      "significance": "Proves Ruby had motive and that she stole from Vincent's safe. Shows Vincent was blackmailing her.",
+      "revealedBy": [
+        "searching Ruby's dressing room",
+        "pressuring Ruby about the safe"
+      ]
+    },
+    {
+      "id": "cash_register_records",
+      "name": "Cash Register Discrepancies",
+      "description": "Register receipts showing consistent shortfalls over the past three months, always during Tommy's shifts.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "document",
+      "significance": "Proves Tommy was stealing money systematically. Vincent had discovered this pattern.",
+      "revealedBy": [
+        "examining the bar area",
+        "checking financial records"
+      ]
+    },
+    {
+      "id": "threatening_letter",
+      "name": "Threatening Letter",
+      "description": "A letter in Vincent's handwriting threatening to expose 'certain parties' unless they 'make things right.'",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "document",
+      "significance": "Shows Vincent was actively blackmailing multiple people. Written the day before his murder.",
+      "revealedBy": [
+        "searching Vincent's desk"
+      ]
+    },
+    {
+      "id": "margaret_investment_documents",
+      "name": "Investment Fraud Evidence",
+      "description": "Documents detailing Margaret's illegal stock manipulation scheme, with Vincent's notes about reporting her.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "document",
+      "significance": "Proves Margaret's motive - Vincent was about to expose her financial crimes to authorities.",
+      "revealedBy": [
+        "searching the private dining room",
+        "pressuring Margaret about her finances"
+      ]
+    },
+    {
+      "id": "murphy_gambling_debt_note",
+      "name": "Murphy's Gambling Debt",
+      "description": "A threatening note about Detective Murphy's gambling debts, dropped in the alley.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "document",
+      "significance": "Shows Murphy was desperate for money and being threatened by loan sharks.",
+      "revealedBy": [
+        "searching the back alley"
+      ]
+    },
+    {
+      "id": "professors_fake_credentials",
+      "name": "Fake University Papers",
+      "description": "Forged documents identifying 'Professor Blackwood,' but with obvious inconsistencies in the university letterhead.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "document",
+      "significance": "Proves the Professor is a fraud. Vincent had been investigating his identity.",
+      "revealedBy": [
+        "examining the library area",
+        "pressuring Professor about his credentials"
+      ]
+    },
+    {
+      "id": "bloody_gloves",
+      "name": "Bloody Leather Gloves",
+      "description": "Expensive leather gloves hidden behind trash cans, stained with blood.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "physical",
+      "significance": "Margaret's gloves that she wore during the murder. She tried to dispose of them but panicked and left them.",
+      "revealedBy": [
+        "thoroughly searching the back alley"
+      ]
+    },
+    {
+      "id": "whiskey_bottle_evidence",
+      "name": "Watered Down Whiskey",
+      "description": "Several bottles of expensive whiskey that have clearly been diluted with water.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "physical",
+      "significance": "Shows Vincent was cheating customers, giving multiple people motive to be angry with him.",
+      "revealedBy": [
+        "examining the bar stock"
+      ]
+    },
+    {
+      "id": "business_ledger",
+      "name": "Club Financial Records",
+      "description": "Vincent's private ledger showing his various criminal enterprises and who owed him money.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "document",
+      "significance": "Shows the full scope of Vincent's blackmail operations and criminal activities.",
+      "revealedBy": [
+        "searching the private dining room"
+      ]
+    },
+    {
+      "id": "ruby_alibi_witness",
+      "name": "Chorus Girl Testimony",
+      "description": "Another performer confirms Ruby was in her dressing room during the murder, but seemed 'nervous and distracted.'",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "testimony",
+      "significance": "Supports Ruby's alibi but suggests she was involved in something suspicious earlier.",
+      "revealedBy": [
+        "interviewing other staff members"
+      ]
+    },
+    {
+      "id": "witness_testimony_alley",
+      "name": "Delivery Boy's Account",
+      "description": "A delivery boy saw Margaret Thornton leaving through the back door around the time of the murder, looking disheveled.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "testimony",
+      "significance": "Contradicts Margaret's alibi and places her at the scene. Key evidence pointing to her guilt.",
+      "revealedBy": [
+        "interviewing people in the alley area"
+      ]
+    },
+    {
+      "id": "newspaper_clipping",
+      "name": "Wanted Poster Clipping",
+      "description": "A newspaper clipping about wanted con man 'Eddie Kowalski' that matches the Professor's description.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "document",
+      "significance": "Proves Professor Blackwood is actually Eddie Kowalski, a wanted criminal. Vincent had this clipping.",
+      "revealedBy": [
+        "searching the library area thoroughly"
+      ]
+    },
+    {
+      "id": "time_contradiction",
+      "name": "Margaret's Time Contradiction",
+      "description": "Margaret claims she was in the powder room for 20 minutes, but multiple witnesses saw the powder room empty during that time.",
+      "location": "vincent's-office",
+      "artPrompt": "",
+      "type": "contradiction",
+      "significance": "Destroys Margaret's alibi completely. She has no explanation for where she actually was during the murder.",
+      "revealedBy": [
+        "questioning multiple witnesses about Margaret's whereabouts"
+      ]
+    }
+  ],
+  "timeline": [
+    {
+      "time": "9:00 PM",
+      "event": "Club opens for evening. All suspects present.",
+      "participants": [
+        "Vincent Marconi",
+        "Ruby Valentine",
+        "Tommy Chen",
+        "Margaret Thornton",
+        "Detective Murphy",
+        "Professor Blackwood"
+      ]
+    },
+    {
+      "time": "9:30 PM",
+      "event": "Ruby breaks into Vincent's safe and steals blackmail photos.",
+      "participants": [
+        "Ruby Valentine"
+      ],
+      "evidence": [
+        "safe_with_broken_lock",
+        "blackmail_photos"
+      ]
+    },
+    {
+      "time": "10:15 PM",
+      "event": "Vincent confronts Tommy about missing money from register.",
+      "participants": [
+        "Vincent Marconi",
+        "Tommy Chen"
+      ],
+      "evidence": [
+        "cash_register_records"
+      ]
+    },
+    {
+      "time": "10:45 PM",
+      "event": "Margaret argues with Vincent in his office about her investment scheme.",
+      "participants": [
+        "Vincent Marconi",
+        "Margaret Thornton"
+      ],
+      "evidence": [
+        "margaret_investment_documents"
+      ]
+    },
+    {
+      "time": "11:00 PM",
+      "event": "Vincent is murdered in his office with the letter opener.",
+      "participants": [
+        "Vincent Marconi",
+        "Margaret Thornton"
+      ],
+      "evidence": [
+        "bloodstained_letter_opener",
+        "bloody_gloves"
+      ]
+    },
+    {
+      "time": "11:05 PM",
+      "event": "Margaret disposes of bloody gloves in back alley and is seen leaving.",
+      "participants": [
+        "Margaret Thornton"
+      ],
+      "evidence": [
+        "bloody_gloves",
+        "witness_testimony_alley"
+      ]
+    },
+    {
+      "time": "11:10 PM",
+      "event": "Vincent's body is discovered by Ruby when she comes to return stolen photos.",
+      "participants": [
+        "Ruby Valentine"
+      ],
+      "evidence": [
+        "bloodstained_letter_opener"
+      ]
+    }
+  ],
+  "solution": {
+    "killerId": "margaret-thornton",
+    "method": "Stabbed with letter opener during heated argument",
+    "motive": "Vincent was about to expose her illegal stock manipulation scheme to authorities, which would have destroyed her reputation and sent her to prison",
+    "explanation": "Margaret Thornton killed Vincent Marconi during a heated argument in his office at 11:00 PM. Vincent had discovered her illegal stock manipulation scheme and was threatening to report her to the authorities. During their confrontation, Margaret grabbed the letter opener from Vincent's desk and stabbed him in a moment of desperation. She then fled through the back door, disposing of her bloody gloves in the alley where they were later found. A delivery boy witnessed her leaving, contradicting her alibi of being in the powder room. The bloody gloves are expensive leather ones matching her outfit, and her alibi falls apart when witnesses confirm the powder room was empty during the time she claimed to be there."
+  },
+  "redHerrings": [
+    {
+      "suspectName": "Tommy Chen",
+      "evidence": [
+        "bloodstained_letter_opener",
+        "cash_register_records"
+      ],
+      "misleadingClue": "His fingerprints are on the murder weapon and he was stealing money",
+      "actualExplanation": "Tommy handled the letter opener earlier when Vincent asked him to help open mail. He was stealing money, but Vincent was killed before he could act on this discovery."
+    },
+    {
+      "suspectName": "Ruby Valentine",
+      "evidence": [
+        "safe_with_broken_lock",
+        "blackmail_photos"
+      ],
+      "misleadingClue": "She broke into Vincent's safe and stole evidence he was using to blackmail her",
+      "actualExplanation": "Ruby did break into the safe and steal the photos, but this happened before the murder. She actually discovered the body when she returned to put the photos back, realizing Vincent's death meant her secret was safe."
+    },
+    {
+      "suspectName": "Detective Murphy",
+      "evidence": [
+        "murphy_gambling_debt_note",
+        "business_ledger"
+      ],
+      "misleadingClue": "He was being blackmailed about corruption and had gambling debts",
+      "actualExplanation": "While Murphy was corrupt and desperate for money, he was actually outside smoking and making his rounds when the murder occurred. His corruption gave him motive but he has a solid alibi."
+    }
+  ],
+  "difficulty_settings": {
+    "easy": {
+      "par_time_minutes": 45,
+      "evidence_accessibility": "obvious",
+      "red_herring_strength": "weak"
+    }
+  },
+  "id": "mystery-1769726052647-g4l6qc"
+}
