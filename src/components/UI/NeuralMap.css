@@ -1,0 +1,75 @@
+/**
+ * Neural Map Animations
+ * CSS keyframes for the mind-map visualization
+ */
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes drawLine {
+  from {
+    stroke-dashoffset: 1000;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes nodeAppear {
+  from {
+    opacity: 0;
+    transform: scale(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 2px rgba(201, 162, 39, 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(201, 162, 39, 0.8));
+  }
+}
+
+@keyframes contradictionPulse {
+  0%, 100% {
+    opacity: 0.6;
+    stroke-width: 2;
+  }
+  50% {
+    opacity: 1;
+    stroke-width: 3;
+  }
+}
+
+/* Apply animations */
+.neural-map-node {
+  animation: nodeAppear 0.5s ease-out;
+}
+
+.neural-map-edge {
+  stroke-dasharray: 1000;
+  animation: drawLine 1s ease-out forwards;
+}
+
+.neural-map-edge.discovered {
+  stroke-dasharray: none;
+}
+
+.neural-map-node.selected {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+.neural-map-edge.contradiction {
+  animation: contradictionPulse 2s ease-in-out infinite;
+}

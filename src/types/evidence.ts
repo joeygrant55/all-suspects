@@ -8,4 +8,5 @@ export interface EvidenceData {
   prerequisite?: string // Evidence ID that must be found first
   hint?: string // Investigative hint for player guidance
   pointsTo?: string // Hidden field for suspicion tracking
+  image?: string // Path to evidence artwork
 }

@@ -21,6 +21,7 @@ The paper is expensive stationery with the Ashford family crest.`,
     relatedCharacter: 'thomas',
     hint: 'Someone in the family had a strong motive...',
     pointsTo: 'thomas',
+    image: '/evidence/torn-will.webp',
   },
   'champagne-glass': {
     id: 'champagne-glass',
@@ -35,6 +36,7 @@ This appears to be the glass Edmund drank from at the midnight toast.`,
     relatedCharacter: 'thomas',
     hint: 'Who poured the champagne that night?',
     pointsTo: 'thomas',
+    image: '/evidence/poison-vial.webp',
   },
   'body-outline': {
     id: 'body-outline',
@@ -63,6 +65,7 @@ Someone tried to destroy this document recently - the ashes are still warm. This
     relatedCharacter: 'thomas',
     hint: 'Someone stood to lose everything...',
     pointsTo: 'thomas',
+    image: '/evidence/swiss-bank-doc.webp',
   },
   'victoria-medication': {
     id: 'victoria-medication',
@@ -77,6 +80,7 @@ Victoria claims she only takes it occasionally, but this much is missing in just
     relatedCharacter: 'victoria',
     hint: 'Where did all the medication go?',
     pointsTo: 'victoria',
+    image: '/evidence/love-letters.webp',
   },
 
   // DINING ROOM - 1 piece of evidence
@@ -107,6 +111,7 @@ The active ingredient? Arsenic - the same compound that would cause Edmund's sym
     relatedCharacter: 'james',
     hint: 'Arsenic... the murder weapon?',
     pointsTo: 'thomas',
+    image: '/evidence/brass-candlestick.webp',
   },
 
   // HALLWAY - 1 piece of evidence
