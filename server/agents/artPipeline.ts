@@ -201,7 +201,7 @@ async function generateImage(prompt: string, outputPath: string): Promise<void> 
   const ai = new GoogleGenAI({ apiKey: getGeminiKey() })
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-preview-image-generation',
+    model: 'gemini-2.0-flash-exp-image-generation',
     contents: prompt,
     config: {
       responseModalities: ['image', 'text'],
