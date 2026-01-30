@@ -120,13 +120,16 @@ You MUST return a JSON object with EXACTLY these top-level keys (no extras, no n
 - Return ONLY the JSON object. No markdown code fences. No explanation text.
 
 ## CREATIVE GUIDELINES
+- **FOLLOW THE THEME** — if the player asks for a jazz club, set it in a jazz club. If they ask for a space station, set it on a space station. NEVER default to an English manor unless that's what was asked for.
 - Make characters feel REAL — complex motivations, not cartoon villains
 - Every suspect should seem potentially guilty at first
 - The solution should be satisfying — "of course!" not "huh?"
 - Include emotional depth — betrayal, love, fear, ambition
-- Speech patterns should be distinctive per character
+- Speech patterns should be distinctive per character AND reflect the era/setting
 - Include 2-3 convincing red herrings among the evidence
-- Physical evidence should have forensic details`
+- Physical evidence should have forensic details
+- Locations should be SPECIFIC to the setting, not generic rooms
+- The atmosphere in setting.atmosphere should paint the scene vividly`
 
 /**
  * Generate a complete mystery blueprint
@@ -134,33 +137,59 @@ You MUST return a JSON object with EXACTLY these top-level keys (no extras, no n
 export async function generateMystery(request: MysteryRequest = {}): Promise<MysteryBlueprint> {
   const {
     era = '1920s',
-    setting = 'English manor house',
+    setting,
     difficulty = 'medium',
-    theme = 'noir',
+    theme,
     suspectCount = 6,
     playerHint = '',
   } = request
 
-  const userPrompt = `Generate a ${difficulty} ${theme} murder mystery set in a ${setting} during the ${era}.
+  // Build a rich, specific prompt from whatever the player gave us
+  const themeDesc = theme || 'noir murder mystery'
+  const settingDesc = setting || ''
+  const eraDesc = era || '1920s'
+  
+  // If the player gave a rich theme description, use it as the primary creative direction
+  const hasRichTheme = themeDesc.length > 20
+  
+  const userPrompt = hasRichTheme
+    ? `# CREATIVE BRIEF
+${themeDesc}
 
-Number of suspects: ${suspectCount}
+Era: ${eraDesc}
+Difficulty: ${difficulty}
+${settingDesc ? `Setting: ${settingDesc}` : ''}
+${playerHint ? `Additional notes: ${playerHint}` : ''}
+
+## IMPORTANT: Follow the creative brief EXACTLY. The setting, theme, location, and atmosphere described above are what the player wants. Do NOT default to a generic English manor — use the specific setting described.
+
+## REQUIREMENTS
+- ${suspectCount} suspects with unique personalities, motives, alibis, and speech patterns
+- 5-7 explorable locations that fit the setting described above
+- 12-15 evidence items (physical objects, documents, testimonies)
+- A compelling victim whose secrets drive the mystery
+- A watertight timeline of events leading to the murder
+- A solution with a clear logical chain the player can deduce
+- 2-3 convincing red herrings
+- Each character needs a distinct greeting and interrogation personality
+- Speech patterns should reflect the era and setting (${eraDesc} ${settingDesc || themeDesc})
+
+Generate the complete MysteryBlueprint JSON now.`
+    : `Generate a ${difficulty} murder mystery set during the ${eraDesc}.
+
+Theme/Style: ${themeDesc}
+${settingDesc ? `Setting: ${settingDesc}` : ''}
 ${playerHint ? `Player request: ${playerHint}` : ''}
 
-The mystery needs:
-- A compelling victim with dark secrets
-- ${suspectCount} suspects, each with unique personality, motive, alibi, and pressure profile
-- 6 explorable locations with evidence hidden in them
-- 12-15 evidence items (physical, documents, testimonies, contradictions)
+## REQUIREMENTS
+- ${suspectCount} suspects with unique personalities, motives, alibis, and speech patterns
+- 5-7 explorable locations that fit the setting
+- 12-15 evidence items (physical objects, documents, testimonies)
+- A compelling victim whose secrets drive the mystery
 - A watertight timeline of events
-- A solution with clear logical chain
+- A solution with a clear logical chain
 - 2-3 convincing red herrings
-- Scoring config with par time based on difficulty
-
-For each character, include:
-- A detailed systemPrompt that instructs Claude how to roleplay them during interrogation
-- Specific weaknesses that make them crack under pressure
-- What they know about other suspects
-- Their greeting when first approached
+- Each character needs a distinct greeting and interrogation personality
 
 Generate the complete MysteryBlueprint JSON now.`
 
