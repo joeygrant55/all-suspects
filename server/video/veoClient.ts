@@ -222,16 +222,53 @@ export async function generateVideo(
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    console.error('[VEO3] Video generation failed:', error)
+    console.error('[VEO3] Video generation failed:', errorMessage)
 
-    // Try fallback to text description
+    // ── Fallback 1: fal.ai (Kling → Minimax → Wan) ──
+    try {
+      const { generateFalVideo, isFalConfigured } = await import('./falClient')
+      if (isFalConfigured()) {
+        console.log('[VIDEO] Veo failed, trying fal.ai cascade (Kling → Minimax → Wan)...')
+        const falResult = await generateFalVideo({
+          prompt: request.prompt,
+          duration: request.duration || 5,
+          aspectRatio: request.aspectRatio || '16:9',
+        })
+
+        if (falResult.success && falResult.videoUrl) {
+          console.log(`[VIDEO] ✅ fal.ai ${falResult.model} delivered video: ${falResult.videoUrl}`)
+          generationQueue.set(generationId, {
+            generationId,
+            status: 'completed',
+            progress: 100,
+            videoUrl: falResult.videoUrl,
+          })
+
+          return {
+            success: true,
+            videoUrl: falResult.videoUrl,
+            generationId,
+            characterId: request.characterId,
+            testimonyId: request.testimonyId,
+            prompt: request.prompt,
+            generatedAt: Date.now(),
+            durationMs: falResult.durationMs,
+          }
+        }
+        console.warn('[VIDEO] fal.ai cascade exhausted:', falResult.error)
+      }
+    } catch (falError) {
+      console.error('[VIDEO] fal.ai fallback failed:', falError)
+    }
+
+    // ── Fallback 2: Text description ──
     if (genai) {
       try {
-        console.log('[VEO3] Falling back to scene description...')
+        console.log('[VIDEO] All video models failed, generating scene description...')
         const response = await genai.models.generateContent({
           model: 'gemini-2.0-flash',
-          contents: `Create a detailed visual description for this 1920s noir mystery scene.
-This will be used to generate a short video clip.
+          contents: `Create a detailed visual description for this mystery scene.
+This will be used as a placeholder until video generation is available.
 
 Scene description: ${request.prompt}
 
@@ -241,17 +278,16 @@ Provide:
 3. Character positions and expressions
 4. Key visual details
 
-Keep it cinematic and noir-styled.`,
+Keep it cinematic and atmospheric.`,
         })
 
         const description = response.text || ''
 
-        // Fallback to text description - mark as failed since there's no actual video
         generationQueue.set(generationId, {
           generationId,
           status: 'failed',
           progress: 100,
-          error: 'Video generation unavailable. Text description generated as fallback.',
+          error: 'All video models unavailable. Text description generated.',
         })
 
         return {
@@ -263,10 +299,10 @@ Keep it cinematic and noir-styled.`,
           generatedAt: Date.now(),
           fallback: true,
           videoData: description,
-          error: `Video generation failed (${errorMessage}) - fallback to text description`,
+          error: `All video models failed (Veo: ${errorMessage}) - text fallback`,
         }
       } catch (fallbackError) {
-        console.error('[VEO3] Fallback also failed:', fallbackError)
+        console.error('[VIDEO] Text fallback also failed:', fallbackError)
       }
     }
 
