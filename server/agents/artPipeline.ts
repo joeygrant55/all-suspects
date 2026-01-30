@@ -19,18 +19,20 @@ import * as fs from 'fs'
 import * as path from 'path'
 import type { MysteryBlueprint } from '../../shared/types/MysteryBlueprint'
 import { generateArtPrompts } from './mysteryGenerator'
+import { generateImageToVideo, isFalConfigured } from '../video/falClient'
 
 // Lazy — dotenv may not have loaded yet at import time
 function getGeminiKey() { return process.env.GEMINI_API_KEY || '' }
 
 interface ArtAsset {
   id: string
-  category: 'portrait' | 'room' | 'evidence' | 'ui'
+  category: 'portrait' | 'room' | 'evidence' | 'ui' | 'video'
   characterId?: string
   mood?: 'calm' | 'nervous' | 'breaking'
   prompt: string
   status: 'pending' | 'generating' | 'complete' | 'failed'
   path?: string
+  sourceImage?: string // For image-to-video: path to the source image
   priority: number // Lower = higher priority
 }
 
@@ -143,13 +145,15 @@ export function startArtPipeline(
   }
 
   // Ensure output directories exist
-  const dirs = ['portraits', 'rooms', 'evidence', 'ui']
+  const dirs = ['portraits', 'rooms', 'evidence', 'ui', 'videos']
   for (const dir of dirs) {
     fs.mkdirSync(path.join(outputDir, dir), { recursive: true })
   }
 
-  // Start processing in background
-  processQueue(state).catch(err => {
+  // Start processing in background — Phase 1 (images), then Phase 2 (videos)
+  processQueue(state).then(() => {
+    startVideoPhase(state, blueprint)
+  }).catch(err => {
     console.error('[ArtPipeline] Fatal error:', err)
   })
 
@@ -253,9 +257,115 @@ function getOutputPath(baseDir: string, asset: ArtAsset): string {
       return path.join(baseDir, 'evidence', `${asset.id.replace('evidence-', '')}.webp`)
     case 'ui':
       return path.join(baseDir, 'ui', `${asset.id}.png`)
+    case 'video':
+      return path.join(baseDir, 'videos', `${asset.id.replace('video-room-', '')}.mp4`)
     default:
       return path.join(baseDir, `${asset.id}.png`)
   }
+}
+
+/**
+ * Phase 2: Generate atmosphere videos from completed room images
+ * Takes each room's static image and creates a cinematic loop via image-to-video
+ */
+async function startVideoPhase(state: PipelineState, blueprint: MysteryBlueprint): Promise<void> {
+  if (!isFalConfigured()) {
+    console.log('[ArtPipeline] Skipping video phase — FAL_KEY not configured')
+    return
+  }
+
+  // Find completed room images
+  const completedRooms = state.assets.filter(
+    a => a.category === 'room' && a.status === 'complete' && a.path
+  )
+
+  if (completedRooms.length === 0) {
+    console.log('[ArtPipeline] No room images to animate — skipping video phase')
+    return
+  }
+
+  console.log(`[ArtPipeline] 🎬 Phase 2: Generating ${completedRooms.length} room atmosphere videos...`)
+
+  for (const room of completedRooms) {
+    const roomId = room.id.replace('room-', '')
+    const videoAssetId = `video-room-${roomId}`
+
+    // Skip if video already exists
+    const videoPath = getOutputPath(state.outputDir, { id: videoAssetId, category: 'video', prompt: '', status: 'pending', priority: 0 })
+    if (fs.existsSync(videoPath)) {
+      console.log(`[ArtPipeline] 🎬 Video already exists for ${roomId}, skipping`)
+      continue
+    }
+
+    // Find location data from blueprint
+    const location = blueprint.locations.find(l => l.id === roomId)
+    const locationName = location?.name || roomId.replace(/-/g, ' ')
+    const locationDesc = location?.description || ''
+
+    // Build cinematic prompt for the atmosphere loop
+    const videoPrompt = `Slow cinematic camera movement through ${locationName}. ${locationDesc}. ` +
+      `Subtle atmospheric details: flickering light, dust motes, gentle shadows moving. ` +
+      `Mystery noir atmosphere, moody lighting. No people, empty room. ` +
+      `Smooth slow pan or dolly movement. Cinematic 24fps look.`
+
+    // Create the video asset tracker
+    const videoAsset: ArtAsset = {
+      id: videoAssetId,
+      category: 'video',
+      prompt: videoPrompt,
+      sourceImage: room.path,
+      status: 'generating',
+      priority: 100 + state.assets.length,
+    }
+    state.assets.push(videoAsset)
+
+    try {
+      console.log(`[ArtPipeline] 🎬 Animating ${roomId}...`)
+
+      // Need to serve the image as a URL for fal.ai
+      // Use the local path relative to public/
+      const publicRelPath = room.path!.replace(state.outputDir, `/generated/${state.mysteryId}/assets`)
+      const imageUrl = `http://localhost:3001${publicRelPath}`
+
+      const result = await generateImageToVideo(
+        imageUrl,
+        videoPrompt,
+        'kling-1.6' // Best quality for room atmospheres
+      )
+
+      if (result.success && result.videoUrl) {
+        // Copy/move from the fal download location to our asset dir
+        const sourcePath = path.join(process.cwd(), 'public', result.videoUrl.replace(/^\//, ''))
+        if (fs.existsSync(sourcePath)) {
+          fs.copyFileSync(sourcePath, videoPath)
+          console.log(`[ArtPipeline] 🎬 ✅ Room video: ${roomId} → ${videoPath}`)
+        } else {
+          // Already at the right location or external URL
+          videoAsset.path = result.videoUrl
+        }
+
+        videoAsset.status = 'complete'
+        videoAsset.path = videoPath
+
+        if (state.onAssetReady) {
+          state.onAssetReady(videoAsset)
+        }
+      } else {
+        videoAsset.status = 'failed'
+        console.warn(`[ArtPipeline] 🎬 ❌ Room video failed for ${roomId}: ${result.error}`)
+      }
+    } catch (err) {
+      videoAsset.status = 'failed'
+      console.error(`[ArtPipeline] 🎬 ❌ Room video error for ${roomId}:`, err)
+    }
+
+    // Rate limit between video generations
+    await sleep(3000)
+  }
+
+  const videoAssets = state.assets.filter(a => a.category === 'video')
+  const completed = videoAssets.filter(a => a.status === 'complete').length
+  console.log(`[ArtPipeline] 🎬 Video phase complete: ${completed}/${videoAssets.length} room videos generated`)
 }
 
 /**

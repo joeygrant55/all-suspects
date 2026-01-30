@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
 import { useMysteryStore } from '../../game/mysteryState'
@@ -87,10 +87,41 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
   // Check if all evidence in this room has been discovered
   const allDiscovered = evidenceIds.every(id => discoveredEvidenceIds.includes(id))
 
+  // Check for video background
+  const roomVideoBg = isGenerated
+    ? `/generated/${mystery!.id}/assets/videos/${roomId}.mp4`
+    : `/videos/rooms/${roomId}.mp4`
+
+  const videoRef = useRef<HTMLVideoElement>(null)
+  const [hasVideo, setHasVideo] = useState(false)
+
+  useEffect(() => {
+    // Probe if the video file exists
+    const video = document.createElement('video')
+    video.src = roomVideoBg
+    video.oncanplay = () => setHasVideo(true)
+    video.onerror = () => setHasVideo(false)
+    return () => { video.src = '' }
+  }, [roomVideoBg])
+
   return (
     <div className="fixed inset-0 bg-noir-black overflow-hidden flex flex-col">
-      {/* Room background image */}
-      {roomBg && (
+      {/* Room background — video if available, image fallback */}
+      {hasVideo ? (
+        <video
+          ref={videoRef}
+          className="absolute inset-0 w-full h-full object-cover"
+          src={roomVideoBg}
+          autoPlay
+          loop
+          muted
+          playsInline
+          style={{
+            opacity: 0.55,
+            filter: 'sepia(0.4) brightness(0.7)',
+          }}
+        />
+      ) : roomBg ? (
         <div
           className="absolute inset-0 bg-cover bg-center"
           style={{
@@ -99,7 +130,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
             filter: 'sepia(0.4) brightness(0.7)',
           }}
         />
-      )}
+      ) : null}
 
       {/* Dark vignette overlay */}
       <div
