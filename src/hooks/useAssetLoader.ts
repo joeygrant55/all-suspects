@@ -82,7 +82,9 @@ export function useAssetLoader(mysteryId: string | null): AssetLoaderResult {
     [status],
   )
 
-  const isReady = hasTitleBg && portraitsReady >= 3
+  // Ready as soon as we have calm portraits for all characters
+  // Don't wait for title bg, rooms, evidence, or mood variants — those load in background
+  const isReady = portraitsReady >= 2
 
   return {
     progress,

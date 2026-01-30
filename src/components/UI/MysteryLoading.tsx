@@ -286,11 +286,18 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
                 )}
               </AnimatePresence>
 
-              {/* Not ready yet hint */}
-              {!isReady && portraitsReady > 0 && (
-                <p className="text-noir-smoke/50 text-xs italic" style={{ fontFamily: 'Georgia, serif' }}>
-                  Waiting for more assets... ({portraitsReady}/3 portraits ready)
-                </p>
+              {/* Skip waiting — enter with whatever's ready */}
+              {!isReady && blueprint && (
+                <motion.button
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 5 }}
+                  onClick={onEnter}
+                  className="mt-4 px-6 py-2 text-noir-smoke/50 text-xs tracking-wider hover:text-noir-gold transition-colors"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  SKIP ARTWORK — ENTER NOW →
+                </motion.button>
               )}
             </motion.div>
           )}
