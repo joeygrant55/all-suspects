@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
+import { useMysteryStore } from '../../game/mysteryState'
 import { CharacterPortrait } from '../UI/CharacterPortrait'
 import { sendMessage, analyzeWithWatson, checkVideoStatus } from '../../api/client'
 import { EVIDENCE_DATABASE } from '../../data/evidence'
@@ -469,8 +470,31 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     }
   }
 
-  // Suggested questions (character-specific)
+  // Suggested questions — dynamic based on active mystery
   const getSuggestedQuestions = () => {
+    const mystery = useMysteryStore.getState().activeMystery
+    
+    // For generated mysteries, build questions from the blueprint
+    if (mystery && mystery.id !== 'ashford-affair') {
+      const victim = mystery.worldState?.victim || 'the victim'
+      const char = mystery.characters?.find((c: { id: string }) => c.id === characterId)
+      const role = char?.role || 'your role here'
+      
+      const questions = [
+        `Where were you when ${victim} was killed?`,
+        `What was your relationship with ${victim}?`,
+        `Tell me about your role as ${role}.`,
+      ]
+      
+      // Add a motive-related question if available
+      if (char?.motive) {
+        questions.push(`I've heard you had reason to want ${victim} dead. Care to explain?`)
+      }
+      
+      return questions
+    }
+    
+    // Fallback: Ashford Affair hardcoded questions
     const baseQuestions = [
       'Where were you at midnight when Edmund was killed?',
       'What was your relationship with Edmund Ashford?',
@@ -480,32 +504,26 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       victoria: [
         'How was your marriage to Edmund?',
         'Did you know about the will changes?',
-        'Were you aware of any affairs?',
       ],
       thomas: [
         'What did your father think of your lifestyle?',
         'Were you in debt to anyone?',
-        'Did you argue with your father recently?',
       ],
       eleanor: [
         'How long have you worked for the Ashfords?',
         'Did Edmund confide in you about anything?',
-        'Did you notice anything unusual in his papers?',
       ],
       marcus: [
         'What was Edmund\'s health like?',
         'Did you prescribe him any medications?',
-        'Were you treating anyone else at the manor?',
       ],
       lillian: [
         'How did you know Edmund?',
         'When did you last see him before the party?',
-        'What brought you to the manor tonight?',
       ],
       james: [
         'Who did you see enter and leave the study?',
         'Did you hear any arguments?',
-        'Was anything out of place when you did your rounds?',
       ],
     }
     
