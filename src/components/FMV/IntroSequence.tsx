@@ -3,27 +3,37 @@ import { motion, AnimatePresence } from 'framer-motion'
 
 interface IntroSequenceProps {
   onComplete: () => void
+  title?: string
+  subtitle?: string
+  victim?: string
+  suspectCount?: number
 }
 
-export function IntroSequence({ onComplete }: IntroSequenceProps) {
+export function IntroSequence({ onComplete, title, subtitle, victim, suspectCount }: IntroSequenceProps) {
   const [scene, setScene] = useState(0)
+
+  // Dynamic scenes based on the active mystery
+  const mysteryTitle = title || "New Year's Eve, 1929"
+  const mysterySubtitle = subtitle || 'Ashford Manor'
+  const victimName = victim || 'Edmund Ashford'
+  const numSuspects = suspectCount || 6
 
   const scenes = [
     {
-      text: "New Year's Eve, 1929",
-      subtext: 'Ashford Manor',
+      text: mysteryTitle,
+      subtext: mysterySubtitle,
     },
     {
-      text: 'A grand party. Champagne flows.',
-      subtext: 'Secrets lurk in every shadow.',
+      text: 'A night that began like any other.',
+      subtext: 'But darkness was already in motion.',
     },
     {
-      text: 'At midnight, the clock strikes...',
-      subtext: 'And Edmund Ashford is found dead.',
+      text: `Then ${victimName} was found dead.`,
+      subtext: 'And nothing would ever be the same.',
     },
     {
       text: 'You are the detective.',
-      subtext: 'Six suspects. One murderer.',
+      subtext: `${numSuspects} suspects. One murderer.`,
     },
   ]
 

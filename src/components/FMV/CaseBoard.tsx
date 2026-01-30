@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
+import { useMysteryStore } from '../../game/mysteryState'
 import { GameTimer } from '../UI/GameTimer'
 import { ManorView } from './ManorView'
 
@@ -10,8 +11,8 @@ interface CaseBoardProps {
   onAccuse: () => void
 }
 
-// Suspect IDs in display order
-const SUSPECT_IDS = ['victoria', 'thomas', 'eleanor', 'marcus', 'lillian', 'james']
+// Suspect IDs in display order (fallback for Ashford Affair)
+const DEFAULT_SUSPECT_IDS = ['victoria', 'thomas', 'eleanor', 'marcus', 'lillian', 'james']
 
 type ViewMode = 'suspects' | 'manor'
 
@@ -34,6 +35,10 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
   const [viewMode, setViewMode] = useState<ViewMode>(lastViewMode || 'suspects')
 
   // Total evidence = room evidence + interrogation evidence
+  const mystery = useMysteryStore.getState().activeMystery
+  const mysteryTitle = mystery?.title || 'THE CASE'
+  const mysterySubtitle = mystery?.worldState?.location || 'New Year\'s Eve, 1929'
+  const suspectIds = characters.length > 0 ? characters.map(c => c.id) : DEFAULT_SUSPECT_IDS
   const totalEvidence = discoveredEvidenceIds.length + collectedEvidence.length
 
 
@@ -56,8 +61,15 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
     onOpenEvidence()
   }
 
-  // Get portrait image path
-  const getPortraitPath = (id: string) => `/portraits/${id}.png`
+  // Get portrait image path — checks generated mystery assets first
+  const getPortraitPath = (id: string) => {
+    const mystery = useMysteryStore?.getState?.()?.activeMystery
+    if (mystery?.id && mystery.id !== 'ashford-affair' && mystery.id !== 'hollywood-premiere') {
+      // Generated mystery — portraits are in /generated/{id}/assets/portraits/
+      return `/generated/${mystery.id}/assets/portraits/${id}.png`
+    }
+    return `/portraits/${id}.png`
+  }
 
   // Get character by ID
   const getCharacter = (id: string) => characters.find(c => c.id === id)
@@ -94,9 +106,9 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                   className="text-xl md:text-2xl font-serif text-noir-gold tracking-wide"
                   style={{ fontFamily: 'var(--font-serif)' }}
                 >
-                  THE ASHFORD CASE
+                  {mysteryTitle}
                 </h1>
-                <p className="text-noir-smoke text-xs md:text-sm">New Year's Eve, 1929</p>
+                <p className="text-noir-smoke text-xs md:text-sm">{mysterySubtitle}</p>
               </div>
               
               {/* View mode tabs */}
@@ -224,9 +236,9 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                 className="text-xl md:text-2xl font-serif text-noir-gold tracking-wide"
                 style={{ fontFamily: 'var(--font-serif)' }}
               >
-                THE ASHFORD CASE
+                {mysteryTitle}
               </h1>
-              <p className="text-noir-smoke text-xs md:text-sm">New Year's Eve, 1929</p>
+              <p className="text-noir-smoke text-xs md:text-sm">{mysterySubtitle}</p>
             </div>
             
             {/* View mode tabs */}
@@ -350,7 +362,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
 
           {/* Suspect grid - 3x2, constrained to fit viewport */}
           <div className="grid grid-cols-3 grid-rows-2 gap-1.5 md:gap-2 flex-1 min-h-0 max-h-[calc(100vh-140px)]">
-            {SUSPECT_IDS.map((id, index) => {
+            {suspectIds.map((id, index) => {
               const character = getCharacter(id)
               if (!character) return null
 

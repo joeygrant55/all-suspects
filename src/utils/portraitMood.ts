@@ -23,8 +23,14 @@ export function getMoodFromPressure(pressure: number): PortraitMood {
 
 /**
  * Get the portrait image path for a character + mood.
+ * Checks for generated mystery assets first.
  */
-export function getPortraitPath(characterId: string, mood: PortraitMood = 'calm'): string {
+export function getPortraitPath(characterId: string, mood: PortraitMood = 'calm', mysteryId?: string | null): string {
+  // For generated mysteries, use the generated assets path
+  if (mysteryId && mysteryId !== 'ashford-affair' && mysteryId !== 'hollywood-premiere') {
+    const suffix = mood === 'calm' ? '' : `-${mood}`
+    return `/generated/${mysteryId}/assets/portraits/${characterId}${suffix}.png`
+  }
   if (mood === 'calm') return `/portraits/${characterId}.png`
   return `/portraits/${characterId}-${mood}.png`
 }

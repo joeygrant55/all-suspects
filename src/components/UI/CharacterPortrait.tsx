@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { type PortraitMood, getPortraitPath } from '../../utils/portraitMood'
+import { useMysteryStore } from '../../game/mysteryState'
 
 interface CharacterPortraitProps {
   characterId: string
@@ -60,9 +61,10 @@ export function CharacterPortrait({
     }
   }, [mood])
 
+  const mysteryId = useMysteryStore.getState().activeMystery?.id || null
   const colors = CHARACTER_COLORS[characterId] || { primary: '#2d2d2d', accent: '#c9a227' }
   const initials = CHARACTER_INITIALS[characterId] || name.charAt(0)
-  const portraitPath = getPortraitPath(characterId, displayedMood)
+  const portraitPath = getPortraitPath(characterId, displayedMood, mysteryId)
 
   const sizeClasses = {
     small: 'w-12 h-12',

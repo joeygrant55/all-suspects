@@ -280,10 +280,19 @@ function App() {
         <div className="h-screen w-screen bg-noir-black">
           {/* Main game screens */}
           <div className="h-full relative">
-            {/* Intro sequence */}
-            {showIntro && currentScreen === 'intro' && (
-              <IntroSequence onComplete={completeIntro} />
-            )}
+            {/* Intro sequence — dynamic based on active mystery */}
+            {showIntro && currentScreen === 'intro' && (() => {
+              const mystery = useMysteryStore.getState().activeMystery
+              return (
+                <IntroSequence
+                  onComplete={completeIntro}
+                  title={mystery?.title}
+                  subtitle={mystery?.worldState?.location}
+                  victim={mystery?.worldState?.victim}
+                  suspectCount={mystery?.characters?.length}
+                />
+              )
+            })()}
 
             {/* Case Board - main hub */}
             {!showIntro && currentScreen === 'map' && (
