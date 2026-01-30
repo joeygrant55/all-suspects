@@ -8,7 +8,7 @@
  */
 
 import type { MysteryInfo, LoadedMystery } from '../game/mysteryState'
-import type { EvidenceData } from '../types/evidence'
+// Evidence types removed — Hollywood Premiere stripped out
 
 // Import Ashford Affair
 import {
@@ -20,13 +20,6 @@ import { EVIDENCE_DATABASE as ASHFORD_EVIDENCE } from '../data/evidence'
 import { EVIDENCE_BY_ROOM as ASHFORD_EVIDENCE_BY_ROOM } from '../data/evidence'
 import { EVIDENCE_DIALOGUE_UNLOCKS as ASHFORD_DIALOGUE_UNLOCKS } from '../data/evidence'
 
-// Import Hollywood Premiere
-import {
-  WORLD_STATE as HOLLYWOOD_WORLD,
-  CHARACTERS as HOLLYWOOD_CHARACTERS,
-  CHARACTER_GREETINGS as HOLLYWOOD_GREETINGS,
-} from '../../mysteries/hollywood-premiere/characters'
-
 // Hardcoded mysteries metadata
 export const HARDCODED_MYSTERIES: MysteryInfo[] = [
   {
@@ -34,14 +27,6 @@ export const HARDCODED_MYSTERIES: MysteryInfo[] = [
     title: 'The Ashford Affair',
     subtitle: 'New Year\'s Eve, 1929 — Ashford Manor',
     era: '1920s',
-    difficulty: 'medium',
-    isGenerated: false,
-  },
-  {
-    id: 'hollywood-premiere',
-    title: 'Shadows Over Sunset',
-    subtitle: 'March 15th, 1947 — The Palladium Theatre',
-    era: '1940s',
     difficulty: 'medium',
     isGenerated: false,
   },
@@ -68,26 +53,6 @@ export async function loadMysteryById(id: string): Promise<LoadedMystery | null>
         killerId: ASHFORD_CHARACTERS.find(c => c.isGuilty)?.id || 'thomas',
       }
 
-    case 'hollywood-premiere':
-      return {
-        id: 'hollywood-premiere',
-        title: 'Shadows Over Sunset',
-        worldState: HOLLYWOOD_WORLD,
-        characters: HOLLYWOOD_CHARACTERS,
-        greetings: HOLLYWOOD_GREETINGS,
-        // Hollywood Premiere doesn't have evidence database yet - create minimal structure
-        evidence: createHollywoodEvidence(),
-        evidenceByRoom: {
-          lobby: ['victim-body', 'projection-schedule'],
-          projectionRoom: ['film-strip', 'locked-door'],
-          dressingRooms: ['gloria-letter', 'vivian-pills'],
-          vipLounge: ['witness-statements'],
-        },
-        evidenceDialogueUnlocks: {},
-        rooms: ['lobby', 'projectionRoom', 'dressingRooms', 'vipLounge', 'backAlley', 'rooftop'],
-        killerId: HOLLYWOOD_CHARACTERS.find(c => c.isGuilty)?.id || 'gloria',
-      }
-
     default:
       // Try loading generated mystery from API
       try {
@@ -101,79 +66,6 @@ export async function loadMysteryById(id: string): Promise<LoadedMystery | null>
         console.error('Error loading mystery from API:', error)
       }
       return null
-  }
-}
-
-/**
- * Create minimal evidence structure for Hollywood Premiere
- * TODO: Expand this with full evidence database like Ashford Affair
- */
-function createHollywoodEvidence(): Record<string, EvidenceData> {
-  return {
-    'victim-body': {
-      id: 'victim-body',
-      name: 'Crime Scene',
-      description: 'Victor Malone\'s body in the projection room',
-      detailedDescription: 'Victor Malone was found strangled with a film strip in the projection room. The door was locked from the inside.',
-      type: 'physical',
-      relatedCharacter: 'gloria',
-      hint: 'The killer knew the building well...',
-      pointsTo: 'gloria',
-    },
-    'film-strip': {
-      id: 'film-strip',
-      name: 'Murder Weapon',
-      description: 'A strip of film from an old silent picture',
-      detailedDescription: 'The film strip used to strangle Victor is from "The Queen of Hearts" (1928) - one of Gloria Fontaine\'s most famous films.',
-      type: 'physical',
-      relatedCharacter: 'gloria',
-      hint: 'This film meant something to someone...',
-      pointsTo: 'gloria',
-    },
-    'gloria-letter': {
-      id: 'gloria-letter',
-      name: 'Gloria\'s Evidence',
-      description: 'Documents in Gloria\'s dressing room',
-      detailedDescription: 'Gloria kept evidence of Victor\'s predatory behavior for years - letters, photographs, testimony from other victims.',
-      type: 'document',
-      relatedCharacter: 'gloria',
-      hint: 'Someone was planning revenge...',
-      pointsTo: 'gloria',
-    },
-    'projection-schedule': {
-      id: 'projection-schedule',
-      name: 'Projection Schedule',
-      description: 'The schedule for the night',
-      detailedDescription: 'Shows intermission at 9:15 PM - the exact time of the murder.',
-      type: 'document',
-      hint: 'The killer knew the timing perfectly...',
-    },
-    'locked-door': {
-      id: 'locked-door',
-      name: 'Locked Projection Room',
-      description: 'The door was locked from inside',
-      detailedDescription: 'The projection room was locked from the inside, but there\'s a service hatch in the ceiling - someone who knew the building could have escaped that way.',
-      type: 'physical',
-      hint: 'How did the killer escape?',
-      pointsTo: 'gloria',
-    },
-    'vivian-pills': {
-      id: 'vivian-pills',
-      name: 'Prescription Bottles',
-      description: 'Barbiturates in Vivian\'s dressing room',
-      detailedDescription: 'Vivian has been taking pills to cope with the pressure. Her supply comes from Rex.',
-      type: 'physical',
-      relatedCharacter: 'vivian',
-      hint: 'Everyone has secrets to hide...',
-    },
-    'witness-statements': {
-      id: 'witness-statements',
-      name: 'Witness Statements',
-      description: 'Accounts from guests in the VIP lounge',
-      detailedDescription: 'Multiple people saw different suspects at different times. The alibis don\'t all line up.',
-      type: 'document',
-      hint: 'Someone is lying...',
-    },
   }
 }
 
