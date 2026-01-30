@@ -171,11 +171,12 @@ Generate the complete MysteryBlueprint JSON now.`
   
   const ai = new GoogleGenAI({ apiKey: getGeminiKey() })
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-2.5-pro',
     contents: `${MYSTERY_GENERATOR_PROMPT}\n\n${userPrompt}`,
     config: {
       maxOutputTokens: 12000,
       responseMimeType: 'application/json',
+      thinkingConfig: { thinkingBudget: 0 },
     },
   })
   
