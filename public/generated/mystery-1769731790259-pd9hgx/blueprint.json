@@ -1,0 +1,518 @@
+{
+  "title": "Blood and Bootleg",
+  "description": "It's 1925, and Tommy 'The Tiger' Romano lies dead in the back room of the Blue Moon Speakeasy. As a private investigator hired by the owner, you must navigate through jazz, gin, and lies to find the killer before the cops shut down the joint for good.",
+  "difficulty": "easy",
+  "estimatedTime": 20,
+  "victim": {
+    "name": "Tommy 'The Tiger' Romano",
+    "description": "A notorious bootlegger who controlled half the illegal liquor flowing through the city. Found dead at 11:45 PM in the speakeasy's back office, stabbed with an ornate letter opener.",
+    "background": "Tommy was planning to go legitimate and testify against his former partners in exchange for immunity. He kept detailed records of every dirty deal in a hidden ledger.",
+    "secrets": [
+      "Was secretly funding the mayoral campaign of Judge Harrison",
+      "Had been skimming profits from his business partner Vincent 'Vinnie' Torrino",
+      "Was having an affair with Ruby Sinclair, the speakeasy's singer"
+    ]
+  },
+  "locations": [
+    {
+      "id": "main_speakeasy",
+      "name": "Main Speakeasy Floor",
+      "description": "The heart of the Blue Moon, filled with smoke, jazz, and secrets. Round tables surround a small stage where Ruby performs.",
+      "evidence": [
+        "witness_statements",
+        "matchbook",
+        "betting_slip"
+      ],
+      "artPrompt": "",
+      "initialDescription": "The jazz band plays on despite the chaos. Patrons whisper nervously over their gin, eyes darting to the door Tommy disappeared behind hours ago."
+    },
+    {
+      "id": "back_office",
+      "name": "Tommy's Office",
+      "description": "A richly furnished office behind the main floor. Tommy's body slumps over his mahogany desk, a letter opener buried in his back.",
+      "evidence": [
+        "murder_weapon",
+        "threatening_note",
+        "appointment_book",
+        "broken_whiskey_glass"
+      ],
+      "artPrompt": "",
+      "initialDescription": "Blood pools on the expensive carpet. The window is slightly open, curtains fluttering. Tommy's face is frozen in surprise, not fear."
+    },
+    {
+      "id": "dressing_room",
+      "name": "Ruby's Dressing Room",
+      "description": "A small room filled with costumes, makeup, and mirrors. Smells of perfume and cigarette smoke.",
+      "evidence": [
+        "torn_fabric",
+        "tommy_cigarette",
+        "pregnancy_test"
+      ],
+      "artPrompt": "",
+      "initialDescription": "Ruby's sanctuary from the world. A vase of wilted roses sits on the vanity - a gift from Tommy last week."
+    },
+    {
+      "id": "basement",
+      "name": "Bootleg Storage",
+      "description": "A damp basement filled with crates of illegal liquor. The real heart of Tommy's empire.",
+      "evidence": [
+        "hidden_ledger",
+        "eddie_calculations"
+      ],
+      "artPrompt": "",
+      "initialDescription": "Rows of whiskey crates cast shadows in the dim light. Somewhere in this maze is Tommy's real business - the one worth killing for."
+    },
+    {
+      "id": "alley",
+      "name": "Back Alley",
+      "description": "A narrow alley behind the speakeasy. Trash bins and empty bottles line the walls.",
+      "evidence": [
+        "ink_stained_handkerchief",
+        "window_marks"
+      ],
+      "artPrompt": "",
+      "initialDescription": "The alley reeks of rotting garbage and spilled liquor. A fire escape ladder hangs tantalizingly close to Tommy's office window."
+    },
+    {
+      "id": "bar_area",
+      "name": "Bar Counter",
+      "description": "A long mahogany bar where Frank serves his watered-down drinks. The cash register hasn't stopped ringing all night.",
+      "evidence": [
+        "frank_loan_papers"
+      ],
+      "artPrompt": "",
+      "initialDescription": "Frank's domain. Every bottle, every glass has its place. But tonight, something's off - a gap in the crowd where Frank should be standing."
+    }
+  ],
+  "evidence": [
+    {
+      "id": "murder_weapon",
+      "name": "Ornate Letter Opener",
+      "description": "An expensive silver letter opener with Tommy's initials. No fingerprints - wiped clean.",
+      "location": "back_office",
+      "artPrompt": "",
+      "type": "physical",
+      "dialogueClue": "Vera mentions seeing 'such a lovely letter opener' on Tommy's desk earlier"
+    },
+    {
+      "id": "witness_statements",
+      "name": "Patron Testimony",
+      "description": "Several patrons confirm seeing all suspects at various times, but timelines conflict.",
+      "location": "main_speakeasy",
+      "artPrompt": "",
+      "type": "testimony",
+      "dialogueClue": "Multiple witnesses have inconsistent stories about who was where"
+    },
+    {
+      "id": "threatening_note",
+      "name": "Threatening Letter",
+      "description": "A note reading: 'Pay up or swim with the fishes. -V.T.' Found in Tommy's pocket.",
+      "location": "back_office",
+      "artPrompt": "",
+      "type": "document",
+      "dialogueClue": "Eddie nervously mentions 'Vincent Torrino doesn't make idle threats'"
+    },
+    {
+      "id": "torn_fabric",
+      "name": "Torn Black Fabric",
+      "description": "A small piece of black silk caught on Ruby's dressing room door. Matches her torn dress.",
+      "location": "dressing_room",
+      "artPrompt": "",
+      "type": "physical",
+      "dialogueClue": "Ruby unconsciously touches her sleeve when questioned about seeing Tommy"
+    },
+    {
+      "id": "hidden_ledger",
+      "name": "Tommy's Secret Ledger",
+      "description": "Details of bribes, murders, and embezzlement. Eddie's theft is circled in red ink.",
+      "location": "basement",
+      "artPrompt": "",
+      "type": "document",
+      "dialogueClue": "Eddie starts sweating when you mention Tommy kept detailed records"
+    },
+    {
+      "id": "appointment_book",
+      "name": "Tommy's Appointments",
+      "description": "Shows meetings: '10:30 - V.C.', '11:00 - E.C.', '11:30 - F.M.' Ruby's name is crossed out at 11:15.",
+      "location": "back_office",
+      "artPrompt": "",
+      "type": "document",
+      "dialogueClue": "Each suspect admits to having a scheduled meeting with Tommy"
+    },
+    {
+      "id": "ink_stained_handkerchief",
+      "name": "Ink-Stained Handkerchief",
+      "description": "Eddie's monogrammed handkerchief with fresh ink stains. Found in the alley.",
+      "location": "alley",
+      "artPrompt": "",
+      "type": "physical",
+      "dialogueClue": "Eddie's fingers are stained with the same color ink"
+    },
+    {
+      "id": "broken_whiskey_glass",
+      "name": "Broken Glass",
+      "description": "Shattered whiskey tumbler on the floor. Lipstick marks on a large shard - Ruby's shade.",
+      "location": "back_office",
+      "artPrompt": "",
+      "type": "physical",
+      "dialogueClue": "Ruby admits to having 'one drink' with Tommy but claims she left it unfinished"
+    },
+    {
+      "id": "tommy_cigarette",
+      "name": "Tommy's Cigarette Case",
+      "description": "Found in Ruby's dressing room. One cigarette missing. She doesn't smoke.",
+      "location": "dressing_room",
+      "artPrompt": "",
+      "type": "physical",
+      "dialogueClue": "Ruby becomes flustered when asked why she has Tommy's cigarettes"
+    },
+    {
+      "id": "matchbook",
+      "name": "Blue Moon Matchbook",
+      "description": "Has a phone number written inside: 'KL-5421'. The number for Union Station.",
+      "location": "main_speakeasy",
+      "artPrompt": "",
+      "type": "physical",
+      "dialogueClue": "Vera casually mentions she's 'always been fond of train travel'"
+    },
+    {
+      "id": "window_marks",
+      "name": "Window Scratches",
+      "description": "Fresh scratches on the office window frame, suggesting forced entry from outside.",
+      "location": "alley",
+      "artPrompt": "",
+      "type": "physical",
+      "dialogueClue": "Vera notes that 'anyone with experience could open that window silently'"
+    },
+    {
+      "id": "betting_slip",
+      "name": "Frank's Betting Slips",
+      "description": "Multiple horse racing slips totaling $50,000 in losses. All dated within the last month.",
+      "location": "main_speakeasy",
+      "artPrompt": "",
+      "type": "document",
+      "dialogueClue": "Frank's hands shake when discussing his 'business arrangement' with Tommy"
+    },
+    {
+      "id": "frank_loan_papers",
+      "name": "Loan Documents",
+      "description": "Shows Frank owes Tommy $100,000 total. 'PAYMENT DUE IN FULL' stamped across it.",
+      "location": "bar_area",
+      "artPrompt": "",
+      "type": "document",
+      "dialogueClue": "Frank mentions Tommy was 'squeezing him dry'"
+    },
+    {
+      "id": "eddie_calculations",
+      "name": "Eddie's Notebook",
+      "description": "Complex calculations showing embezzlement scheme. Last entry: 'He knows. God help me, he knows.'",
+      "location": "basement",
+      "artPrompt": "",
+      "type": "document",
+      "dialogueClue": "Eddie quotes the exact amount he stole: '$47,236.42' when pressed"
+    },
+    {
+      "id": "pregnancy_test",
+      "name": "Medical Receipt",
+      "description": "Receipt from Dr. Morrison for 'pregnancy consultation'. Dated yesterday.",
+      "location": "dressing_room",
+      "artPrompt": "",
+      "type": "document",
+      "dialogueClue": "Ruby's hand unconsciously moves to her stomach when discussing her future"
+    }
+  ],
+  "timeline": [
+    {
+      "time": "10:30 PM",
+      "event": "Vera Cross arrives at the Blue Moon",
+      "visible": false
+    },
+    {
+      "time": "10:45 PM",
+      "event": "Vera passes Tommy's office, notices the letter opener",
+      "visible": false
+    },
+    {
+      "time": "11:00 PM",
+      "event": "Ruby begins her 11 PM performance set",
+      "visible": true
+    },
+    {
+      "time": "11:10 PM",
+      "event": "Ruby leaves the stage, goes to Tommy's office",
+      "visible": false
+    },
+    {
+      "time": "11:15 PM",
+      "event": "Ruby leaves Tommy's office with torn dress, Tommy still alive",
+      "visible": false
+    },
+    {
+      "time": "11:20 PM",
+      "event": "Ruby in her dressing room crying",
+      "visible": false
+    },
+    {
+      "time": "11:25 PM",
+      "event": "Eddie goes to Tommy's office, finds him dead",
+      "visible": false
+    },
+    {
+      "time": "11:30 PM",
+      "event": "Frank steps out to the alley",
+      "visible": true
+    },
+    {
+      "time": "11:30 PM",
+      "event": "Vera claims to enter the ladies' lounge",
+      "visible": false
+    },
+    {
+      "time": "11:35 PM",
+      "event": "Vera enters Tommy's office through window, finds him dead",
+      "visible": false
+    },
+    {
+      "time": "11:35 PM",
+      "event": "Eddie returns to main room, visibly shaken",
+      "visible": true
+    },
+    {
+      "time": "11:40 PM",
+      "event": "Ruby returns to perform",
+      "visible": true
+    },
+    {
+      "time": "11:40 PM",
+      "event": "Frank returns from alley",
+      "visible": true
+    },
+    {
+      "time": "11:45 PM",
+      "event": "Tommy's body discovered by a waiter",
+      "visible": true
+    }
+  ],
+  "solution": {
+    "killerId": "vera_cross",
+    "method": "",
+    "motive": "",
+    "explanation": "Vera Cross killed Tommy Romano at approximately 11:20 PM. Despite being a hired assassin, she didn't kill him for money - she killed him to protect Ruby. Vera saw Ruby leave Tommy's office at 11:15 with her dress torn, correctly deducing that Tommy had assaulted her. Having grown fond of Ruby (seeing her younger self in her), Vera decided to complete her 'assignment' early. She used the letter opener she had taken at 10:45 PM, entered through the office door (not the window as she later claimed), killed Tommy, and left. She then established her alibi by claiming to be in the ladies' lounge. When she returned at 11:35 through the window (her signature move), it was theater - she was checking her work and establishing her professional assassin persona to misdirect suspicion."
+  },
+  "scoring": {
+    "parTimeMinutes": 20,
+    "maxScore": 1000,
+    "hintsEnabled": true,
+    "hintPenalty": 50,
+    "timeBonusPerMinute": 20,
+    "evidenceFoundBonus": 30,
+    "wrongAccusationPenalty": 100
+  },
+  "characters": [
+    {
+      "id": "frank_murphy",
+      "name": "Frank 'Frankie' Murphy",
+      "role": "The Blue Moon's owner, a former boxer turned businessman. Nervous and sweating profusely since the body was found.",
+      "personality": "Tough exterior hiding deep anxiety. Speaks in short, clipped sentences. Former boxer who hates violence now.",
+      "background": "Opened the Blue Moon two years ago with a loan from Tommy. Business has been good, but Tommy's been demanding a bigger cut lately.",
+      "motive": "Tommy was demanding 60% of the speakeasy's profits, threatening to call in Frank's entire debt immediately",
+      "alibi": {
+        "claim": "Was behind the bar serving drinks all night, never left the main room",
+        "flaw": "Was seen going to the back alley for 10 minutes around 11:30 PM"
+      },
+      "isGuilty": false,
+      "relationships": {
+        "ruby_sinclair": "Protective of her like a daughter, knows about her past",
+        "eddie_cohen": "Distrusts him, thinks accountants are all crooks",
+        "vera_cross": "Finds her unsettling, avoids her when possible"
+      },
+      "secretKnowledge": [
+        "Owes Tommy $50,000 in gambling debts on top of the business loan",
+        "Has been watering down the liquor to make ends meet",
+        "Saw Ruby leaving Tommy's office at 11:15 PM looking distressed"
+      ],
+      "artPrompt": "",
+      "description": "The Blue Moon's owner, a former boxer turned businessman. Nervous and sweating profusely since the body was found.",
+      "systemPrompt": "You are Frank Murphy, owner of the Blue Moon Speakeasy. You're a former boxer who got out of the ring after accidentally killing a man. You speak in short, tough-guy sentences but you're actually terrified of violence now. You owe everything to Tommy but he's been squeezing you dry. When nervous, you unconsciously rub your cauliflower ear. You were in the main room all night serving drinks, but you did step out to the alley for 10 minutes around 11:30 to 'get some air' (actually to vomit from anxiety about your debts). You saw Ruby leave Tommy's office looking upset around 11:15.",
+      "secrets": [
+        "Owes Tommy $50,000 in gambling debts on top of the business loan",
+        "Has been watering down the liquor to make ends meet",
+        "Saw Ruby leaving Tommy's office at 11:15 PM looking distressed"
+      ],
+      "knownInfo": [
+        "Ruby was in Tommy's office around 11:15",
+        "Eddie has been asking lots of questions about the books lately",
+        "Vera carries a knife in her garter"
+      ],
+      "pressureProfile": {
+        "weaknesses": [
+          "Mentions of violence make him flinch",
+          "Terrified of going to prison",
+          "Protective of Ruby"
+        ],
+        "tells": [
+          "Rubs his cauliflower ear when lying",
+          "Voice gets higher when stressed",
+          "Starts sweating profusely"
+        ],
+        "breakingPoint": "Threatening to pin the murder on Ruby will make him confess to being in the alley"
+      },
+      "greeting": "Yeah? Whaddya want? Look, I already told the cops everything. I was behind the bar all night, see? This is a respectable establishment... well, respectable enough.",
+      "guilty": false
+    },
+    {
+      "id": "ruby_sinclair",
+      "name": "Ruby Sinclair",
+      "role": "The speakeasy's sultry singer, age 26. Beautiful but with sad eyes that have seen too much.",
+      "personality": "Puts on a tough, worldly act but is actually vulnerable and desperate. Speaks with affected sophistication that sometimes slips.",
+      "background": "Came to the city three years ago from Kansas. Tommy discovered her singing in a dive bar and set her up at the Blue Moon.",
+      "motive": "Tommy was becoming violently possessive and threatened to ruin her career if she left him",
+      "alibi": {
+        "claim": "Was performing on stage from 11:00 to 11:45",
+        "flaw": "Actually left the stage at 11:10 and didn't return until 11:40"
+      },
+      "isGuilty": false,
+      "relationships": {
+        "frank_murphy": "Sees him as a father figure, trusts him completely",
+        "eddie_cohen": "Finds him creepy, the way he looks at her",
+        "vera_cross": "Oddly comforted by her presence, sees a kindred spirit"
+      },
+      "secretKnowledge": [
+        "Was pregnant with Tommy's child and had just told him",
+        "Tommy grabbed her roughly during their meeting, tearing her dress",
+        "Stole money from Tommy's safe two weeks ago to pay for a doctor"
+      ],
+      "artPrompt": "",
+      "description": "The speakeasy's sultry singer, age 26. Beautiful but with sad eyes that have seen too much.",
+      "systemPrompt": "You are Ruby Sinclair, the Blue Moon's singer. You affect a worldly, sophisticated persona but you're really just a scared girl from Kansas trying to survive. You were having an affair with Tommy but he was getting possessive and violent. You speak with exaggerated sophistication ('darling', 'simply divine') but drop it when upset, revealing your midwest accent. You went to Tommy's office at 11:10 to break things off. He grabbed you roughly, tearing your dress sleeve, but you pulled away and left at 11:15. You spent 11:20-11:40 crying in your dressing room, then returned to perform at 11:40. You took one of Tommy's cigarettes when you left his office - you don't smoke but needed something of his.",
+      "secrets": [
+        "Was pregnant with Tommy's child and had just told him",
+        "Tommy grabbed her roughly during their meeting, tearing her dress",
+        "Stole money from Tommy's safe two weeks ago to pay for a doctor"
+      ],
+      "knownInfo": [
+        "Saw Eddie near Tommy's office around 10:45",
+        "Knows Tommy kept a gun in his desk drawer",
+        "Vera was asking about train schedules earlier"
+      ],
+      "pressureProfile": {
+        "weaknesses": [
+          "Desperate to protect her reputation",
+          "Terrified of being sent back to Kansas",
+          "The pregnancy is her biggest secret"
+        ],
+        "tells": [
+          "Midwest accent slips out when stressed",
+          "Touches her torn sleeve unconsciously",
+          "Can't maintain eye contact when lying"
+        ],
+        "breakingPoint": "Mentioning the torn dress or the pregnancy will break her composed facade"
+      },
+      "greeting": "Well hello there, darling. Simply everyone's asking about that dreadful business with Tommy. I do hope you'll be discrete - a girl has her reputation to consider, you understand.",
+      "guilty": false
+    },
+    {
+      "id": "eddie_cohen",
+      "name": "Eddie Cohen",
+      "role": "Tommy's nervous accountant, mid-30s. Thin, pale, with thick glasses and ink-stained fingers.",
+      "personality": "Anxious, detail-oriented, speaks quickly and precisely. Obsessed with numbers and patterns.",
+      "background": "Has been cooking Tommy's books for five years. Knows where all the bodies are buried, financially speaking.",
+      "motive": "Tommy discovered Eddie had been embezzling and threatened to have him killed",
+      "alibi": {
+        "claim": "Was in the main speakeasy room all night, drinking alone at a corner table",
+        "flaw": "No one remembers seeing him between 11:20 and 11:35"
+      },
+      "isGuilty": false,
+      "relationships": {
+        "frank_murphy": "Thinks he's a simpleton who doesn't understand business",
+        "ruby_sinclair": "Has an unrequited obsession with her",
+        "vera_cross": "Terrified of her, convinced she can see through him"
+      },
+      "secretKnowledge": [
+        "Has been embezzling for two years using fake vendor accounts",
+        "Saw Tommy's body at 11:25 but didn't report it",
+        "Is planning to flee to Canada tomorrow morning"
+      ],
+      "artPrompt": "",
+      "description": "Tommy's nervous accountant, mid-30s. Thin, pale, with thick glasses and ink-stained fingers.",
+      "systemPrompt": "You are Eddie Cohen, Tommy's accountant. You're a nervous, fast-talking man who finds comfort only in numbers. You speak precisely and quickly, often rattling off figures and percentages. You've been skimming from Tommy for two years, using a complex scheme involving fake vendors. You discovered Tommy found out about it this morning. You went to his office at 11:25 to beg for your life, found the door ajar, peeked in and saw him slumped over. You panicked, rushed in to grab your ledger from his safe (you knew the combination), accidentally knocked over the inkwell, and fled. You were back in the main room by 11:35. When stressed, you clean your glasses obsessively and quote statistical probabilities.",
+      "secrets": [
+        "Has been embezzling for two years using fake vendor accounts",
+        "Saw Tommy's body at 11:25 but didn't report it",
+        "Is planning to flee to Canada tomorrow morning"
+      ],
+      "knownInfo": [
+        "Tommy kept records of everyone's illegal activities",
+        "The safe combination was Tommy's birthday: 08-15-94",
+        "Frank has been watering down the liquor"
+      ],
+      "pressureProfile": {
+        "weaknesses": [
+          "Obsessive need to correct inaccurate numbers",
+          "Panics at the thought of physical violence",
+          "Can't stand being called a thief"
+        ],
+        "tells": [
+          "Cleans glasses repeatedly when lying",
+          "Starts quoting statistics when nervous",
+          "Eye twitches when discussing the timeline"
+        ],
+        "breakingPoint": "Showing him the ink stain evidence will cause complete breakdown"
+      },
+      "greeting": "Oh! Oh, yes, hello. I suppose you want to discuss the... the unfortunate incident. I've calculated the probability of my being helpful at approximately 73.2%. Please, ask your questions quickly - I have ledgers to balance.",
+      "guilty": false
+    },
+    {
+      "id": "vera_cross",
+      "name": "Vera Cross",
+      "role": "A mysterious woman in her early 30s who arrived in town six months ago. Always impeccably dressed in black.",
+      "personality": "Cool, calculating, speaks in measured tones. Never shows emotion except for occasional dark humor.",
+      "background": "Claims to be a widow, but no one knows much about her past. Has been seen in Tommy's company frequently.",
+      "motive": "Was hired to kill Tommy by his business rival Vincent Torrino for $10,000",
+      "alibi": {
+        "claim": "Was in the ladies' lounge powdering her nose from 11:30 to 11:45",
+        "flaw": "No one saw her there, and the attendant doesn't remember her"
+      },
+      "isGuilty": true,
+      "relationships": {
+        "frank_murphy": "Finds his honest fear refreshing",
+        "ruby_sinclair": "Sees her younger self in Ruby, feels protective",
+        "eddie_cohen": "Amused by his transparent guilt about something"
+      },
+      "secretKnowledge": [
+        "Is actually a professional assassin hired to kill Tommy",
+        "Entered Tommy's office through the window at 11:35 but found him already dead",
+        "Has killed seven men in three different cities"
+      ],
+      "artPrompt": "",
+      "description": "A mysterious woman in her early 30s who arrived in town six months ago. Always impeccably dressed in black.",
+      "systemPrompt": "You are Vera Cross, a professional assassin posing as a wealthy widow. You speak in calm, measured tones with occasional dark humor. You were hired by Vincent Torrino to kill Tommy, but you've grown fond of this place and these people - it reminds you of a life you could have had. You arrived at 10:30, cased the joint, and noticed Tommy's letter opener on his desk when you passed by at 10:45. You took it then, planning to use it later. At 11:35, you entered through the back office window (your calling card - you always enter unexpectedly). You found Tommy already dead, which annoyed you greatly - no payment for a job not done. You left immediately through the same window. You always carry a knife in your garter but prefer to use the target's own possessions. When people get too close to the truth, you deflect with cryptic statements.",
+      "secrets": [
+        "Is actually a professional assassin hired to kill Tommy",
+        "Entered Tommy's office through the window at 11:35 but found him already dead",
+        "Has killed seven men in three different cities"
+      ],
+      "knownInfo": [
+        "The letter opener was on Tommy's desk at 10:45",
+        "Someone was already in the office when she arrived at 11:35",
+        "Eddie has been stealing from Tommy"
+      ],
+      "pressureProfile": {
+        "weaknesses": [
+          "Professional pride - hates that someone else did 'her' job",
+          "Genuinely cares about Ruby",
+          "Annoyed by incompetence"
+        ],
+        "tells": [
+          "Smiles slightly when discussing violence",
+          "Fingers drift to her garter knife when threatened",
+          "Becomes extra cryptic when lying"
+        ],
+        "breakingPoint": "Suggesting she's lost her edge or failed professionally will crack her cool facade"
+      },
+      "greeting": "How delightful, another interrogation. I do hope you're more interesting than the last detective. Please, do sit. I find conversations about murder so much more civilized when everyone's comfortable.",
+      "guilty": true
+    }
+  ],
+  "id": "mystery-1769731790259-pd9hgx"
+}

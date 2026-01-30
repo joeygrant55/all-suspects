@@ -1,0 +1,387 @@
+{
+  "id": "last-call-at-the-blue-moon",
+  "title": "Last Call at the Blue Moon",
+  "subtitle": "October 13th, 1925 — Chicago",
+  "era": "1920s",
+  "difficulty": "easy",
+  "setting": {
+    "location": "The Blue Moon Speakeasy",
+    "atmosphere": "smoky, jazz-filled, dangerous",
+    "weather": "Rain hammering the windows"
+  },
+  "victim": {
+    "name": "Vincent 'Vinnie' Torrino",
+    "role": "Speakeasy owner and bootlegger",
+    "causeOfDeath": "Poisoned gin",
+    "timeOfDeath": "10:45 PM",
+    "description": "A notorious bootlegger who owned the Blue Moon. Known for watering down his gin and blackmailing his patrons with their secrets."
+  },
+  "characters": [
+    {
+      "id": "ruby-valentine",
+      "name": "Ruby Valentine",
+      "role": "Jazz singer",
+      "personality": "Sultry, ambitious, desperate to escape",
+      "background": "Came from nothing, clawed her way to the Blue Moon stage. Vinnie discovered her but also trapped her with a terrible contract.",
+      "motive": "Vinnie refused to let her take a recording contract in New York, threatening to ruin her if she tried to leave",
+      "alibi": "Was performing on stage from 10:30 to 11:00 PM",
+      "isGuilty": false,
+      "relationships": {
+        "tommy-fingers": "Former lover, still carries a torch",
+        "betty-carlisle": "Sees her as competition for male attention",
+        "sal-benedetto": "Knows he's sweet on her, uses it"
+      },
+      "secretKnowledge": [
+        "Vinnie kept a second set of books",
+        "She saw Tommy leave the bar at 10:40",
+        "Vinnie was drinking heavily tonight"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Smooth as honey, drops her g's, uses jazz slang",
+      "greeting": "Well well, if it ain't the law. Or what passes for it these days. Buy a girl a drink before you start askin' questions?",
+      "systemPrompt": "You are Ruby Valentine, a jazz singer trapped by Vinnie's contract. Speak in smooth 1920s slang, be flirtatious but guarded. You hated Vinnie but your alibi is solid - you were on stage. Deflect by hinting at others' secrets. If pressed about Tommy, get defensive. Crack if confronted with evidence about your past relationship with Tommy.",
+      "weaknesses": [
+        "Gets flustered when Tommy is mentioned",
+        "Protective of her humble origins",
+        "Fear of going back to poverty"
+      ],
+      "pressure": {
+        "low": "Flirtatious and confident",
+        "medium": "Defensive, starts smoking nervously",
+        "high": "Admits she wanted Vinnie dead but swears she didn't do it"
+      }
+    },
+    {
+      "id": "tommy-fingers",
+      "name": "Tommy 'Fingers' McGrath",
+      "role": "Piano player and Vinnie's accountant",
+      "personality": "Nervous, guilt-ridden, protective",
+      "background": "Handles the books for the speakeasy. Been skimming money to pay for his mother's medical bills.",
+      "motive": "Vinnie discovered he'd been stealing and threatened to have him killed",
+      "alibi": "Left the speakeasy at 10:40 PM to make a phone call from the booth outside",
+      "isGuilty": true,
+      "relationships": {
+        "ruby-valentine": "Former lover, still in love with her",
+        "betty-carlisle": "Thinks she's trouble",
+        "sal-benedetto": "Fears him and his connections"
+      },
+      "secretKnowledge": [
+        "Vinnie found out about the skimming today",
+        "Sal is connected to the Benedetto crime family",
+        "Ruby still loves him"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Quick, clipped sentences. Irish accent when stressed",
+      "greeting": "I don't know nothin' about nothin'. I just play the piano and mind the books, see?",
+      "systemPrompt": "You are Tommy McGrath, the actual killer. You poisoned Vinnie's private gin bottle at 10:15. Be nervous and defensive. Your alibi is that you left at 10:40 to make a call. If pressed about the books, admit to skimming but claim Vinnie deserved it. Never admit to the murder unless completely cornered with evidence. Irish accent slips out when stressed.",
+      "weaknesses": [
+        "Mother's illness",
+        "Love for Ruby",
+        "Fear of being caught stealing"
+      ],
+      "pressure": {
+        "low": "Fidgets with his cufflinks, avoids eye contact",
+        "medium": "Starts sweating, Irish accent emerges",
+        "high": "Admits to stealing but maintains innocence about murder"
+      }
+    },
+    {
+      "id": "betty-carlisle",
+      "name": "Betty Carlisle",
+      "role": "Society girl and Vinnie's girlfriend",
+      "personality": "Spoiled, jealous, manipulative",
+      "background": "Rich senator's daughter who rebels by slumming in speakeasies. Been Vinnie's girl for six months.",
+      "motive": "Found love letters from another woman in Vinnie's office. He was planning to dump her.",
+      "alibi": "Was in the powder room fixing her makeup from 10:40 to 10:55 PM",
+      "isGuilty": false,
+      "relationships": {
+        "ruby-valentine": "Jealous rival for male attention",
+        "tommy-fingers": "Thinks he's beneath her notice",
+        "sal-benedetto": "Finds him exciting but dangerous"
+      },
+      "secretKnowledge": [
+        "Vinnie was seeing a chorus girl named Maxine",
+        "Her father is Senator Carlisle",
+        "She has a cocaine habit"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Upper-class accent, condescending, uses darling and dear mockingly",
+      "greeting": "How dare you interrogate me! Do you know who my father is? Senator Carlisle would have your badge!",
+      "systemPrompt": "You are Betty Carlisle, a spoiled society girl. Be haughty and condescending. You're furious about Vinnie cheating but didn't kill him. Use your father's name as a threat. If pressed about drugs, deny everything. Crack if shown evidence of your cocaine habit or the love letters you found.",
+      "weaknesses": [
+        "Fear of scandal",
+        "Cocaine addiction",
+        "Jealousy over other women"
+      ],
+      "pressure": {
+        "low": "Imperious and threatening",
+        "medium": "Starts chain-smoking, makeup begins to run",
+        "high": "Breaks down about Vinnie's cheating, admits to wanting him dead"
+      }
+    },
+    {
+      "id": "sal-benedetto",
+      "name": "Sal Benedetto",
+      "role": "Enforcer and business partner",
+      "personality": "Calm, dangerous, honorable in his own way",
+      "background": "Represents the Benedetto family's interests in the speakeasy. Suspected Vinnie was shorting the family.",
+      "motive": "Vinnie was skimming from the family's cut. That's a death sentence in their world.",
+      "alibi": "Was in the back room counting money from 10:30 to 11:00 PM",
+      "isGuilty": false,
+      "relationships": {
+        "ruby-valentine": "Respects her talent, mild attraction",
+        "tommy-fingers": "Knows he's stealing, plans to deal with him later",
+        "betty-carlisle": "Finds her amusing but useless"
+      },
+      "secretKnowledge": [
+        "The real books showed Vinnie stealing from the family",
+        "Tommy has been skimming too",
+        "Has orders from above to handle Vinnie"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Soft-spoken, grammatically perfect, implied threats",
+      "greeting": "Please, sit. I'm happy to assist the investigation. After all, this unfortunate event is bad for everyone's business.",
+      "systemPrompt": "You are Sal Benedetto, a mafia enforcer. Be polite but menacing. Never directly threaten, only imply. You planned to kill Vinnie but someone beat you to it. You're actually pleased he's dead. If asked about the family, be vague. Crack only if presented with evidence about the family's orders.",
+      "weaknesses": [
+        "Loyalty to the Benedetto family",
+        "His mother (never threatens women)",
+        "Evidence of family crimes"
+      ],
+      "pressure": {
+        "low": "Perfectly calm and cooperative",
+        "medium": "Subtle threats emerge in his tone",
+        "high": "Admits Vinnie had to die but insists the family handles things differently"
+      }
+    }
+  ],
+  "locations": [
+    {
+      "id": "main-bar",
+      "name": "Main Bar",
+      "description": "Art deco bar with brass rails and mirror backing. Bottles of illegal hooch line the shelves. Vinnie's body slumps over his private booth in the corner.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "backstage",
+      "name": "Backstage Area",
+      "description": "Cramped space behind the stage. Makeup mirrors, costume racks, and Ruby's vanity. Smells of greasepaint and perfume.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "office",
+      "name": "Vinnie's Office",
+      "description": "Lavish office with a massive desk, wall safe, and leather chairs. Reeks of cigars and corruption.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "description": "Industrial kitchen where they prepare the speakeasy's famous (terrible) food. Access to the bar's liquor storage.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "back-room",
+      "name": "Back Room",
+      "description": "Where the real business happens. Card tables, counting money, and private deals.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "alley",
+      "name": "Alley Behind the Speakeasy",
+      "description": "Rain-slicked alley with trash bins and a phone booth. The stage door and kitchen exit open here.",
+      "evidence": [],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "poisoned-gin-bottle",
+      "name": "Poisoned Gin Bottle",
+      "description": "Vinnie's private bottle of gin",
+      "location": "main-bar",
+      "artPrompt": "",
+      "detailedDescription": "Vinnie's personal gin bottle, kept behind the bar. Only he drank from it. Tests show traces of cyanide. No fingerprints - wiped clean.",
+      "type": "physical",
+      "relatedCharacter": "tommy-fingers",
+      "pointsTo": "tommy-fingers"
+    },
+    {
+      "id": "love-letters",
+      "name": "Love Letters",
+      "description": "Letters to someone named 'M'",
+      "location": "office",
+      "artPrompt": "",
+      "detailedDescription": "Passionate love letters from Vinnie to 'My darling Maxine.' Dated last week. Found torn up in the waste basket.",
+      "type": "document",
+      "relatedCharacter": "betty-carlisle",
+      "pointsTo": "betty-carlisle"
+    },
+    {
+      "id": "accounting-ledger",
+      "name": "Accounting Ledger",
+      "description": "The speakeasy's books",
+      "location": "office",
+      "artPrompt": "",
+      "detailedDescription": "Shows discrepancies - someone's been skimming. Pencil marks in margins show Vinnie discovered it today. Tommy's handwriting.",
+      "type": "document",
+      "relatedCharacter": "tommy-fingers",
+      "pointsTo": "tommy-fingers"
+    },
+    {
+      "id": "threatening-note",
+      "name": "Threatening Note",
+      "description": "A note warning Vinnie",
+      "location": "main-bar",
+      "artPrompt": "",
+      "detailedDescription": "'You're shorting the family. This ends tonight. -B' Found in Vinnie's pocket.",
+      "type": "document",
+      "relatedCharacter": "sal-benedetto",
+      "pointsTo": "sal-benedetto"
+    },
+    {
+      "id": "ruby-contract",
+      "name": "Ruby's Contract",
+      "description": "Ruby's performance contract",
+      "location": "backstage",
+      "artPrompt": "",
+      "detailedDescription": "Draconian contract binding Ruby to the Blue Moon for five years. Penalties for breaking it would ruin her. Torn rejection letter from Columbia Records attached.",
+      "type": "document",
+      "relatedCharacter": "ruby-valentine",
+      "pointsTo": "ruby-valentine"
+    },
+    {
+      "id": "phone-booth-log",
+      "name": "Phone Booth Log",
+      "description": "Call log from outside booth",
+      "location": "alley",
+      "artPrompt": "",
+      "detailedDescription": "Tommy made a call at 10:42 PM to St. Mary's Hospital. Call lasted 3 minutes. Confirms his alibi for the time of death.",
+      "type": "document",
+      "relatedCharacter": "tommy-fingers",
+      "pointsTo": null
+    },
+    {
+      "id": "powder-compact",
+      "name": "Cocaine-Laced Compact",
+      "description": "Betty's powder compact",
+      "location": "main-bar",
+      "artPrompt": "",
+      "detailedDescription": "Expensive gold compact with 'B.C.' engraved. The powder tests positive for cocaine. Found under the powder room sink.",
+      "type": "physical",
+      "relatedCharacter": "betty-carlisle",
+      "pointsTo": "betty-carlisle"
+    },
+    {
+      "id": "bartender-testimony",
+      "name": "Bartender's Testimony",
+      "description": "What the bartender saw",
+      "location": "main-bar",
+      "artPrompt": "",
+      "detailedDescription": "Bartender says Tommy was behind the bar at 10:15 PM 'checking stock.' Only Tommy and Vinnie had access to Vinnie's private bottle.",
+      "type": "testimony",
+      "relatedCharacter": "tommy-fingers",
+      "pointsTo": "tommy-fingers"
+    },
+    {
+      "id": "stage-hand-testimony",
+      "name": "Stagehand's Testimony",
+      "description": "Confirms Ruby's alibi",
+      "location": "backstage",
+      "artPrompt": "",
+      "detailedDescription": "Stagehand swears Ruby was on stage from 10:30 to 11:00 PM. Never left, gave the performance of her life.",
+      "type": "testimony",
+      "relatedCharacter": "ruby-valentine",
+      "pointsTo": null
+    },
+    {
+      "id": "money-count",
+      "name": "Money Count Sheet",
+      "description": "Tonight's take",
+      "location": "back-room",
+      "artPrompt": "",
+      "detailedDescription": "Sal's meticulous count of tonight's earnings. Time-stamped entries from 10:30 to 11:00 PM. His handwriting, supports his alibi.",
+      "type": "document",
+      "relatedCharacter": "sal-benedetto",
+      "pointsTo": null
+    },
+    {
+      "id": "cyanide-bottle",
+      "name": "Cyanide Bottle",
+      "description": "Rat poison from kitchen",
+      "location": "kitchen",
+      "artPrompt": "",
+      "detailedDescription": "Industrial rat poison containing cyanide. From the kitchen supply closet. Cap recently opened, some missing.",
+      "type": "physical",
+      "relatedCharacter": null,
+      "pointsTo": "tommy-fingers"
+    },
+    {
+      "id": "tommy-cufflink",
+      "name": "Tommy's Cufflink",
+      "description": "Found near the kitchen",
+      "location": "kitchen",
+      "artPrompt": "",
+      "detailedDescription": "Distinctive Celtic design cufflink. Tommy's - he's wearing the matching one. Found on kitchen floor near the supply closet.",
+      "type": "physical",
+      "relatedCharacter": "tommy-fingers",
+      "pointsTo": "tommy-fingers"
+    }
+  ],
+  "solution": {
+    "killerId": "tommy-fingers",
+    "method": "Poisoned Vinnie's private gin bottle with cyanide from the kitchen",
+    "motive": "Vinnie discovered Tommy had been skimming money to pay for his mother's hospital bills and threatened to kill him",
+    "explanation": "Tommy McGrath killed Vinnie at 10:15 PM by adding cyanide to his private gin bottle. As both bartender and accountant, Tommy had unique access. He took cyanide from the kitchen (losing a cufflink), poisoned the bottle while 'checking stock,' then wiped it clean. He left at 10:40 to establish an alibi, knowing Vinnie always had a drink after 10:30. The threatening note from 'B' was a red herring - Sal planned to kill Vinnie but Tommy beat him to it."
+  },
+  "timeline": [
+    {
+      "time": "9:00 PM",
+      "event": "Speakeasy opens for the night"
+    },
+    {
+      "time": "9:30 PM",
+      "event": "Vinnie confronts Tommy about the missing money"
+    },
+    {
+      "time": "10:00 PM",
+      "event": "Betty finds love letters in Vinnie's office"
+    },
+    {
+      "time": "10:15 PM",
+      "event": "Tommy poisons Vinnie's private gin bottle"
+    },
+    {
+      "time": "10:30 PM",
+      "event": "Ruby begins her stage performance"
+    },
+    {
+      "time": "10:30 PM",
+      "event": "Sal begins counting money in back room"
+    },
+    {
+      "time": "10:40 PM",
+      "event": "Tommy leaves to make phone call"
+    },
+    {
+      "time": "10:40 PM",
+      "event": "Betty goes to powder room"
+    },
+    {
+      "time": "10:45 PM",
+      "event": "Vinnie drinks poisoned gin and dies"
+    },
+    {
+      "time": "10:55 PM",
+      "event": "Betty returns from powder room"
+    },
+    {
+      "time": "11:00 PM",
+      "event": "Ruby finishes performance, Vinnie found dead"
+    }
+  ]
+}
