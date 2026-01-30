@@ -1,6 +1,8 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import * as fs from 'fs'
+import * as path from 'path'
 import Anthropic from '@anthropic-ai/sdk'
 import { CHARACTERS, WORLD_STATE } from '../mysteries/ashford-affair/characters'
 import { EVIDENCE_DATABASE } from '../src/data/evidence'
