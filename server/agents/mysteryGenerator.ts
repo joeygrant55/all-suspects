@@ -12,15 +12,11 @@
  * 5. Game starts immediately with placeholders, art fills in as generated
  */
 
-import Anthropic from '@anthropic-ai/sdk'
+import { GoogleGenAI } from '@google/genai'
 import type { MysteryBlueprint } from '../../shared/types/MysteryBlueprint'
 
 // Lazy init — must wait for dotenv to load process.env
-let _anthropic: Anthropic | null = null
-function getAnthropic() {
-  if (!_anthropic) _anthropic = new Anthropic()
-  return _anthropic
-}
+function getGeminiKey() { return process.env.GEMINI_API_KEY || '' }
 
 export interface MysteryRequest {
   era?: string          // '1920s', '1970s', '2050s', 'Victorian', etc.
@@ -168,31 +164,25 @@ For each character, include:
 
 Generate the complete MysteryBlueprint JSON now.`
 
-  console.log('[MysteryGenerator] Calling Claude Opus (streaming)...')
+  console.log('[MysteryGenerator] Calling Gemini 2.5 Pro...')
   const startMs = Date.now()
   
-  // Use streaming — required for Opus which can take >10 minutes
   let fullText = ''
-  let outputTokens = 0
-  const stream = getAnthropic().messages.stream({
-    model: 'claude-opus-4-20250514',
-    max_tokens: 12000,
-    messages: [
-      { role: 'user', content: userPrompt }
-    ],
-    system: MYSTERY_GENERATOR_PROMPT,
+  
+  const ai = new GoogleGenAI({ apiKey: getGeminiKey() })
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: `${MYSTERY_GENERATOR_PROMPT}\n\n${userPrompt}`,
+    config: {
+      maxOutputTokens: 12000,
+      responseMimeType: 'application/json',
+    },
   })
   
-  for await (const event of stream) {
-    if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-      fullText += event.delta.text
-    }
-  }
+  fullText = response.text || ''
   
-  const finalMessage = await stream.finalMessage()
-  outputTokens = finalMessage.usage?.output_tokens || 0
   const elapsed = ((Date.now() - startMs) / 1000).toFixed(1)
-  console.log(`[MysteryGenerator] Claude responded in ${elapsed}s: ${outputTokens} tokens, stop=${finalMessage.stop_reason}`)
+  console.log(`[MysteryGenerator] Gemini responded in ${elapsed}s: ${fullText.length} chars`)
 
   const content = { type: 'text' as const, text: fullText }
   if (!fullText) {

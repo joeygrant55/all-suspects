@@ -1352,38 +1352,7 @@ app.post('/api/watson/reset', (_req, res) => {
 // MYSTERY GENERATION ENDPOINTS (Mystery Architect)
 // ============================================================
 
-/**
- * Generate a new procedural mystery
- * This creates a unique mystery with victim, suspects, evidence, and solution
- */
-app.post('/api/mystery/generate', async (req, res) => {
-  try {
-    const { difficulty = 'medium' } = req.body
-    console.log('[MYSTERY] Generating new mystery, difficulty:', difficulty)
-
-    const mystery = await generateMystery(difficulty)
-    await saveMystery(mystery)
-
-    // Don't return full mystery (spoilers!)
-    // Return only player-safe information
-    res.json({
-      success: true,
-      mysteryId: mystery.id,
-      setting: mystery.setting,
-      victim: {
-        name: mystery.victim.name,
-        role: mystery.victim.role,
-        causeOfDeath: mystery.victim.causeOfDeath,
-      },
-      suspectCount: mystery.suspects.length,
-      evidenceCount: mystery.evidence.length,
-    })
-  } catch (error) {
-    console.error('[MYSTERY] Generation failed:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    res.status(500).json({ error: 'Failed to generate mystery', details: errorMessage })
-  }
-})
+// Legacy /api/mystery/generate removed — handled by mysteryRouter (agents/mysteryApi.ts)
 
 /**
  * Get current mystery (player-safe, no spoilers)
@@ -1733,11 +1702,10 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('  GET /api/manor/room/:id/enter - Enter room and overhear conversations')
 
   // Pre-generate character introduction videos in the background
-  // Wait 5 seconds after server starts to avoid startup congestion
-  setTimeout(() => {
-    pregenerateIntroductions().catch(error => {
-      console.error('[SERVER] Failed to pre-generate introductions:', error)
-      // Don't crash the server - this is background work
-    })
-  }, 5000)
+  // Disabled — Veo3 rate-limited, fal.ai needs credits. Enable when video quota available.
+  // setTimeout(() => {
+  //   pregenerateIntroductions().catch(error => {
+  //     console.error('[SERVER] Failed to pre-generate introductions:', error)
+  //   })
+  // }, 5000)
 })
