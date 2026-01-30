@@ -194,33 +194,50 @@ async function processQueue(state: PipelineState): Promise<void> {
   console.log(`[ArtPipeline] Pipeline complete. ${state.assets.filter(a => a.status === 'complete').length}/${state.assets.length} assets generated.`)
 }
 
+// Best → fastest fallback. Gemini 3 Pro Image is highest quality, 2.5 Flash is fast fallback.
+const IMAGE_MODELS = [
+  'gemini-3-pro-image-preview',   // Best quality (Nano Banana Pro)
+  'gemini-2.5-flash-image',       // Fast + good quality (Nano Banana)
+  'gemini-2.0-flash-exp-image-generation', // Legacy fallback
+]
+
 /**
- * Generate a single image using Gemini (Nano Banana Pro)
+ * Generate a single image using the best available Gemini image model
  */
 async function generateImage(prompt: string, outputPath: string): Promise<void> {
   const ai = new GoogleGenAI({ apiKey: getGeminiKey() })
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.0-flash-exp-image-generation',
-    contents: prompt,
-    config: {
-      responseModalities: ['image', 'text'],
-    },
-  })
+  let lastError: Error | null = null
+  for (const model of IMAGE_MODELS) {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: prompt,
+        config: {
+          responseModalities: ['image', 'text'],
+        },
+      })
 
-  // Extract image data from response
-  const parts = response.candidates?.[0]?.content?.parts
-  if (!parts) throw new Error('No response parts')
+      const parts = response.candidates?.[0]?.content?.parts
+      if (!parts) throw new Error('No response parts')
 
-  for (const part of parts) {
-    if (part.inlineData?.data) {
-      const buffer = Buffer.from(part.inlineData.data, 'base64')
-      fs.writeFileSync(outputPath, buffer)
-      return
+      for (const part of parts) {
+        if (part.inlineData?.data) {
+          const buffer = Buffer.from(part.inlineData.data, 'base64')
+          fs.writeFileSync(outputPath, buffer)
+          console.log(`[ArtPipeline] Used model: ${model}`)
+          return
+        }
+      }
+      throw new Error('No image data in response')
+    } catch (err: any) {
+      lastError = err
+      console.log(`[ArtPipeline] Model ${model} failed, trying next...`)
+      continue
     }
   }
+  throw lastError || new Error('All image models failed')
 
-  throw new Error('No image data in response')
 }
 
 /**
