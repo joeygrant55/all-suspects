@@ -22,6 +22,7 @@ import * as path from 'path'
 import * as fs from 'fs'
 import { generateMystery, type MysteryRequest } from './mysteryGenerator'
 import { startArtPipeline, getPipelineStatus, type GeneratedAssets } from './artPipeline'
+import { talkToCharacter, getGreeting, resetSession, getSessionSummary } from './universalCharacterAgent'
 
 const router = Router()
 
@@ -168,6 +169,86 @@ router.get('/list', (_req, res) => {
   }
 
   res.json(mysteries)
+})
+
+// ─── Interrogation / Chat Routes ───
+
+/**
+ * Helper to load a blueprint by mystery ID
+ */
+function loadBlueprint(mysteryId: string): any | null {
+  const mystery = activeMysteries.get(mysteryId)
+  if (mystery) return mystery.blueprint
+
+  const blueprintPath = path.join(GENERATED_DIR, mysteryId, 'blueprint.json')
+  if (fs.existsSync(blueprintPath)) {
+    return JSON.parse(fs.readFileSync(blueprintPath, 'utf-8'))
+  }
+  return null
+}
+
+/**
+ * POST /api/mystery/:id/chat
+ * Talk to a character in a mystery
+ * Body: { characterId, message, evidenceId? }
+ */
+router.post('/:id/chat', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { characterId, message, evidenceId } = req.body
+
+    if (!characterId || !message) {
+      return res.status(400).json({ error: 'characterId and message are required' })
+    }
+
+    const blueprint = loadBlueprint(id)
+    if (!blueprint) {
+      return res.status(404).json({ error: 'Mystery not found' })
+    }
+
+    console.log(`[MysteryAPI] Chat: ${characterId} in mystery ${id}`)
+    const response = await talkToCharacter(id, blueprint, characterId, message, evidenceId)
+    res.json(response)
+  } catch (err: any) {
+    console.error('[MysteryAPI] Chat error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+/**
+ * GET /api/mystery/:id/character/:characterId/greeting
+ * Get a character's initial greeting
+ */
+router.get('/:id/character/:characterId/greeting', async (req, res) => {
+  try {
+    const { id, characterId } = req.params
+    const blueprint = loadBlueprint(id)
+    if (!blueprint) return res.status(404).json({ error: 'Mystery not found' })
+
+    const response = await getGreeting(id, blueprint, characterId)
+    res.json(response)
+  } catch (err: any) {
+    console.error('[MysteryAPI] Greeting error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+/**
+ * GET /api/mystery/:id/investigation
+ * Get investigation progress summary
+ */
+router.get('/:id/investigation', (req, res) => {
+  const summary = getSessionSummary(req.params.id)
+  res.json(summary)
+})
+
+/**
+ * POST /api/mystery/:id/reset
+ * Reset all character conversations for a mystery
+ */
+router.post('/:id/reset', (req, res) => {
+  resetSession(req.params.id)
+  res.json({ ok: true })
 })
 
 export default router
