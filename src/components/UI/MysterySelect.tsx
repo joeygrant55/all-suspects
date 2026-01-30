@@ -22,7 +22,6 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
   const initializeFromMystery = useGameStore((state) => state.initializeFromMystery)
   const startGame = useGameStore((state) => state.startGame)
 
-  // Load available mysteries on mount (including generated ones)
   useEffect(() => {
     fetchAllMysteries().then(mysteries => {
       useMysteryStore.setState({ availableMysteries: mysteries })
@@ -34,14 +33,11 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
       await loadMystery(id)
       const mystery = useMysteryStore.getState().activeMystery
       if (mystery) {
-        // Route chat to universal character agent for generated mysteries
         const info = availableMysteries.find(m => m.id === id)
         if (info?.isGenerated) {
           setActiveMysteryId(id)
         }
-        // Initialize the game store with this mystery
         initializeFromMystery(mystery)
-        // Start the game (shows intro sequence)
         startGame()
       }
     } catch (error) {
@@ -62,160 +58,151 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
     }
   }
 
-  const difficultyColor = {
+  const difficultyColor: Record<string, string> = {
     easy: '#4ade80',
     medium: '#fbbf24',
     hard: '#ef4444',
   }
 
+  const eraIcon: Record<string, string> = {
+    '1920s': '🥃',
+    '1940s': '🎬',
+    '1970s': '🪩',
+    '2050s': '🔬',
+    'medieval': '⚔️',
+    'Custom': '✨',
+  }
+
   return (
-    <div className="h-screen w-screen bg-noir-black flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Vignette overlay */}
-      <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.8) 100%)',
-        }}
-      />
-
-      {/* Fog effect */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-20"
-        style={{
-          background:
-            'linear-gradient(180deg, transparent 0%, rgba(201, 162, 39, 0.1) 50%, transparent 100%)',
-          animation: 'fog 10s ease-in-out infinite',
-        }}
-      />
-
-      {/* Header */}
-      <div className="relative z-10 text-center mb-12">
-        <h1
-          className="text-5xl font-bold tracking-wider mb-2"
-          style={{
-            fontFamily: 'Georgia, serif',
-            color: '#c9a227',
-            textShadow: '0 0 40px rgba(201, 162, 39, 0.5)',
+    <div className="h-screen w-screen bg-noir-black flex flex-col" style={{ fontFamily: 'Georgia, serif' }}>
+      
+      {/* Fixed top bar */}
+      <div className="flex-shrink-0 flex items-center justify-between px-8 py-5 border-b border-noir-slate/20">
+        <button
+          onClick={() => {
+            useMysteryStore.getState().clearMystery()
+            useGameStore.getState().resetGame()
           }}
+          className="text-noir-smoke text-sm tracking-wider hover:text-noir-gold transition-colors"
+        >
+          ← BACK
+        </button>
+        <h1
+          className="text-lg tracking-[0.3em] text-noir-gold"
+          style={{ textShadow: '0 0 30px rgba(201, 162, 39, 0.3)' }}
         >
           SELECT YOUR CASE
         </h1>
-        <div
-          className="text-noir-smoke text-sm tracking-[0.3em]"
-          style={{ fontFamily: 'Georgia, serif' }}
-        >
-          Each mystery presents unique suspects and motives
-        </div>
+        <div className="w-16" /> {/* Spacer for centering */}
       </div>
 
-      {/* Hero: Create New Mystery */}
-      <div className="relative z-10 max-w-2xl w-full px-8 mb-10">
-        <div
-          className="group relative bg-gradient-to-br from-noir-black to-noir-charcoal border-2 border-noir-gold p-8 cursor-pointer"
-          style={{ fontFamily: 'Georgia, serif' }}
-          onClick={() => onCreateNew ? onCreateNew() : handleGenerateMystery()}
-        >
-          <div className="absolute top-0 left-0 w-12 h-12 border-l-2 border-t-2 border-noir-gold" />
-          <div className="absolute bottom-0 right-0 w-12 h-12 border-r-2 border-b-2 border-noir-gold" />
+      {/* Scrollable body */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-2xl mx-auto px-6 py-8">
 
-          <div className="relative text-center">
-            <h2 className="text-3xl font-bold text-noir-gold mb-3 flex items-center justify-center gap-3">
-              <span className="text-3xl">✨</span>
-              Mystery Architect
-            </h2>
-            <p className="text-noir-cream text-sm mb-6 max-w-md mx-auto">
-              Generate a unique, never-before-seen murder mystery — crafted by AI with custom art, suspects, and evidence
-            </p>
-            <button
-              onClick={(e) => {
-                e.stopPropagation()
-                onCreateNew ? onCreateNew() : handleGenerateMystery()
-              }}
-              disabled={isGenerating}
-              className="px-12 py-4 bg-noir-gold text-noir-black text-lg font-bold tracking-widest hover:bg-opacity-90 transition-all duration-300 disabled:opacity-50"
-            >
-              {isGenerating ? 'GENERATING...' : 'CREATE NEW MYSTERY →'}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Existing mysteries — compact horizontal scroll or small grid */}
-      {availableMysteries.length > 0 && (
-        <div className="relative z-10 max-w-5xl w-full px-8 mb-8">
-          <h3
-            className="text-sm text-noir-smoke tracking-[0.3em] mb-4 text-center"
-            style={{ fontFamily: 'Georgia, serif' }}
+          {/* Mystery Architect — premium inline card */}
+          <button
+            onClick={() => onCreateNew ? onCreateNew() : handleGenerateMystery()}
+            disabled={isGenerating}
+            className="w-full group relative flex items-center gap-5 p-6 mb-8 border-2 border-noir-gold/80 bg-gradient-to-r from-noir-gold/5 to-transparent hover:from-noir-gold/10 transition-all duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-left"
           >
-            — OR INVESTIGATE AN EXISTING CASE —
-          </h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="flex-shrink-0 w-12 h-12 flex items-center justify-center text-3xl">
+              ✨
+            </div>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl text-noir-gold font-bold mb-1">
+                Mystery Architect
+              </h2>
+              <p className="text-noir-smoke text-sm">
+                Generate a unique case with custom art, suspects & evidence
+              </p>
+            </div>
+            <div className="flex-shrink-0 text-noir-gold text-sm tracking-widest font-bold opacity-80 group-hover:opacity-100 transition-opacity">
+              {isGenerating ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-noir-gold border-t-transparent rounded-full animate-spin" />
+                  CREATING...
+                </span>
+              ) : (
+                'CREATE →'
+              )}
+            </div>
+          </button>
+
+          {/* Divider */}
+          {availableMysteries.length > 0 && (
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex-1 h-px bg-noir-gold/20" />
+              <span className="text-[11px] text-noir-smoke/60 tracking-[0.25em]">YOUR CASE FILES</span>
+              <div className="flex-1 h-px bg-noir-gold/20" />
+            </div>
+          )}
+
+          {/* Mystery list */}
+          <div className="flex flex-col gap-2">
             {availableMysteries.map((mystery) => (
-              <div
+              <button
                 key={mystery.id}
-                className="group relative bg-noir-black/80 border border-noir-slate/40 hover:border-noir-gold transition-all duration-300 p-4 cursor-pointer"
                 onClick={() => handleSelectMystery(mystery.id)}
-                style={{ fontFamily: 'Georgia, serif' }}
+                disabled={isLoading}
+                className="w-full group flex items-center gap-4 p-4 border border-noir-slate/20 hover:border-noir-gold/50 bg-noir-black hover:bg-noir-gold/[0.03] transition-all duration-200 cursor-pointer text-left disabled:opacity-50"
               >
-                {mystery.isGenerated && (
-                  <span className="absolute -top-1.5 -right-1.5 text-[10px] bg-noir-gold text-noir-black px-1.5 py-0.5 font-bold">
-                    AI
+                {/* Era icon */}
+                <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center text-xl rounded bg-noir-charcoal/50">
+                  {eraIcon[mystery.era] || '🔍'}
+                </div>
+
+                {/* Title + subtitle */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm text-noir-cream font-bold truncate group-hover:text-noir-gold transition-colors">
+                      {mystery.title}
+                    </h3>
+                    {mystery.isGenerated && (
+                      <span className="flex-shrink-0 w-1.5 h-1.5 rounded-full bg-noir-gold" title="AI Generated" />
+                    )}
+                  </div>
+                  <p className="text-noir-smoke/60 text-xs truncate mt-0.5">
+                    {mystery.subtitle || mystery.era}
+                  </p>
+                </div>
+
+                {/* Tags */}
+                <div className="flex-shrink-0 flex items-center gap-2">
+                  <span className="text-[10px] text-noir-smoke/40 tracking-wider hidden sm:inline">
+                    {mystery.era}
                   </span>
-                )}
-                <h4 className="text-sm font-bold text-noir-gold mb-1 leading-tight">
-                  {mystery.title}
-                </h4>
-                <p className="text-noir-smoke text-xs mb-2 line-clamp-1">
-                  {mystery.subtitle || mystery.era}
-                </p>
-                <div className="flex items-center justify-between text-[10px] text-noir-smoke">
-                  <span>{mystery.era}</span>
                   <span
-                    className="px-1.5 py-0.5 rounded"
+                    className="text-[10px] px-2 py-0.5 rounded-sm tracking-wider font-bold"
                     style={{
-                      backgroundColor: `${difficultyColor[mystery.difficulty]}20`,
+                      backgroundColor: `${difficultyColor[mystery.difficulty]}15`,
                       color: difficultyColor[mystery.difficulty],
-                      fontSize: '10px',
                     }}
                   >
                     {mystery.difficulty.toUpperCase()}
                   </span>
                 </div>
-                <div className="absolute inset-0 bg-noir-gold opacity-0 group-hover:opacity-5 transition-opacity pointer-events-none" />
-              </div>
+
+                {/* Arrow */}
+                <div className="flex-shrink-0 text-noir-smoke/30 group-hover:text-noir-gold transition-colors text-sm">
+                  →
+                </div>
+              </button>
             ))}
           </div>
+
+          {/* Error */}
+          {error && (
+            <div className="mt-6 p-4 border border-red-500/40 bg-red-500/5 text-red-400 text-center text-sm">
+              <p className="font-bold mb-1">ERROR</p>
+              <p>{error}</p>
+            </div>
+          )}
+
+          {/* Bottom breathing room */}
+          <div className="h-12" />
         </div>
-      )}
-
-      {/* Error message */}
-      {error && (
-        <div className="relative z-10 mt-6 p-4 border-2 border-red-500 bg-red-500 bg-opacity-10 text-red-400 text-center text-sm max-w-2xl">
-          <p className="font-bold mb-1">ERROR</p>
-          <p>{error}</p>
-        </div>
-      )}
-
-      {/* Back button */}
-      <button
-        onClick={() => {
-          // Clear any selected mystery
-          useMysteryStore.getState().clearMystery()
-          // Reset the game state
-          useGameStore.getState().resetGame()
-        }}
-        className="relative z-10 px-8 py-2 border border-noir-slate text-noir-slate text-sm tracking-wider hover:border-noir-gold hover:text-noir-gold transition-all duration-300"
-        style={{ fontFamily: 'Georgia, serif' }}
-      >
-        ← BACK TO TITLE
-      </button>
-
-      {/* Corner decorations */}
-      <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-noir-gold opacity-30" />
-      <div className="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-noir-gold opacity-30" />
-      <div className="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-noir-gold opacity-30" />
-      <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-noir-gold opacity-30" />
+      </div>
     </div>
   )
 }
