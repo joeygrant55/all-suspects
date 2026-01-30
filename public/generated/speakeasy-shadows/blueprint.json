@@ -1,0 +1,698 @@
+{
+  "id": "speakeasy-shadows",
+  "title": "Shadows at the Blue Moon",
+  "description": "Chicago, 1925. Vincent 'Vinnie' Romano, notorious bootlegger and owner of the Blue Moon speakeasy, lies dead in his private office. A glass of his finest whiskey sits untouched, but his prized pearl-handled revolver is missing. The jazz still echoes through the walls, but murder has silenced the king of the Chicago underground.",
+  "difficulty": "medium",
+  "estimatedTime": 45,
+  "setting": {
+    "location": "The Blue Moon Speakeasy, Chicago",
+    "timeOfDeath": "11:45 PM",
+    "dateOfDeath": "October 13, 1925",
+    "timeDiscovered": "12:15 AM",
+    "discoveredBy": "Eddie 'The Weasel' Martinez"
+  },
+  "victim": {
+    "name": "Vincent 'Vinnie' Romano",
+    "age": 42,
+    "occupation": "Speakeasy Owner & Bootlegger",
+    "background": "Rose from petty theft to control Chicago's most exclusive speakeasy. Known for his charm, ruthlessness, and mysterious past in New York.",
+    "causeOfDeath": "Poisoned with cyanide in his private whiskey",
+    "secretsRevealed": [
+      "Was planning to go legitimate and sell out to a hotel chain",
+      "Had been blackmailing Judge Morrison with compromising photographs",
+      "Discovered his trusted accountant was skimming profits",
+      "Was having an affair with his singer, Vivian Hart"
+    ]
+  },
+  "locations": [
+    {
+      "id": "office",
+      "name": "Vinnie's Private Office",
+      "description": "Luxurious office with mahogany desk, hidden safe behind painting. Smells of cigars and death.",
+      "evidence": [],
+      "artPrompt": "",
+      "evidenceIds": [
+        "empty-glass",
+        "love-letter",
+        "appointment-book",
+        "missing-gun"
+      ]
+    },
+    {
+      "id": "main-room",
+      "name": "Main Speakeasy Floor",
+      "description": "Jazz music still echoes. Bar fully stocked, poker tables active. Stage shows signs of recent performance.",
+      "evidence": [],
+      "artPrompt": "",
+      "evidenceIds": [
+        "poker-chips",
+        "vivian-lipstick",
+        "bottle-arsenic"
+      ]
+    },
+    {
+      "id": "dressing-room",
+      "name": "Vivian's Dressing Room",
+      "description": "Mirrors surrounded by lights, costumes everywhere. Flowers from admirers, including dead roses from Vinnie.",
+      "evidence": [],
+      "artPrompt": "",
+      "evidenceIds": [
+        "pregnancy-test",
+        "hollywood-letter"
+      ]
+    },
+    {
+      "id": "kitchen",
+      "name": "Speakeasy Kitchen",
+      "description": "Industrial kitchen, back entrance to alley. Stores the special liquor reserves.",
+      "evidence": [],
+      "artPrompt": "",
+      "evidenceIds": [
+        "cyanide-bottle",
+        "kitchen-schedule"
+      ]
+    },
+    {
+      "id": "basement",
+      "name": "Storage Basement",
+      "description": "Hidden entrance, stores illegal liquor. Second set of books hidden here.",
+      "evidence": [],
+      "artPrompt": "",
+      "evidenceIds": [
+        "second-books",
+        "tommy-note"
+      ]
+    },
+    {
+      "id": "alley",
+      "name": "Back Alley",
+      "description": "Dark alley behind speakeasy. Fire escape, trash bins, and shadows.",
+      "evidence": [],
+      "artPrompt": "",
+      "evidenceIds": [
+        "muddy-footprints",
+        "witness-testimony-bum"
+      ]
+    }
+  ],
+  "evidence": [
+    {
+      "id": "empty-glass",
+      "name": "Empty Whiskey Glass",
+      "description": "Crystal tumbler on Vinnie's desk. Faint smell of almonds (cyanide).",
+      "location": "office",
+      "artPrompt": "",
+      "type": "physical",
+      "locationId": "office",
+      "forensicDetails": "Only Vinnie's fingerprints. Traces of cyanide in residue.",
+      "importance": "critical",
+      "pointsTo": "Maxine (knew where he kept his private whiskey)"
+    },
+    {
+      "id": "love-letter",
+      "name": "Torn Love Letter",
+      "description": "Half a passionate letter to someone named 'R'. Not Vivian's initial.",
+      "location": "office",
+      "artPrompt": "",
+      "type": "document",
+      "locationId": "office",
+      "forensicDetails": "Woman's handwriting, expensive paper",
+      "importance": "medium",
+      "pointsTo": "Red herring - suggests another woman"
+    },
+    {
+      "id": "appointment-book",
+      "name": "Vinnie's Appointment Book",
+      "description": "Shows meeting with 'H.C.' tomorrow - hotel chain representative",
+      "location": "office",
+      "artPrompt": "",
+      "type": "document",
+      "locationId": "office",
+      "forensicDetails": "Recent entry, Vinnie's handwriting",
+      "importance": "high",
+      "pointsTo": "Motive for Maxine and employees"
+    },
+    {
+      "id": "missing-gun",
+      "name": "Missing Pearl-Handle Revolver",
+      "description": "Vinnie's famous gun is missing from its usual drawer",
+      "location": "office",
+      "artPrompt": "",
+      "type": "contradiction",
+      "locationId": "office",
+      "forensicDetails": "Drawer shows signs of hasty opening",
+      "importance": "medium",
+      "pointsTo": "Red herring - suggests violent confrontation"
+    },
+    {
+      "id": "poker-chips",
+      "name": "Maxine's Poker Chips",
+      "description": "Stack of chips at her seat, suggesting she didn't leave in a hurry",
+      "location": "office",
+      "artPrompt": "",
+      "type": "physical",
+      "locationId": "main-room",
+      "forensicDetails": "Neatly stacked, not abandoned",
+      "importance": "medium",
+      "pointsTo": "Contradicts a hasty departure"
+    },
+    {
+      "id": "vivian-lipstick",
+      "name": "Lipstick Mark",
+      "description": "Vivian's distinctive red lipstick on a glass at the bar",
+      "location": "office",
+      "artPrompt": "",
+      "type": "physical",
+      "locationId": "main-room",
+      "forensicDetails": "Matches her shade exactly, fresh",
+      "importance": "low",
+      "pointsTo": "Red herring - suggests Vivian was drinking"
+    },
+    {
+      "id": "bottle-arsenic",
+      "name": "Small Arsenic Bottle",
+      "description": "Hidden behind bar. Partially empty. Labeled 'Rat Poison'.",
+      "location": "office",
+      "artPrompt": "",
+      "type": "physical",
+      "locationId": "main-room",
+      "forensicDetails": "Maxine's fingerprints, multiple doses missing",
+      "importance": "critical",
+      "pointsTo": "Maxine's slow poisoning plot"
+    },
+    {
+      "id": "pregnancy-test",
+      "name": "Doctor's Note",
+      "description": "Confirms Vivian is three months pregnant",
+      "location": "office",
+      "artPrompt": "",
+      "type": "document",
+      "locationId": "dressing-room",
+      "forensicDetails": "Dated last week",
+      "importance": "high",
+      "pointsTo": "Vivian's motive to want Vinnie alive"
+    },
+    {
+      "id": "hollywood-letter",
+      "name": "Hollywood Contract Offer",
+      "description": "Offer for Vivian to star in pictures. Requires leaving immediately.",
+      "location": "office",
+      "artPrompt": "",
+      "type": "document",
+      "locationId": "dressing-room",
+      "forensicDetails": "Legitimate studio letterhead",
+      "importance": "medium",
+      "pointsTo": "Vivian's reason to leave, not kill"
+    },
+    {
+      "id": "cyanide-bottle",
+      "name": "Cyanide Bottle",
+      "description": "Industrial cyanide used for pest control. Cap is loose.",
+      "location": "office",
+      "artPrompt": "",
+      "type": "physical",
+      "locationId": "kitchen",
+      "forensicDetails": "Eddie's fingerprints AND Maxine's fingerprints",
+      "importance": "critical",
+      "pointsTo": "Both handled it, but only one used it"
+    },
+    {
+      "id": "kitchen-schedule",
+      "name": "Kitchen Access Log",
+      "description": "Shows who entered kitchen. Maxine at 11:30 PM, Eddie at 10:45 PM.",
+      "location": "office",
+      "artPrompt": "",
+      "type": "document",
+      "locationId": "kitchen",
+      "forensicDetails": "Official log, multiple witnesses confirm",
+      "importance": "critical",
+      "pointsTo": "Maxine had opportunity"
+    },
+    {
+      "id": "second-books",
+      "name": "Second Set of Books",
+      "description": "Eddie's real accounting. Shows embezzlement and everyone's debts.",
+      "location": "office",
+      "artPrompt": "",
+      "type": "document",
+      "locationId": "basement",
+      "forensicDetails": "Eddie's handwriting, damning evidence",
+      "importance": "high",
+      "pointsTo": "Multiple motives, Eddie's desperation"
+    },
+    {
+      "id": "tommy-note",
+      "name": "Peace Treaty Draft",
+      "description": "Proposed territory agreement between Tommy and Vinnie",
+      "location": "office",
+      "artPrompt": "",
+      "type": "document",
+      "locationId": "basement",
+      "forensicDetails": "Both signatures, dated today",
+      "importance": "high",
+      "pointsTo": "Tommy wanted Vinnie alive"
+    },
+    {
+      "id": "muddy-footprints",
+      "name": "Muddy Footprints",
+      "description": "Women's shoes, size 6, leading from alley to kitchen",
+      "location": "office",
+      "artPrompt": "",
+      "type": "physical",
+      "locationId": "alley",
+      "forensicDetails": "Match Maxine's shoes",
+      "importance": "critical",
+      "pointsTo": "Maxine used back entrance"
+    },
+    {
+      "id": "witness-testimony-bum",
+      "name": "Homeless Man's Testimony",
+      "description": "Saw 'fancy blonde dame' enter through alley at 11:25 PM",
+      "location": "office",
+      "artPrompt": "",
+      "type": "testimony",
+      "locationId": "alley",
+      "forensicDetails": "Credible despite intoxication",
+      "importance": "critical",
+      "pointsTo": "Places Maxine at kitchen during supposed alibi"
+    }
+  ],
+  "timeline": [
+    {
+      "time": "10:00 PM",
+      "event": "Speakeasy opens for the evening. All suspects present."
+    },
+    {
+      "time": "10:30 PM",
+      "event": "Vivian seen leaving Vinnie's office in tears after argument"
+    },
+    {
+      "time": "10:45 PM",
+      "event": "Eddie enters kitchen (logged), handles cyanide for 'pest control'"
+    },
+    {
+      "time": "11:00 PM",
+      "event": "Vivian finishes her set, goes to dressing room"
+    },
+    {
+      "time": "11:15 PM",
+      "event": "Tommy seen near office hallway by Vivian's dresser"
+    },
+    {
+      "time": "11:20 PM",
+      "event": "Maxine excuses herself from poker game"
+    },
+    {
+      "time": "11:25 PM",
+      "event": "Homeless man sees blonde woman enter via alley"
+    },
+    {
+      "time": "11:30 PM",
+      "event": "Maxine enters kitchen (logged), Lou finishes piano set"
+    },
+    {
+      "time": "11:35 PM",
+      "event": "Maxine poisons Vinnie's private whiskey bottle in office"
+    },
+    {
+      "time": "11:40 PM",
+      "event": "Maxine returns to poker game, Eddie seen leaving office area"
+    },
+    {
+      "time": "11:45 PM",
+      "event": "Vinnie drinks poisoned whiskey, dies within minutes"
+    },
+    {
+      "time": "12:15 AM",
+      "event": "Eddie discovers body while looking for Vinnie"
+    }
+  ],
+  "solution": {
+    "killerId": "maxine-romano",
+    "method": "Cyanide poisoning in his private whiskey",
+    "motive": "Vinnie was planning to divorce her and sell the speakeasy, leaving her with nothing. The slow arsenic poisoning wasn't working fast enough.",
+    "explanation": ""
+  },
+  "scoring": {
+    "parTimeMinutes": 45,
+    "maxPoints": 100,
+    "pointDeductionPerMinute": 2,
+    "hintsAvailable": 3,
+    "pointsPerHint": 10
+  },
+  "introductionText": "The year is 1925, and you're Detective Sam Malone, Chicago's only honest cop. You've been called to the Blue Moon Speakeasy where Vincent 'Vinnie' Romano, the most powerful bootlegger in Chicago, lies dead in his office. The jazz is still playing, the liquor still flowing, but death has come to the party. You have one hour before the corrupt Chief arrives to sweep this under the rug. Can you find the killer?",
+  "winCondition": "Correctly identify Maxine Romano as the killer and present the key evidence: the kitchen logs, muddy footprints, and witness testimony that break her alibi.",
+  "metadata": {
+    "author": "AI Game Designer",
+    "version": "1.0",
+    "playtested": false
+  },
+  "characters": [
+    {
+      "id": "maxine-romano",
+      "name": "Maxine Romano",
+      "role": "Vinnie's Wife",
+      "personality": "Cold, calculating, maintains perfect composure. Speaks with icy precision.",
+      "background": "",
+      "motive": "Discovered Vinnie's affair and plans to divorce her, leaving her penniless",
+      "alibi": {
+        "claim": "Playing poker in the main lounge from 10 PM to midnight with Judge Morrison and two others",
+        "witnesses": [
+          "Judge Morrison",
+          "Two regular patrons"
+        ],
+        "holes": [
+          "Left the table for 15 minutes around 11:30 PM 'to powder her nose'",
+          "Judge Morrison was drunk and his timeline is fuzzy"
+        ]
+      },
+      "isGuilty": true,
+      "relationships": [],
+      "secretKnowledge": [
+        "Has been slowly poisoning Vinnie with small doses of arsenic for weeks",
+        "Stole $50,000 from the safe last month",
+        "Is Judge Morrison's mistress"
+      ],
+      "artPrompt": "",
+      "age": 38,
+      "occupation": "Vinnie's Wife",
+      "relationship": "Estranged wife",
+      "systemPrompt": "You are Maxine Romano, speaking in 1920s style. You're an ice queen - sophisticated, bitter about your husband's affairs, but NEVER show emotion. Speak formally, use 'darling' sarcastically. You were in the main lounge all evening playing cards. You know about Vivian but pretend not to. Under pressure, you become even colder, more precise. You crack by accidentally revealing you knew about the hotel deal. Your speech is always grammatically perfect, never use slang.",
+      "greeting": "Well, well. Another gumshoe come to pry into our sordid affairs? How terribly predictable, darling.",
+      "secrets": [
+        "Has been slowly poisoning Vinnie with small doses of arsenic for weeks",
+        "Stole $50,000 from the safe last month",
+        "Is Judge Morrison's mistress"
+      ],
+      "physicalDescription": "Elegant woman with platinum blonde hair, always impeccably dressed in the latest fashion",
+      "whatTheyKnow": {
+        "aboutVictim": "His affairs, his business plans, where he keeps the cyanide",
+        "aboutOthers": {
+          "tommy": "Saw him near the office at 11:20 PM",
+          "vivian": "Knows about the affair, saw her leave Vinnie's office crying at 10:30 PM",
+          "eddie": "Knows he's been skimming the books"
+        }
+      },
+      "pressureProfile": {
+        "tellsWhenPressured": [
+          "Slips and mentions the hotel deal before it's revealed",
+          "Uses present tense when talking about Vinnie initially"
+        ],
+        "breakingPoint": "When confronted about the arsenic in Vinnie's system from the autopsy",
+        "nervousTics": [
+          "Adjusts her pearl necklace",
+          "Voice becomes even more controlled"
+        ]
+      },
+      "guilty": true
+    },
+    {
+      "id": "tommy-oshea",
+      "name": "Tommy 'The Knife' O'Shea",
+      "role": "Rival Bootlegger",
+      "personality": "Gruff, direct, old-school Irish gangster. Respects the code.",
+      "background": "",
+      "motive": "Vinnie was muscling in on his territory on the South Side",
+      "alibi": {
+        "claim": "At the bar drinking with his bodyguard Seamus from 11 PM to 12:30 AM",
+        "witnesses": [
+          "Seamus McGillicuddy (his bodyguard)",
+          "Bartender Sal"
+        ],
+        "holes": [
+          "Seamus left to 'check the car' from 11:30-11:50 PM",
+          "Was seen near the office hallway by Vivian at 11:15 PM"
+        ]
+      },
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Was actually there to make a peace deal with Vinnie",
+        "His territory war was a cover - he's been working with the feds",
+        "Owes Vinnie $30,000 from a poker game"
+      ],
+      "artPrompt": "",
+      "age": 45,
+      "occupation": "Rival Bootlegger",
+      "relationship": "Business rival",
+      "systemPrompt": "You are Tommy O'Shea, speaking in 1920s gangster slang with an Irish accent. You're tough but honorable - you follow the old codes. Use 'boyo', 'sure and', drop g's from -ing words. You were in the speakeasy to discuss territory but NEVER admit you were making a deal. Under pressure, you get angrier, more Irish. You crack by admitting the territory deal. Swear mildly ('bloody hell', 'damn'), respect those who stand up to you.",
+      "greeting": "And what's this then? Another bloody copper sniffin' around? The man's not even cold, boyo.",
+      "secrets": [
+        "Was actually there to make a peace deal with Vinnie",
+        "His territory war was a cover - he's been working with the feds",
+        "Owes Vinnie $30,000 from a poker game"
+      ],
+      "physicalDescription": "Stocky Irishman with scarred knuckles and a gold tooth",
+      "whatTheyKnow": {
+        "aboutVictim": "Vinnie was planning something big, had been meeting with 'respectable' types",
+        "aboutOthers": {
+          "eddie": "Saw him coming out of the office at 11:40 PM looking nervous",
+          "lou": "Knows he's been borrowing money from Vinnie",
+          "maxine": "Saw her in the hallway near the kitchen at 11:35 PM"
+        }
+      },
+      "pressureProfile": {
+        "tellsWhenPressured": [
+          "Admits he owed Vinnie money",
+          "Reveals he saw Eddie with papers"
+        ],
+        "breakingPoint": "When his federal connection is revealed",
+        "nervousTics": [
+          "Cracks knuckles",
+          "Irish accent gets thicker"
+        ]
+      },
+      "guilty": false
+    },
+    {
+      "id": "vivian-hart",
+      "name": "Vivian Hart",
+      "role": "Jazz Singer",
+      "personality": "Sultry, emotional, speaks in theatrical metaphors. Hides vulnerability.",
+      "background": "",
+      "motive": "Vinnie promised to leave his wife but was stringing her along",
+      "alibi": {
+        "claim": "Performing on stage until 11 PM, then in her dressing room until discovered the body",
+        "witnesses": [
+          "Entire audience until 11 PM",
+          "Dresser Sally from 11:10-11:25 PM"
+        ],
+        "holes": [
+          "Alone in dressing room from 11:25 PM to midnight",
+          "Her lipstick was found on a glass in Vinnie's office"
+        ]
+      },
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Is three months pregnant with Vinnie's child",
+        "Was being courted by a Hollywood producer",
+        "Stole love letters Vinnie wrote to another woman"
+      ],
+      "artPrompt": "",
+      "age": 26,
+      "occupation": "Jazz Singer",
+      "relationship": "Mistress/Performer",
+      "systemPrompt": "You are Vivian Hart, a jazz singer in 1925. Speak dramatically, use theater/music metaphors. Call people 'honey', 'sugar'. You're heartbroken but hiding it with false bravado. You were performing until 11, then in your dressing room. Under pressure, the facade cracks and real emotion shows. You crack by revealing the pregnancy. Use phrases like 'the show must go on', reference songs and stages. Occasionally lapse into genuine sadness.",
+      "greeting": "Another admirer come to see the grieving songbird? Sorry honey, but this particular show is sold out.",
+      "secrets": [
+        "Is three months pregnant with Vinnie's child",
+        "Was being courted by a Hollywood producer",
+        "Stole love letters Vinnie wrote to another woman"
+      ],
+      "physicalDescription": "Stunning brunette with expressive green eyes, always in glamorous stage attire",
+      "whatTheyKnow": {
+        "aboutVictim": "His plan to sell the speakeasy, his promise to divorce Maxine",
+        "aboutOthers": {
+          "maxine": "Knows about the arsenic poisoning attempts",
+          "tommy": "Saw him in the hallway at 11:15 PM",
+          "eddie": "Knows Vinnie caught him stealing"
+        }
+      },
+      "pressureProfile": {
+        "tellsWhenPressured": [
+          "Admits to being in his office at 10:30 PM",
+          "Reveals she's pregnant"
+        ],
+        "breakingPoint": "When shown the love letters to another woman",
+        "nervousTics": [
+          "Touches her throat",
+          "Eyes fill with tears"
+        ]
+      },
+      "guilty": false
+    },
+    {
+      "id": "eddie-martinez",
+      "name": "Eddie 'The Weasel' Martinez",
+      "role": "Accountant/Numbers Man",
+      "personality": "Nervous, fast-talking, always calculating odds. Sweats under pressure.",
+      "background": "",
+      "motive": "Vinnie discovered he'd been skimming from the books for two years",
+      "alibi": {
+        "claim": "Left the office at 11 PM, was in the gambling room until finding the body",
+        "witnesses": [
+          "Dealer at the craps table from 11:15 PM on"
+        ],
+        "holes": [
+          "No witnesses from 11:00-11:15 PM",
+          "His fingerprints are on the poison bottle"
+        ]
+      },
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Has been embezzling to pay for his mother's medical bills",
+        "Keeps a second set of books for the feds",
+        "Is $20,000 in debt to another crime family"
+      ],
+      "artPrompt": "",
+      "age": 35,
+      "occupation": "Accountant/Numbers Man",
+      "relationship": "Business associate",
+      "systemPrompt": "You are Eddie Martinez, a nervous accountant in 1925. Speak quickly, use numbers and percentages in conversation. Stutter when nervous. Call people 'friend', 'pal'. You were in the office doing books earlier but claim you left by 11. Under pressure, talk faster, sweat more, contradict yourself. You crack by admitting to stealing. Use phrases like 'by my calculations', 'the odds are', throw in random statistics. Wipe sweat frequently.",
+      "greeting": "Oh! Oh, h-hello there, friend. You startled me. I was just, uh, calculating the— the evening's takes. Terrible business, just terrible.",
+      "secrets": [
+        "Has been embezzling to pay for his mother's medical bills",
+        "Keeps a second set of books for the feds",
+        "Is $20,000 in debt to another crime family"
+      ],
+      "physicalDescription": "Thin, nervous man with thick glasses, always carrying a ledger",
+      "whatTheyKnow": {
+        "aboutVictim": "All his financial secrets, his plans, his hidden safe",
+        "aboutOthers": {
+          "maxine": "Knows about her stealing from the safe",
+          "judge": "Has records of his bribes",
+          "lou": "Knows exactly how much he owes"
+        }
+      },
+      "pressureProfile": {
+        "tellsWhenPressured": [
+          "Admits to being in office until 11:40 PM",
+          "Reveals the second set of books"
+        ],
+        "breakingPoint": "When threatened with his mother's safety",
+        "nervousTics": [
+          "Adjusts glasses repeatedly",
+          "Quotes statistics nervously"
+        ]
+      },
+      "guilty": false
+    },
+    {
+      "id": "judge-morrison",
+      "name": "Judge Harold Morrison",
+      "role": "Circuit Court Judge",
+      "personality": "Pompous, verbose, quotes law and Shakespeare. Drinking problem.",
+      "background": "",
+      "motive": "Vinnie was blackmailing him with photos from a brothel",
+      "alibi": {
+        "claim": "Playing poker with Maxine from 10 PM to midnight",
+        "witnesses": [
+          "Maxine Romano",
+          "Two other players"
+        ],
+        "holes": [
+          "Was very drunk, timeline is confused",
+          "Left the table twice for the restroom"
+        ]
+      },
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Has been taking bribes for 10 years",
+        "Is in love with Maxine Romano",
+        "Has a weakness for illegal opium dens"
+      ],
+      "artPrompt": "",
+      "age": 52,
+      "occupation": "Circuit Court Judge",
+      "relationship": "Protected Vinnie's operation",
+      "systemPrompt": "You are Judge Morrison, a corrupt judge in 1925. Speak pompously, quote Shakespeare and legal precedents randomly. You're drunk but trying to hide it. Use 'my good man/woman', 'I object!' in casual conversation. You were playing cards with Maxine. Under pressure, get more pompous, slur slightly. You crack by revealing the blackmail. Hiccup occasionally, misquote things when very stressed.",
+      "greeting": "*adjusts monocle* Ah, another inquisitor! As Shakespeare said— or was it Blackstone? No matter. I object to this harassment, my good man!",
+      "secrets": [
+        "Has been taking bribes for 10 years",
+        "Is in love with Maxine Romano",
+        "Has a weakness for illegal opium dens"
+      ],
+      "physicalDescription": "Portly man with an impressive mustache, always in formal attire",
+      "whatTheyKnow": {
+        "aboutVictim": "His blackmail materials, his political connections",
+        "aboutOthers": {
+          "maxine": "Her affair with him, her hatred of Vinnie",
+          "tommy": "His federal connections",
+          "lou": "His gambling debts to multiple families"
+        }
+      },
+      "pressureProfile": {
+        "tellsWhenPressured": [
+          "Admits Maxine left the table",
+          "Reveals his affair with her"
+        ],
+        "breakingPoint": "When shown the blackmail photos",
+        "nervousTics": [
+          "Quotes incorrect legal precedents",
+          "Hiccups more"
+        ]
+      },
+      "guilty": false
+    },
+    {
+      "id": "lou-fingers",
+      "name": "Lou 'Fingers' Benedetto",
+      "role": "Piano Player",
+      "personality": "Charming, always humming, speaks in musical terms. Desperate underneath.",
+      "background": "",
+      "motive": "Owes Vinnie $15,000 in gambling debts with payment due",
+      "alibi": {
+        "claim": "Playing piano in the main room until 11:30 PM, then went outside for air",
+        "witnesses": [
+          "Full audience until 11:30 PM"
+        ],
+        "holes": [
+          "Alone outside from 11:30-11:50 PM",
+          "Was seen near the office door by a waiter at 11:35 PM"
+        ]
+      },
+      "isGuilty": false,
+      "relationships": [],
+      "secretKnowledge": [
+        "Has been selling information about the speakeasy to competitors",
+        "Tried to break into Vinnie's safe last week",
+        "His wife doesn't know about his debts"
+      ],
+      "artPrompt": "",
+      "age": 40,
+      "occupation": "Piano Player",
+      "relationship": "Employee and gambling addict",
+      "systemPrompt": "You are Lou Benedetto, a piano player in 1925. Speak using musical metaphors, reference songs. Call people 'maestro', 'songbird'. You're charming but desperate about debts. You were playing piano until 11:30. Under pressure, lose rhythm in speech, hands shake. You crack by admitting to trying to steal from the safe. Use phrases like 'that doesn't strike the right chord', 'let me change the key here'. Fingers drum nervously when stressed.",
+      "greeting": "Well, well, what have we here? Another soul looking to hear my tale of woe? Pull up a chair, maestro, but I'm afraid tonight's performance is rather blue.",
+      "secrets": [
+        "Has been selling information about the speakeasy to competitors",
+        "Tried to break into Vinnie's safe last week",
+        "His wife doesn't know about his debts"
+      ],
+      "physicalDescription": "Handsome Italian with nimble fingers, always impeccably dressed",
+      "whatTheyKnow": {
+        "aboutVictim": "His hiding spots, his routines, combination to the safe (partially)",
+        "aboutOthers": {
+          "vivian": "Her pregnancy, her Hollywood offer",
+          "eddie": "His embezzlement scheme",
+          "maxine": "Saw her with a small bottle near the kitchen"
+        }
+      },
+      "pressureProfile": {
+        "tellsWhenPressured": [
+          "Admits to attempting safe break-in",
+          "Reveals seeing Maxine with bottle"
+        ],
+        "breakingPoint": "When his wife's safety is mentioned",
+        "nervousTics": [
+          "Fingers play invisible piano",
+          "Humming becomes erratic"
+        ]
+      },
+      "guilty": false
+    }
+  ]
+}
