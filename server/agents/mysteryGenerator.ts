@@ -54,9 +54,9 @@ You MUST return a JSON object with EXACTLY these top-level keys (no extras, no n
   "era": "1920s",
   "difficulty": "medium",
   "setting": {
-    "location": "The Blue Moon Speakeasy",
-    "atmosphere": "smoky, jazz-filled, dangerous",
-    "weather": "Rain hammering the windows"
+    "location": "MUST match the player's requested setting — e.g. 'The Blue Moon Jazz Club on Bourbon Street' NOT 'Some Manor'",
+    "atmosphere": "Vivid, specific atmosphere matching the setting",
+    "weather": "Weather that fits the setting and era"
   },
   "victim": {
     "name": "Full Name",
@@ -120,7 +120,7 @@ You MUST return a JSON object with EXACTLY these top-level keys (no extras, no n
 - Return ONLY the JSON object. No markdown code fences. No explanation text.
 
 ## CREATIVE GUIDELINES
-- **FOLLOW THE THEME** — if the player asks for a jazz club, set it in a jazz club. If they ask for a space station, set it on a space station. NEVER default to an English manor unless that's what was asked for.
+- **FOLLOW THE THEME EXACTLY** — if the player asks for a jazz club, the setting.location MUST be a jazz club (NOT a manor). If they ask for a space station, it MUST be a space station. The setting and ALL locations must match the requested theme. Do NOT use "manor", "estate", or "mansion" unless the player specifically asked for one.
 - Make characters feel REAL — complex motivations, not cartoon villains
 - Every suspect should seem potentially guilty at first
 - The solution should be satisfying — "of course!" not "huh?"
