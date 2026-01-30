@@ -257,4 +257,80 @@ router.post('/:id/reset', (req, res) => {
   res.json({ ok: true })
 })
 
+/**
+ * POST /api/mystery/:id/accuse
+ * Make an accusation against a suspect
+ * Body: { suspectId: string }
+ * Returns: { correct: boolean, killerId, killerName, solution }
+ */
+router.post('/:id/accuse', (req, res) => {
+  try {
+    const { id } = req.params
+    const { suspectId } = req.body
+
+    if (!suspectId) {
+      return res.status(400).json({ error: 'Missing suspectId' })
+    }
+
+    const blueprint = loadBlueprint(id)
+    if (!blueprint) return res.status(404).json({ error: 'Mystery not found' })
+
+    const killerId = blueprint.solution?.killerId
+    if (!killerId) {
+      return res.status(500).json({ error: 'Mystery has no solution defined' })
+    }
+
+    const correct = suspectId === killerId
+    const killer = (blueprint.characters || blueprint.suspects)?.find(
+      (c: any) => c.id === killerId
+    )
+    const accused = (blueprint.characters || blueprint.suspects)?.find(
+      (c: any) => c.id === suspectId
+    )
+
+    console.log(`[ACCUSATION] Mystery "${blueprint.title}" — accused: ${accused?.name || suspectId}, correct: ${correct}`)
+
+    res.json({
+      correct,
+      killerId,
+      killerName: killer?.name || killerId,
+      accusedName: accused?.name || suspectId,
+      solution: correct ? {
+        method: blueprint.solution.method || 'The method remains a mystery.',
+        motive: blueprint.solution.motive || 'The motive remains unclear.',
+        explanation: blueprint.solution.explanation || `${killer?.name} was the killer all along.`,
+      } : null,
+      hint: !correct ? getAccusationHint(blueprint, suspectId, killerId) : null,
+    })
+  } catch (err: any) {
+    console.error('[MysteryAPI] Accusation error:', err)
+    res.status(500).json({ error: err.message })
+  }
+})
+
+/**
+ * Generate a contextual hint when the player accuses the wrong person
+ */
+function getAccusationHint(blueprint: any, wrongId: string, killerId: string): string {
+  const characters = blueprint.characters || blueprint.suspects || []
+  const wrongSuspect = characters.find((c: any) => c.id === wrongId)
+  const killer = characters.find((c: any) => c.id === killerId)
+  
+  // Look for alibi or innocence clues
+  if (wrongSuspect?.alibi) {
+    return `Consider ${wrongSuspect.name}'s alibi more carefully. The evidence points elsewhere.`
+  }
+  
+  // Generic but helpful hints
+  const hints = [
+    'Review the physical evidence more carefully. Who had both motive and opportunity?',
+    'Consider who benefits most from the victim\'s death. Follow the motive.',
+    'Some alibis don\'t hold up under scrutiny. Look for contradictions.',
+    'The evidence tells a story. Who was in the right place at the wrong time?',
+    'Think about who had access to the murder weapon or method.',
+  ]
+  
+  return hints[Math.floor(Math.random() * hints.length)]
+}
+
 export default router

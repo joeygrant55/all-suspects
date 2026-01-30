@@ -16,6 +16,7 @@ import {
   useEvidenceNotification,
 } from './components/UI'
 import { WatsonWhisper, WatsonDesk } from './components/Watson'
+import { AccusationPanel } from './components/FMV/AccusationPanel'
 import { useGameStore } from './game/state'
 import { useMysteryStore } from './game/mysteryState'
 import { useWatsonStore } from './game/watsonState'
@@ -372,11 +373,37 @@ function App() {
           {/* Modals */}
           <TutorialModal isOpen={tutorialOpen} onClose={() => setTutorialOpen(false)} />
           <EvidenceBoard isOpen={evidenceBoardOpen} onClose={() => setEvidenceBoardOpen(false)} />
-          <AccusationModal
-            isOpen={accusationOpen}
-            onClose={() => setAccusationOpen(false)}
-            onVictory={() => setVictoryOpen(true)}
-          />
+          {/* Use dynamic AccusationPanel for generated mysteries, legacy modal for hardcoded ones */}
+          {(() => {
+            const mystery = useMysteryStore.getState().activeMystery
+            if (mystery?.isGenerated && mystery.blueprint) {
+              const chars = mystery.blueprint.characters || mystery.blueprint.suspects || []
+              return (
+                <AccusationPanel
+                  isOpen={accusationOpen}
+                  onClose={() => setAccusationOpen(false)}
+                  mysteryId={mystery.id}
+                  mysteryTitle={mystery.blueprint.title}
+                  victimName={mystery.blueprint.victim?.name || 'the victim'}
+                  evidenceCount={useGameStore.getState().collectedEvidence?.length || 0}
+                  suspects={chars.map((c: any) => ({
+                    id: c.id,
+                    name: c.name,
+                    role: c.role || c.occupation || '',
+                    portraitUrl: `/generated/${mystery.id}/assets/portraits/${c.id}-calm.webp`,
+                  }))}
+                  onVictory={() => setVictoryOpen(true)}
+                />
+              )
+            }
+            return (
+              <AccusationModal
+                isOpen={accusationOpen}
+                onClose={() => setAccusationOpen(false)}
+                onVictory={() => setVictoryOpen(true)}
+              />
+            )
+          })()}
           <VictoryScreen
             isOpen={victoryOpen}
             onClose={() => setVictoryOpen(false)}
