@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
+import { useMysteryStore } from '../../game/mysteryState'
 import { EVIDENCE_BY_ROOM } from '../../data/evidence'
 
 interface ManorViewProps {
   onSelectSuspect: (characterId: string) => void
 }
 
-// Room image mapping
-const ROOM_IMAGES: Record<string, string> = {
+// Fallback room images for Ashford Affair
+const ASHFORD_ROOM_IMAGES: Record<string, string> = {
   study: '/rooms/study.webp',
   parlor: '/rooms/parlor.webp',
   'dining-room': '/rooms/library.webp',
@@ -17,40 +18,57 @@ const ROOM_IMAGES: Record<string, string> = {
   garden: '/rooms/garden.webp',
 }
 
-// Room metadata
-const ROOM_DATA = {
-  study: {
-    name: 'Study',
-    description: 'Crime scene - where Edmund was found',
-  },
-  parlor: {
-    name: 'Parlor',
-    description: 'The family gathering room',
-  },
-  'dining-room': {
-    name: 'Dining Room',
-    description: 'The formal dining hall',
-  },
-  kitchen: {
-    name: 'Kitchen',
-    description: 'Servants\' domain',
-  },
-  hallway: {
-    name: 'Hallway',
-    description: 'The main corridor',
-  },
-  garden: {
-    name: 'Garden',
-    description: 'Outside by the fountain',
-  },
+const ASHFORD_ROOM_DATA: Record<string, { name: string; description: string }> = {
+  study: { name: 'Study', description: 'Crime scene - where Edmund was found' },
+  parlor: { name: 'Parlor', description: 'The family gathering room' },
+  'dining-room': { name: 'Dining Room', description: 'The formal dining hall' },
+  kitchen: { name: 'Kitchen', description: "Servants' domain" },
+  hallway: { name: 'Hallway', description: 'The main corridor' },
+  garden: { name: 'Garden', description: 'Outside by the fountain' },
 }
 
 export function ManorView({ onSelectSuspect }: ManorViewProps) {
   const { discoveredEvidenceIds, characters, setCurrentRoom } = useGameStore()
+  const mystery = useMysteryStore.getState().activeMystery
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null)
 
+  // Build room data from mystery blueprint or fall back to Ashford
+  const isGenerated = mystery?.id && mystery.id !== 'ashford-affair'
+  
+  const rooms: Array<{ id: string; name: string; description: string; image: string }> = (() => {
+    if (isGenerated && mystery?.rooms) {
+      // Use blueprint locations
+      const locations = mystery.locations || []
+      const roomIds = mystery.rooms || []
+      return roomIds.map(roomId => {
+        const loc = locations.find((l: { id: string }) => l.id === roomId)
+        return {
+          id: roomId,
+          name: loc?.name || roomId.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()),
+          description: loc?.description || '',
+          image: `/generated/${mystery.id}/assets/rooms/${roomId}.webp`,
+        }
+      })
+    }
+    // Ashford fallback
+    return Object.entries(ASHFORD_ROOM_DATA).map(([id, data]) => ({
+      id,
+      name: data.name,
+      description: data.description,
+      image: ASHFORD_ROOM_IMAGES[id] || '',
+    }))
+  })()
+
+  // Evidence mapping — use mystery data or Ashford fallback
+  const getEvidenceByRoom = (roomId: string): string[] => {
+    if (isGenerated && mystery?.evidenceByRoom) {
+      return mystery.evidenceByRoom[roomId] || []
+    }
+    return EVIDENCE_BY_ROOM[roomId] || []
+  }
+
   const getUndiscoveredCount = (roomId: string) => {
-    const roomEvidence = EVIDENCE_BY_ROOM[roomId] || []
+    const roomEvidence = getEvidenceByRoom(roomId)
     return roomEvidence.filter(id => !discoveredEvidenceIds.includes(id)).length
   }
 
@@ -62,7 +80,18 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
     return characters.filter(c => c.location === roomId)
   }
 
-  const getPortraitPath = (id: string) => `/portraits/${id}.png`
+  const getPortraitPath = (id: string) => {
+    if (isGenerated) {
+      return `/generated/${mystery!.id}/assets/portraits/${id}.png`
+    }
+    return `/portraits/${id}.png`
+  }
+
+  // Location/manor name
+  const manorName = mystery?.worldState?.location || 'Ashford Manor'
+
+  // Grid columns based on room count
+  const gridCols = rooms.length <= 4 ? 'grid-cols-2' : rooms.length <= 6 ? 'grid-cols-3' : 'grid-cols-4'
 
   return (
     <div className="fixed inset-0 bg-noir-black overflow-hidden flex flex-col">
@@ -74,7 +103,6 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
           opacity: 0.3,
         }}
       />
-      {/* Dark overlay on top of exterior */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/50 to-black/80" />
 
       {/* Floor plan texture overlay */}
@@ -101,34 +129,33 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
       <div className="relative z-10 flex-1 flex flex-col justify-center p-4 overflow-hidden">
         <div className="max-w-4xl mx-auto w-full">
 
-          {/* Section title */}
+          {/* Section title — dynamic */}
           <div className="text-center mb-12">
             <h2
               className="text-lg md:text-xl font-serif text-noir-cream/80 tracking-widest uppercase"
               style={{ fontFamily: 'var(--font-serif)' }}
             >
-              — Ashford Manor —
+              — {manorName} —
             </h2>
             <p className="text-noir-smoke text-xs italic mt-1">
               Click a room to search for evidence
             </p>
           </div>
 
-          {/* Room grid - 3x2 layout */}
-          <div className="grid grid-cols-3 grid-rows-2 gap-3 md:gap-4">
-            {Object.entries(ROOM_DATA).map(([id, room], index) => {
-              const isHovered = hoveredRoom === id
-              const undiscovered = getUndiscoveredCount(id)
-              const isComplete = isRoomComplete(id)
-              const totalEvidence = (EVIDENCE_BY_ROOM[id] || []).length
-              const charactersHere = getCharactersInRoom(id)
-              const roomImage = ROOM_IMAGES[id]
+          {/* Room grid — dynamic layout */}
+          <div className={`grid ${gridCols} gap-3 md:gap-4`}>
+            {rooms.map((room, index) => {
+              const isHovered = hoveredRoom === room.id
+              const undiscovered = getUndiscoveredCount(room.id)
+              const isComplete = isRoomComplete(room.id)
+              const totalEvidence = getEvidenceByRoom(room.id).length
+              const charactersHere = getCharactersInRoom(room.id)
 
               return (
                 <motion.button
-                  key={id}
-                  onClick={() => setCurrentRoom(id)}
-                  onMouseEnter={() => setHoveredRoom(id)}
+                  key={room.id}
+                  onClick={() => setCurrentRoom(room.id)}
+                  onMouseEnter={() => setHoveredRoom(room.id)}
                   onMouseLeave={() => setHoveredRoom(null)}
                   className="group relative"
                   initial={{ opacity: 0, y: 20 }}
@@ -165,7 +192,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                       }}
                     >
                       <img
-                        src={roomImage}
+                        src={room.image}
                         alt={room.name}
                         className="w-full h-full object-cover transition-all duration-300"
                         style={{
@@ -173,8 +200,12 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                             ? 'sepia(0.2) contrast(1.1) brightness(1.1)'
                             : 'sepia(0.5) contrast(1.05) brightness(0.8)',
                         }}
+                        onError={(e) => {
+                          // Fallback to a dark placeholder if image not generated yet
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                        }}
                       />
-                      {/* Vignette overlay on room image */}
                       <div className="absolute inset-0 rounded-lg" style={{
                         boxShadow: 'inset 0 0 15px rgba(0,0,0,0.6)',
                       }} />
@@ -182,7 +213,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
 
                     {/* Room name */}
                     <h3
-                      className="text-noir-cream font-serif text-sm md:text-base mb-0.5 transition-colors duration-300"
+                      className="text-noir-cream font-serif text-sm md:text-base mb-0.5 transition-colors duration-300 text-center"
                       style={{
                         fontFamily: 'var(--font-serif)',
                         color: isHovered ? '#c9a227' : undefined,
@@ -192,9 +223,9 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                       {room.name}
                     </h3>
 
-                    {/* Room description - visible on hover */}
+                    {/* Room description */}
                     <p
-                      className="text-noir-smoke text-[10px] md:text-xs italic text-center mb-1.5 transition-opacity duration-300"
+                      className="text-noir-smoke text-[10px] md:text-xs italic text-center mb-1.5 transition-opacity duration-300 line-clamp-2"
                       style={{ opacity: isHovered ? 1 : 0.5 }}
                     >
                       {room.description}
@@ -220,10 +251,9 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement
                                 target.style.display = 'none'
-                                target.parentElement!.innerHTML = `<span class="text-xs font-serif text-noir-gold/60 flex items-center justify-center h-full">${character.name.split(' ').map(n => n[0]).join('')}</span>`
+                                target.parentElement!.innerHTML = `<span class="text-xs font-serif text-noir-gold/60 flex items-center justify-center h-full">${character.name.split(' ').map((n: string) => n[0]).join('')}</span>`
                               }}
                             />
-                            {/* Hover indicator */}
                             <div className="absolute inset-0 bg-noir-gold/0 group-hover/char:bg-noir-gold/20 transition-all flex items-center justify-center">
                               <span className="text-[8px] md:text-[10px] text-noir-cream opacity-0 group-hover/char:opacity-100 transition-opacity">
                                 Talk
@@ -299,7 +329,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
           <p className="text-amber-900 text-xs">
             <span className="font-bold">💡 Watson:</span>{' '}
             {discoveredEvidenceIds.length === 0
-              ? "The manor holds many secrets. Search each room carefully for evidence."
+              ? "Search each room carefully for evidence."
               : `You've found ${discoveredEvidenceIds.length} piece${discoveredEvidenceIds.length !== 1 ? 's' : ''} of evidence. Keep searching!`
             }
           </p>

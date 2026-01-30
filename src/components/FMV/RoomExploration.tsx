@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
+import { useMysteryStore } from '../../game/mysteryState'
 import { EVIDENCE_BY_ROOM, EVIDENCE_DATABASE } from '../../data/evidence'
 import { ExaminationModal } from '../UI/ExaminationModal'
 import type { EvidenceData } from '../../types/evidence'
 
-// Room background image mapping
-const ROOM_BACKGROUNDS: Record<string, string> = {
+// Ashford fallback room backgrounds
+const ASHFORD_ROOM_BACKGROUNDS: Record<string, string> = {
   study: '/rooms/study.webp',
   parlor: '/rooms/parlor.webp',
   'dining-room': '/rooms/library.webp',
@@ -45,11 +46,24 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
   const [hoveredItem, setHoveredItem] = useState<string | null>(null)
   const [watsonHint, setWatsonHint] = useState<string | null>(null)
 
-  const roomBg = ROOM_BACKGROUNDS[roomId]
+  const mystery = useMysteryStore.getState().activeMystery
+  const isGenerated = mystery?.id && mystery.id !== 'ashford-affair'
 
-  // Get evidence items in this room
-  const evidenceIds = EVIDENCE_BY_ROOM[roomId] || []
-  const evidenceItems = evidenceIds.map(id => EVIDENCE_DATABASE[id]).filter(Boolean)
+  const roomBg = isGenerated
+    ? `/generated/${mystery!.id}/assets/rooms/${roomId}.webp`
+    : ASHFORD_ROOM_BACKGROUNDS[roomId]
+
+  // Get evidence items in this room — from mystery data or Ashford fallback
+  const evidenceIds = isGenerated
+    ? (mystery?.evidenceByRoom?.[roomId] || [])
+    : (EVIDENCE_BY_ROOM[roomId] || [])
+  
+  const evidenceItems = isGenerated
+    ? evidenceIds.map((id: string) => {
+        const ev = mystery?.evidence?.[id]
+        return ev || null
+      }).filter(Boolean) as EvidenceData[]
+    : evidenceIds.map((id: string) => EVIDENCE_DATABASE[id]).filter(Boolean)
 
   // Handle examining an evidence item
   const handleExamine = (evidence: EvidenceData) => {
