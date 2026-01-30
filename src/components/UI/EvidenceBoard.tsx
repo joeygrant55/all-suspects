@@ -1,760 +1,539 @@
-import { useState, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useGameStore } from '../../game/state'
-import { EVIDENCE_DATABASE } from '../../data/evidence'
-import { VideoComparison } from '../VideoPlayer/VideoComparison'
-import { isVideoAvailable } from '../../api/client'
-import { NeuralMap } from './NeuralMap'
+import { useMysteryStore } from '../../game/mysteryState'
+import type { EvidenceData } from '../../types/evidence'
+import type { Contradiction } from '../../game/state'
 
 interface EvidenceBoardProps {
   isOpen: boolean
   onClose: () => void
 }
 
-interface BackendPressure {
-  [characterId: string]: {
-    level: number
-    confrontations: number
-    evidencePresented: number
-    contradictionsExposed: number
+// ─── Helpers ───────────────────────────────────────────────────────────
+
+function getEvidenceImagePath(evidenceId: string, mysteryId: string | undefined): string {
+  if (mysteryId && mysteryId !== 'ashford-affair' && mysteryId !== 'hollywood-premiere') {
+    return `/generated/${mysteryId}/assets/evidence/${evidenceId}.webp`
+  }
+  return `/evidence/${evidenceId}.webp`
+}
+
+function getPortraitPath(characterId: string, mysteryId: string | undefined): string {
+  if (mysteryId && mysteryId !== 'ashford-affair' && mysteryId !== 'hollywood-premiere') {
+    return `/generated/${mysteryId}/assets/portraits/${characterId}.png`
+  }
+  return `/portraits/${characterId}.png`
+}
+
+function typeBadgeColor(type: string): string {
+  switch (type) {
+    case 'physical': return '#e74c3c'
+    case 'document': return '#3498db'
+    case 'testimony': return '#27ae60'
+    default: return '#888'
   }
 }
 
-interface Statement {
-  id: string
-  characterId: string
-  characterName: string
-  topic: string
-  content: string
-  timestamp: number
-  playerQuestion: string
+function pressureBarColor(level: number): string {
+  if (level >= 71) return '#e74c3c'
+  if (level >= 41) return '#f39c12'
+  return '#27ae60'
 }
+
+// ─── Component ─────────────────────────────────────────────────────────
 
 export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
-  const collectedEvidence = useGameStore((state) => state.collectedEvidence)
-  const contradictions = useGameStore((state) => state.contradictions)
-  const characters = useGameStore((state) => state.characters)
-  const addContradictions = useGameStore((state) => state.addContradictions)
-  const updateCharacterPressure = useGameStore((state) => state.updateCharacterPressure)
-  
-  const [activeTab, setActiveTab] = useState<'evidence' | 'suspects' | 'statements' | 'timeline' | 'neural-map'>('neural-map')
-  const [videoEnabled, setVideoEnabled] = useState(false)
-  const [selectedContradiction, setSelectedContradiction] = useState<{
-    testimony1: { characterId: string; characterName: string; testimony: string; question: string }
-    testimony2: { characterId: string; characterName: string; testimony: string; question: string }
-    explanation: string
-    type: 'timeline' | 'location' | 'witness' | 'factual' | 'behavioral'
-  } | null>(null)
-  
-  const [statements, setStatements] = useState<Statement[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const collectedEvidence = useGameStore(s => s.collectedEvidence)
+  const contradictions = useGameStore(s => s.contradictions)
+  const characters = useGameStore(s => s.characters)
+  const messages = useGameStore(s => s.messages)
+  const discoveredEvidenceIds = useGameStore(s => s.discoveredEvidenceIds)
 
-  // Check video availability
-  useEffect(() => {
-    isVideoAvailable().then(setVideoEnabled)
-  }, [])
-  
-  // Fetch backend data when Evidence Board opens
-  useEffect(() => {
-    if (isOpen) {
-      fetchBackendData()
-    }
-  }, [isOpen])
-  
-  const fetchBackendData = async () => {
-    setIsLoading(true)
-    try {
-      const apiBase = `http://${window.location.hostname}:3001/api`
-      
-      // Fetch contradictions
-      const contradictionsRes = await fetch(`${apiBase}/contradictions`)
-      if (contradictionsRes.ok) {
-        const data = await contradictionsRes.json()
-        if (data.contradictions && data.contradictions.length > 0) {
-          // Add any new contradictions from backend to game state
-          const formattedContradictions = data.contradictions.map((c: any) => ({
-            id: c.id,
-            statement1: {
-              characterId: c.statement1.characterId,
-              characterName: c.statement1.characterName,
-              content: c.statement1.content,
-              playerQuestion: c.statement1.playerQuestion,
-            },
-            statement2: {
-              characterId: c.statement2.characterId,
-              characterName: c.statement2.characterName,
-              content: c.statement2.content,
-              playerQuestion: c.statement2.playerQuestion,
-            },
-            explanation: c.explanation,
-            severity: c.severity,
-            discoveredAt: c.discoveredAt,
-          }))
-          addContradictions(formattedContradictions)
-        }
-      }
-      
-      // Fetch all statements
-      const statementsRes = await fetch(`${apiBase}/statements`)
-      if (statementsRes.ok) {
-        const data = await statementsRes.json()
-        if (data.statements) {
-          setStatements(data.statements)
-        }
-      }
-      
-      // Fetch pressure states
-      const pressureRes = await fetch(`${apiBase}/pressure`)
-      if (pressureRes.ok) {
-        const data: { pressure: BackendPressure } = await pressureRes.json()
-        // Update character pressure in game state
-        Object.entries(data.pressure).forEach(([characterId, pressure]) => {
-          updateCharacterPressure(characterId, pressure)
-        })
-      }
-      
-    } catch (error) {
-      console.error('Failed to fetch backend data:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const activeMystery = useMysteryStore(s => s.activeMystery)
 
-  // Calculate suspicion levels based on collected evidence
-  const getSuspicionLevel = (characterId: string): number => {
-    let level = 0
-    collectedEvidence.forEach((e) => {
-      const evidenceData = EVIDENCE_DATABASE[e.source]
-      if (evidenceData?.pointsTo === characterId) {
-        level += 1
-      }
-      if (evidenceData?.relatedCharacter === characterId) {
-        level += 0.5
+  const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null)
+  const [expandedSuspect, setExpandedSuspect] = useState<string | null>(null)
+  const [imgErrors, setImgErrors] = useState<Set<string>>(new Set())
+
+  const mysteryId = activeMystery?.id
+
+  // All evidence from blueprint
+  const allBlueprintEvidence: EvidenceData[] = useMemo(() => {
+    if (!activeMystery?.evidence) return []
+    return Object.values(activeMystery.evidence)
+  }, [activeMystery])
+
+  // Discovered evidence (collected or discovered IDs)
+  const discoveredSet = useMemo(() => {
+    const ids = new Set<string>()
+    collectedEvidence.forEach(e => ids.add(e.id))
+    discoveredEvidenceIds.forEach(id => ids.add(id))
+    return ids
+  }, [collectedEvidence, discoveredEvidenceIds])
+
+  // Blueprint characters
+  const blueprintCharacters = activeMystery?.characters ?? []
+
+  // Messages grouped by character
+  const messagesByCharacter = useMemo(() => {
+    const map: Record<string, typeof messages> = {}
+    messages.forEach(m => {
+      if (m.characterId && m.role === 'character') {
+        if (!map[m.characterId]) map[m.characterId] = []
+        map[m.characterId].push(m)
       }
     })
-    return Math.min(level, 5) // Cap at 5
-  }
+    return map
+  }, [messages])
 
-  // Character details for the suspects tab
-  const characterDetails: Record<string, { alibi: string; motive: string; relationship: string }> = {
-    victoria: {
-      alibi: 'Claims she was in the parlor all evening',
-      motive: 'Unhappy marriage, possible affairs',
-      relationship: 'Wife of 25 years',
-    },
-    thomas: {
-      alibi: 'Says he was in the garden, then the study',
-      motive: 'About to be disinherited',
-      relationship: 'Only son, sole heir',
-    },
-    eleanor: {
-      alibi: 'Working in the study until 11 PM',
-      motive: 'Knows family secrets',
-      relationship: 'Secretary for 8 years',
-    },
-    marcus: {
-      alibi: 'Claims he arrived late, around 10:30 PM',
-      motive: 'Medical debts, supplies medication',
-      relationship: 'Family physician, close friend',
-    },
-    lillian: {
-      alibi: 'Was in the garden most of the night',
-      motive: 'Old flame rekindled?',
-      relationship: 'Old family friend, knew Edmund decades',
-    },
-    james: {
-      alibi: 'Serving duties throughout the house',
-      motive: 'Loyal but underpaid for 30 years',
-      relationship: 'Butler since before Thomas was born',
-    },
-  }
+  // Contradictions by character
+  const contradictionsByCharacter = useMemo(() => {
+    const map: Record<string, Contradiction[]> = {}
+    contradictions.forEach(c => {
+      const ids = [c.statement1.characterId, c.statement2.characterId]
+      ids.forEach(id => {
+        if (!map[id]) map[id] = []
+        if (!map[id].includes(c)) map[id].push(c)
+      })
+    })
+    return map
+  }, [contradictions])
 
-  // Timeline events
-  const timelineEvents = [
-    { time: '10:00 PM', event: 'Guests arrive, cocktails in parlor', suspects: ['victoria', 'lillian', 'marcus'] },
-    { time: '10:30 PM', event: 'Dr. Webb arrives late', suspects: ['marcus'] },
-    { time: '11:00 PM', event: 'Eleanor finishes work in study', suspects: ['eleanor', 'thomas'] },
-    { time: '11:15 PM', event: 'Thomas seen arguing with Edmund', suspects: ['thomas'], important: true },
-    { time: '11:32 PM', event: 'Grandfather clock stops (someone in hallway)', suspects: [], important: true },
-    { time: '11:45 PM', event: 'Midnight toast prepared', suspects: ['james', 'thomas'] },
-    { time: '11:47 PM', event: 'Edmund found dead by James', suspects: ['james'], important: true },
-    { time: '12:00 AM', event: 'Police called, manor sealed', suspects: [] },
-  ]
+  // Timeline entries from worldState + messages
+  const timelineEntries = useMemo(() => {
+    const entries: Array<{ time: string; text: string; source?: string }> = []
+
+    // WorldState public knowledge as timeline
+    const ws = activeMystery?.worldState
+    if (ws) {
+      if (ws.timeOfDeath) entries.push({ time: ws.timeOfDeath, text: `Victim (${ws.victim}) found dead at ${ws.location}`, source: 'case-file' })
+      ws.publicKnowledge?.forEach((fact, i) => {
+        entries.push({ time: '', text: fact, source: 'public-knowledge' })
+      })
+    }
+
+    // Character statements as timeline entries (first 2 per character)
+    blueprintCharacters.forEach(char => {
+      const charMsgs = messagesByCharacter[char.id] ?? []
+      charMsgs.slice(0, 2).forEach(m => {
+        entries.push({
+          time: new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          text: m.content.slice(0, 120) + (m.content.length > 120 ? '…' : ''),
+          source: char.name,
+        })
+      })
+    })
+
+    return entries
+  }, [activeMystery, blueprintCharacters, messagesByCharacter])
 
   if (!isOpen) return null
 
-  const getCharacterName = (id: string) => {
-    return characters.find((c) => c.id === id)?.name || id
+  const undiscoveredCount = allBlueprintEvidence.length - discoveredSet.size
+
+  const handleImgError = (id: string) => {
+    setImgErrors(prev => new Set(prev).add(id))
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80">
-      {/* Board container */}
-      <div
-        className="relative w-[900px] h-[600px] rounded-sm overflow-hidden"
-        style={{
-          background: 'linear-gradient(180deg, #3d3028 0%, #2a1f15 100%)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.8), inset 0 2px 4px rgba(255,255,255,0.1)',
-          border: '8px solid #1a1510',
-        }}
-      >
-        {/* Cork board texture background */}
-        <div
-          className="absolute inset-0 opacity-20"
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 50,
+      background: 'linear-gradient(135deg, #0a0a0f 0%, #1a1520 50%, #0a0a0f 100%)',
+      color: '#e8e0d0',
+      fontFamily: 'Georgia, "Times New Roman", serif',
+      display: 'flex', flexDirection: 'column',
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '16px 24px',
+        borderBottom: '1px solid rgba(212,175,55,0.3)',
+        background: 'rgba(0,0,0,0.4)',
+        flexShrink: 0,
+      }}>
+        <h1 style={{ margin: 0, fontSize: 24, color: '#d4af37', letterSpacing: 2, textTransform: 'uppercase' }}>
+          📋 Case File — {activeMystery?.title ?? 'Evidence Board'}
+        </h1>
+        <button
+          onClick={onClose}
           style={{
-            backgroundImage: `url("/evidence/board.webp")`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            filter: 'sepia(0.3) brightness(0.8)',
+            background: 'rgba(212,175,55,0.15)', border: '1px solid rgba(212,175,55,0.4)',
+            color: '#d4af37', padding: '8px 20px', cursor: 'pointer',
+            fontFamily: 'Georgia, serif', fontSize: 14, letterSpacing: 1,
           }}
-        />
-        {/* Additional noise overlay for depth */}
-        <div
-          className="absolute inset-0 opacity-15"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
-          }}
-        />
+        >
+          ✕ CLOSE
+        </button>
+      </div>
 
-        {/* Header */}
-        <div className="relative px-6 py-4 border-b border-noir-black/30 flex items-center justify-between">
-          <h2
-            className="text-2xl text-noir-cream tracking-wider"
-            style={{
-              fontFamily: 'Georgia, serif',
-              textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
-            }}
-          >
-            EVIDENCE BOARD
-          </h2>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center text-noir-cream hover:text-noir-gold transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
+      {/* Three-panel layout */}
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
 
-        {/* Tabs */}
-        <div className="relative px-6 py-2 flex gap-4 border-b border-noir-black/20">
-          {[
-            { id: 'neural-map', label: 'Neural Map', icon: '🕸️' },
-            { id: 'evidence', label: 'Evidence', count: collectedEvidence.length, max: 5 },
-            { id: 'suspects', label: 'Suspects', count: characters.length },
-            { id: 'statements', label: 'Testimony', count: statements.length },
-            { id: 'timeline', label: 'Timeline' },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              className={`px-4 py-2 text-sm tracking-wider transition-colors ${
-                activeTab === tab.id
-                  ? 'text-noir-gold border-b-2 border-noir-gold'
-                  : 'text-noir-cream/70 hover:text-noir-cream'
-              }`}
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              {(tab as any).icon && <span className="mr-1">{(tab as any).icon}</span>}
-              {tab.label}
-              {tab.count !== undefined && (
-                <span className="ml-1">
-                  ({tab.count}{tab.max ? `/${tab.max}` : ''})
-                </span>
-              )}
-            </button>
-          ))}
-          {/* Contradictions badge if any */}
-          {contradictions.length > 0 && (
-            <div className="ml-auto flex items-center gap-2 text-noir-blood">
-              <span className="text-sm" style={{ fontFamily: 'Georgia, serif' }}>
-                {contradictions.length} Contradiction{contradictions.length > 1 ? 's' : ''} Found
-              </span>
-              <span className="w-2 h-2 rounded-full bg-noir-blood animate-pulse" />
-            </div>
-          )}
-        </div>
-
-        {/* Content */}
-        <div className="relative p-6 h-[calc(100%-120px)] overflow-y-auto">
-          {/* Loading indicator */}
-          {isLoading && (
-            <div className="absolute top-4 right-4 flex items-center gap-2 bg-noir-black/80 px-3 py-2 rounded border border-noir-gold/30">
-              <div className="w-3 h-3 border-2 border-noir-gold border-t-transparent rounded-full animate-spin" />
-              <span className="text-noir-cream text-xs">Syncing data...</span>
-            </div>
-          )}
-          
-          {/* Evidence tab */}
-          {activeTab === 'evidence' && (
-            <div className="space-y-4">
-              {collectedEvidence.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-noir-cream/60 italic">No evidence collected yet.</p>
-                  <p className="text-noir-cream/40 text-sm mt-2">
-                    Explore the manor and examine glowing objects to find clues.
-                  </p>
-                </div>
-              ) : (
-                <>
-                  {collectedEvidence.length < 5 && (
-                    <div className="text-center py-2 mb-4 bg-noir-gold/10 border border-noir-gold/30 rounded-sm">
-                      <p className="text-noir-gold text-sm" style={{ fontFamily: 'Georgia, serif' }}>
-                        Collect {5 - collectedEvidence.length} more piece{5 - collectedEvidence.length > 1 ? 's' : ''} of evidence to make an accusation
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Evidence Connections Visualization */}
-                  {collectedEvidence.length >= 3 && (
-                    <div className="mb-6 p-4 bg-noir-black/40 border border-noir-gold/20 rounded-sm">
-                      <h4 className="text-noir-gold text-sm mb-3 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>
-                        EVIDENCE CONNECTIONS
-                      </h4>
-                      <div className="flex flex-wrap gap-2 items-center justify-center">
-                        {(() => {
-                          // Find evidence that points to Thomas
-                          const thomasEvidence = collectedEvidence.filter((e) => {
-                            const data = EVIDENCE_DATABASE[e.source]
-                            return data?.pointsTo === 'thomas'
-                          })
-                          if (thomasEvidence.length >= 2) {
-                            return (
-                              <div className="flex items-center gap-2">
-                                {thomasEvidence.map((evidence, idx) => {
-                                  const data = EVIDENCE_DATABASE[evidence.source]
-                                  return (
-                                    <div key={evidence.id} className="flex items-center">
-                                      <div className="px-2 py-1 bg-noir-blood/30 border border-noir-blood/50 rounded text-xs text-noir-cream">
-                                        {data?.name?.split(' ')[0] || evidence.source}
-                                      </div>
-                                      {idx < thomasEvidence.length - 1 && (
-                                        <div className="mx-1 text-noir-gold">→</div>
-                                      )}
-                                    </div>
-                                  )
-                                })}
-                                <div className="mx-2 text-noir-gold">=</div>
-                                <div className="px-3 py-1 bg-noir-blood/50 border border-noir-blood rounded text-sm text-noir-cream font-medium">
-                                  Thomas Ashford
-                                </div>
-                              </div>
-                            )
-                          }
-                          return (
-                            <p className="text-noir-smoke text-xs italic">
-                              Gathering evidence... connections will appear as patterns emerge.
-                            </p>
-                          )
-                        })()}
+        {/* ─── LEFT: Evidence Locker (30%) ─── */}
+        <div style={{
+          width: '30%', borderRight: '1px solid rgba(212,175,55,0.2)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: '12px 16px', borderBottom: '1px solid rgba(212,175,55,0.15)',
+            background: 'rgba(0,0,0,0.3)',
+          }}>
+            <h2 style={{ margin: 0, fontSize: 16, color: '#d4af37', letterSpacing: 1 }}>
+              🔒 EVIDENCE LOCKER
+            </h2>
+            <span style={{ fontSize: 12, color: '#888', marginTop: 4, display: 'block' }}>
+              {discoveredSet.size} found · {undiscoveredCount > 0 ? `${undiscoveredCount} remaining` : 'All discovered'}
+            </span>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+            {/* Discovered evidence */}
+            {allBlueprintEvidence.filter(e => discoveredSet.has(e.id)).map(ev => {
+              const isExpanded = expandedEvidence === ev.id
+              return (
+                <div
+                  key={ev.id}
+                  onClick={() => setExpandedEvidence(isExpanded ? null : ev.id)}
+                  style={{
+                    background: isExpanded ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${isExpanded ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: 4, marginBottom: 8, padding: 10, cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+                    {/* Thumbnail */}
+                    {!imgErrors.has(ev.id) ? (
+                      <img
+                        src={getEvidenceImagePath(ev.id, mysteryId)}
+                        alt={ev.name}
+                        onError={() => handleImgError(ev.id)}
+                        style={{
+                          width: 48, height: 48, objectFit: 'cover', borderRadius: 3,
+                          border: '1px solid rgba(212,175,55,0.3)', flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 48, height: 48, background: 'rgba(212,175,55,0.1)',
+                        borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 20, flexShrink: 0,
+                      }}>
+                        {ev.type === 'physical' ? '🔍' : ev.type === 'document' ? '📄' : '💬'}
                       </div>
-                    </div>
-                  )}
-
-                  {/* Evidence Grid with visual connection indicators */}
-                  <div className="grid grid-cols-2 gap-4">
-                    {collectedEvidence.map((evidence, index) => {
-                      const evidenceData = EVIDENCE_DATABASE[evidence.source]
-                      const pointsToThomas = evidenceData?.pointsTo === 'thomas'
-                      const relatedToThomas = evidenceData?.relatedCharacter === 'thomas'
-                      const isKeyEvidence = pointsToThomas || relatedToThomas
-                      
-                      return (
-                        <div
-                          key={evidence.id}
-                          className={`p-4 bg-noir-cream/90 text-noir-black rounded-sm shadow-lg transition-all hover:scale-[1.02] ${
-                            isKeyEvidence ? 'ring-2 ring-noir-blood/50' : ''
-                          }`}
-                          style={{
-                            boxShadow: '4px 4px 8px rgba(0,0,0,0.3)',
-                            transform: `rotate(${(index % 2 === 0 ? -1 : 1) * 0.5}deg)`,
-                          }}
-                        >
-                          {/* Pin decoration */}
-                          <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-3 h-3 rounded-full bg-red-600 shadow-sm" />
-                          
-                          <div className="flex items-start justify-between gap-4">
-                            {/* Evidence artwork */}
-                            {evidenceData?.image && (
-                              <div className="w-16 h-16 shrink-0 rounded-sm overflow-hidden border border-noir-black/20 shadow-inner">
-                                <img
-                                  src={evidenceData.image}
-                                  alt={evidenceData.name}
-                                  className="w-full h-full object-cover filter sepia-[0.2] contrast-[1.1]"
-                                />
-                              </div>
-                            )}
-                            <div className="flex-1">
-                              <p className="font-medium" style={{ fontFamily: 'Georgia, serif' }}>
-                                {evidenceData?.name || evidence.description}
-                              </p>
-                              <p className="text-sm text-noir-smoke mt-1">
-                                {evidenceData?.description || evidence.source}
-                              </p>
-                              {evidenceData?.hint && (
-                                <p className="text-sm text-amber-800 mt-2 italic" style={{ fontFamily: 'Georgia, serif' }}>
-                                  "{evidenceData.hint}"
-                                </p>
-                              )}
-                              {/* Connection indicator */}
-                              {isKeyEvidence && (
-                                <div className="mt-2 flex items-center gap-1">
-                                  <span className="w-2 h-2 rounded-full bg-noir-blood" />
-                                  <span className="text-xs text-noir-blood font-medium">
-                                    {pointsToThomas ? 'Points to Thomas' : `Related to ${getCharacterName(evidenceData?.relatedCharacter || '')}`}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                            <span
-                              className={`px-2 py-1 text-xs rounded shrink-0 ${
-                                evidence.type === 'testimony'
-                                  ? 'bg-blue-900 text-blue-100'
-                                  : evidence.type === 'contradiction'
-                                    ? 'bg-red-900 text-red-100'
-                                    : evidence.type === 'physical'
-                                      ? 'bg-green-900 text-green-100'
-                                      : 'bg-amber-900 text-amber-100'
-                              }`}
-                            >
-                              {evidence.type}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Suspects tab */}
-          {activeTab === 'suspects' && (
-            <div className="space-y-6">
-              {/* Contradictions section */}
-              {contradictions.length > 0 && (
-                <div className="bg-noir-blood/10 border border-noir-blood/30 rounded-sm p-4 mb-4">
-                  <h3
-                    className="text-noir-blood text-sm font-bold uppercase tracking-wider mb-3"
-                    style={{ fontFamily: 'Georgia, serif' }}
-                  >
-                    Detected Contradictions ({contradictions.length})
-                  </h3>
-                  <div className="space-y-3">
-                    {contradictions.map((contradiction) => (
-                      <div
-                        key={contradiction.id}
-                        className="bg-noir-black/40 p-3 rounded-sm border-l-2 border-noir-blood"
-                      >
-                        <p className="text-noir-cream text-sm mb-2" style={{ fontFamily: 'Georgia, serif' }}>
-                          {contradiction.explanation}
-                        </p>
-                        <div className="flex gap-4 text-xs">
-                          <div className="flex-1">
-                            <span className="text-noir-gold">{contradiction.statement1.characterName}:</span>
-                            <p className="text-noir-smoke italic truncate">"{contradiction.statement1.content.slice(0, 60)}..."</p>
-                          </div>
-                          <div className="text-noir-blood font-bold self-center">vs</div>
-                          <div className="flex-1">
-                            <span className="text-noir-gold">{contradiction.statement2.characterName}:</span>
-                            <p className="text-noir-smoke italic truncate">"{contradiction.statement2.content.slice(0, 60)}..."</p>
-                          </div>
-                        </div>
-                        <div className="mt-2 flex justify-between items-center">
-                          {/* Compare Videos button */}
-                          {videoEnabled && (
-                            <button
-                              onClick={() => setSelectedContradiction({
-                                testimony1: {
-                                  characterId: contradiction.statement1.characterId,
-                                  characterName: contradiction.statement1.characterName,
-                                  testimony: contradiction.statement1.content,
-                                  question: contradiction.statement1.playerQuestion,
-                                },
-                                testimony2: {
-                                  characterId: contradiction.statement2.characterId,
-                                  characterName: contradiction.statement2.characterName,
-                                  testimony: contradiction.statement2.content,
-                                  question: contradiction.statement2.playerQuestion,
-                                },
-                                explanation: contradiction.explanation,
-                                type: 'factual', // Default type
-                              })}
-                              className="text-xs text-noir-gold hover:text-noir-cream transition-colors flex items-center gap-1"
-                            >
-                              🎬 Compare Videos
-                            </button>
-                          )}
-                          <span className={`text-xs px-2 py-0.5 rounded ${
-                            contradiction.severity === 'major' ? 'bg-noir-blood/50 text-noir-cream' :
-                            contradiction.severity === 'significant' ? 'bg-amber-900/50 text-amber-200' :
-                            'bg-noir-slate/50 text-noir-smoke'
-                          }`}>
-                            {contradiction.severity}
-                          </span>
-                        </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 'bold', fontSize: 13 }}>{ev.name}</span>
+                        <span style={{
+                          fontSize: 9, padding: '1px 6px', borderRadius: 3,
+                          background: typeBadgeColor(ev.type), color: '#fff',
+                          textTransform: 'uppercase', letterSpacing: 0.5,
+                        }}>
+                          {ev.type}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Suspects grid */}
-              <div className="grid grid-cols-2 gap-4">
-                {characters.map((character) => {
-                  const details = characterDetails[character.id]
-                  const suspicion = getSuspicionLevel(character.id)
-                  // Check if this character has contradictions
-                  const charContradictions = contradictions.filter(
-                    (c) => c.statement1.characterId === character.id || c.statement2.characterId === character.id
-                  )
-                  return (
-                    <div
-                      key={character.id}
-                      className={`p-4 bg-noir-black/40 border rounded-sm hover:border-noir-gold/40 transition-colors ${
-                        charContradictions.length > 0 ? 'border-noir-blood/50' : 'border-noir-slate/40'
-                      }`}
-                    >
-                      <div className="flex gap-4">
-                        {/* Portrait */}
-                        <div
-                          className="w-16 h-16 shrink-0 rounded-sm flex items-center justify-center text-2xl relative"
-                          style={{
-                            background: 'linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%)',
-                            border: suspicion > 2 ? '2px solid #c9a227' : '2px solid #4a4a4a',
-                            fontFamily: 'Georgia, serif',
-                            color: '#c9a227',
-                          }}
-                        >
-                          {character.name.charAt(0)}
-                          {charContradictions.length > 0 && (
-                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-noir-blood rounded-full flex items-center justify-center text-[10px] text-white">
-                              !
-                            </div>
-                          )}
-                        </div>
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <h3
-                            className="text-noir-cream font-medium"
-                            style={{ fontFamily: 'Georgia, serif' }}
-                          >
-                            {character.name}
-                          </h3>
-                          <p className="text-noir-smoke text-xs italic">{character.role}</p>
-                          {/* Suspicion meter */}
-                          <div className="mt-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-xs text-noir-smoke">Suspicion:</span>
-                              <div className="flex gap-0.5">
-                                {[0, 1, 2, 3, 4].map((i) => (
-                                  <div
-                                    key={i}
-                                    className={`w-3 h-1.5 rounded-sm ${
-                                      i < suspicion ? 'bg-noir-blood' : 'bg-noir-slate/50'
-                                    }`}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                      <div style={{ fontSize: 11, color: '#999', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: isExpanded ? 'normal' : 'nowrap' }}>
+                        {ev.description}
                       </div>
-                      {/* Details */}
-                      {details && (
-                        <div className="mt-3 pt-3 border-t border-noir-slate/30 space-y-1.5 text-xs">
-                          <p className="text-noir-cream/80">
-                            <span className="text-noir-smoke">Alibi:</span> {details.alibi}
-                          </p>
-                          <p className="text-noir-cream/80">
-                            <span className="text-noir-smoke">Possible motive:</span> {details.motive}
-                          </p>
-                          {charContradictions.length > 0 && (
-                            <p className="text-noir-blood text-[10px]">
-                              {charContradictions.length} contradiction{charContradictions.length > 1 ? 's' : ''} found
-                            </p>
-                          )}
-                          <p className="text-noir-gold/80 text-[10px]">
-                            Currently in: {character.location}
-                          </p>
+                      {ev.pointsTo && (
+                        <div style={{ fontSize: 11, color: '#d4af37', marginTop: 3 }}>
+                          Points to: {ev.pointsTo}
                         </div>
                       )}
                     </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Statements tab */}
-          {activeTab === 'statements' && (
-            <div className="space-y-4">
-              {statements.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-noir-cream/60 italic">No testimony collected yet.</p>
-                  <p className="text-noir-cream/40 text-sm mt-2">
-                    Question the suspects to gather statements.
-                  </p>
+                  </div>
+                  {isExpanded && ev.detailedDescription && (
+                    <div style={{
+                      marginTop: 10, padding: '8px 10px', fontSize: 12, lineHeight: 1.6,
+                      background: 'rgba(0,0,0,0.3)', borderRadius: 3,
+                      borderLeft: '2px solid #d4af37', color: '#ccc',
+                    }}>
+                      {ev.detailedDescription}
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  {/* Group statements by character */}
-                  {characters.map((character) => {
-                    const charStatements = statements.filter(s => s.characterId === character.id)
-                    if (charStatements.length === 0) return null
-                    
-                    return (
-                      <div key={character.id} className="bg-noir-black/40 border border-noir-slate/30 rounded-sm overflow-hidden">
-                        {/* Character header */}
-                        <div className="px-4 py-2 bg-noir-charcoal/50 border-b border-noir-slate/30 flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div 
-                              className="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-noir-slate/50 border border-noir-gold/30"
-                              style={{ fontFamily: 'Georgia, serif' }}
-                            >
-                              {character.name.charAt(0)}
-                            </div>
-                            <div>
-                              <h4 className="text-noir-cream font-medium text-sm" style={{ fontFamily: 'Georgia, serif' }}>
-                                {character.name}
-                              </h4>
-                              <p className="text-noir-smoke text-xs">{character.role}</p>
-                            </div>
-                          </div>
-                          <span className="text-noir-gold/60 text-xs">
-                            {charStatements.length} statement{charStatements.length > 1 ? 's' : ''}
-                          </span>
+              )
+            })}
+
+            {/* Undiscovered evidence placeholders */}
+            {allBlueprintEvidence.filter(e => !discoveredSet.has(e.id)).map(ev => (
+              <div
+                key={ev.id}
+                style={{
+                  background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
+                  borderRadius: 4, marginBottom: 8, padding: 10, opacity: 0.5,
+                }}
+              >
+                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                  <div style={{
+                    width: 48, height: 48, background: 'rgba(255,255,255,0.05)',
+                    borderRadius: 3, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 18,
+                  }}>🔒</div>
+                  <div>
+                    <div style={{ fontSize: 13, color: '#666', fontStyle: 'italic' }}>[REDACTED]</div>
+                    <div style={{ fontSize: 11, color: '#444' }}>Evidence not yet discovered</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {allBlueprintEvidence.length === 0 && (
+              <div style={{ textAlign: 'center', padding: 24, color: '#666', fontSize: 13 }}>
+                No evidence catalogued yet. Explore rooms and interrogate suspects.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ─── CENTER: Suspect Profiles (40%) ─── */}
+        <div style={{
+          width: '40%', borderRight: '1px solid rgba(212,175,55,0.2)',
+          display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: '12px 16px', borderBottom: '1px solid rgba(212,175,55,0.15)',
+            background: 'rgba(0,0,0,0.3)',
+          }}>
+            <h2 style={{ margin: 0, fontSize: 16, color: '#d4af37', letterSpacing: 1 }}>
+              👤 SUSPECT PROFILES
+            </h2>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px' }}>
+            {blueprintCharacters.map(char => {
+              const gameChar = characters.find(c => c.id === char.id)
+              const isExpanded = expandedSuspect === char.id
+              const pressureLevel = gameChar?.pressure?.level ?? 0
+              const charContradictions = contradictionsByCharacter[char.id] ?? []
+              const charMessages = messagesByCharacter[char.id] ?? []
+
+              return (
+                <div
+                  key={char.id}
+                  style={{
+                    background: isExpanded ? 'rgba(212,175,55,0.08)' : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${isExpanded ? 'rgba(212,175,55,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: 4, marginBottom: 8, overflow: 'hidden',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {/* Collapsed header */}
+                  <div
+                    onClick={() => setExpandedSuspect(isExpanded ? null : char.id)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: 10,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {!imgErrors.has(`portrait-${char.id}`) ? (
+                      <img
+                        src={getPortraitPath(char.id, mysteryId)}
+                        alt={char.name}
+                        onError={() => handleImgError(`portrait-${char.id}`)}
+                        style={{
+                          width: 48, height: 48, borderRadius: '50%', objectFit: 'cover',
+                          border: '2px solid rgba(212,175,55,0.4)', flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 48, height: 48, borderRadius: '50%',
+                        background: 'rgba(212,175,55,0.15)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'center', fontSize: 20, flexShrink: 0,
+                      }}>👤</div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 'bold', fontSize: 14 }}>{char.name}</div>
+                      <div style={{ fontSize: 11, color: '#999' }}>{char.role}</div>
+                      {/* Pressure meter */}
+                      <div style={{
+                        marginTop: 4, height: 4, background: 'rgba(255,255,255,0.1)',
+                        borderRadius: 2, overflow: 'hidden', width: '100%',
+                      }}>
+                        <div style={{
+                          height: '100%', width: `${Math.min(pressureLevel, 100)}%`,
+                          background: pressureBarColor(pressureLevel),
+                          borderRadius: 2, transition: 'width 0.3s',
+                        }} />
+                      </div>
+                    </div>
+                    <span style={{ color: '#666', fontSize: 16 }}>{isExpanded ? '▾' : '▸'}</span>
+                  </div>
+
+                  {/* Expanded content */}
+                  {isExpanded && (
+                    <div style={{ padding: '0 12px 12px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                      {/* Alibi */}
+                      <div style={{ marginTop: 10 }}>
+                        <div style={{ fontSize: 11, color: '#d4af37', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                          Alibi
                         </div>
-                        
-                        {/* Statements */}
-                        <div className="p-3 space-y-2 max-h-64 overflow-y-auto">
-                          {charStatements.map((statement) => (
-                            <div key={statement.id} className="bg-noir-charcoal/30 p-3 rounded-sm border-l-2 border-noir-gold/30">
-                              <div className="flex items-start justify-between gap-2 mb-1">
-                                <span className="text-noir-gold text-xs uppercase tracking-wider">
-                                  {statement.topic}
-                                </span>
-                                <span className="text-noir-smoke text-[10px]">
-                                  {new Date(statement.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                              </div>
-                              <p className="text-noir-cream/70 text-xs italic mb-2">
-                                Q: "{statement.playerQuestion}"
-                              </p>
-                              <p className="text-noir-cream text-sm">
-                                "{statement.content.length > 200 ? statement.content.slice(0, 200) + '...' : statement.content}"
-                              </p>
+                        <div style={{ fontSize: 12, color: '#bbb', lineHeight: 1.5, fontStyle: 'italic' }}>
+                          "{char.alibi || 'No alibi provided.'}"
+                        </div>
+                      </div>
+
+                      {/* Public info as motive proxy */}
+                      {char.publicInfo && (
+                        <div style={{ marginTop: 10 }}>
+                          <div style={{ fontSize: 11, color: '#d4af37', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                            Background
+                          </div>
+                          <div style={{ fontSize: 12, color: '#bbb', lineHeight: 1.5 }}>
+                            {char.publicInfo}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Key statements */}
+                      {charMessages.length > 0 && (
+                        <div style={{ marginTop: 10 }}>
+                          <div style={{ fontSize: 11, color: '#d4af37', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                            Key Statements ({charMessages.length})
+                          </div>
+                          {charMessages.slice(0, 5).map(m => (
+                            <div key={m.id} style={{
+                              fontSize: 11, color: '#aaa', lineHeight: 1.4, marginBottom: 4,
+                              paddingLeft: 8, borderLeft: '2px solid rgba(255,255,255,0.1)',
+                            }}>
+                              "{m.content.slice(0, 150)}{m.content.length > 150 ? '…' : ''}"
+                            </div>
+                          ))}
+                          {charMessages.length > 5 && (
+                            <div style={{ fontSize: 10, color: '#666' }}>
+                              +{charMessages.length - 5} more statements
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Contradictions */}
+                      {charContradictions.length > 0 && (
+                        <div style={{ marginTop: 10 }}>
+                          <div style={{ fontSize: 11, color: '#e74c3c', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+                            ⚠ Contradictions ({charContradictions.length})
+                          </div>
+                          {charContradictions.map(c => (
+                            <div key={c.id} style={{
+                              fontSize: 11, padding: 8, marginBottom: 4,
+                              background: 'rgba(231,76,60,0.1)', border: '1px solid rgba(231,76,60,0.2)',
+                              borderRadius: 3, lineHeight: 1.4,
+                            }}>
+                              <div style={{ color: '#e8a0a0' }}>{c.explanation}</div>
                             </div>
                           ))}
                         </div>
-                      </div>
-                    )
-                  })}
+                      )}
+
+                      {charMessages.length === 0 && charContradictions.length === 0 && (
+                        <div style={{ marginTop: 10, fontSize: 11, color: '#555', fontStyle: 'italic' }}>
+                          No interrogation data yet. Question this suspect to learn more.
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+
+            {blueprintCharacters.length === 0 && (
+              <div style={{ textAlign: 'center', padding: 24, color: '#666', fontSize: 13 }}>
+                No suspects identified.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ─── RIGHT: Timeline + Contradictions (30%) ─── */}
+        <div style={{
+          width: '30%', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        }}>
+          {/* Timeline */}
+          <div style={{
+            padding: '12px 16px', borderBottom: '1px solid rgba(212,175,55,0.15)',
+            background: 'rgba(0,0,0,0.3)',
+          }}>
+            <h2 style={{ margin: 0, fontSize: 16, color: '#d4af37', letterSpacing: 1 }}>
+              🕐 TIMELINE
+            </h2>
+          </div>
+          <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+            {timelineEntries.length > 0 ? timelineEntries.map((entry, i) => (
+              <div key={i} style={{
+                display: 'flex', gap: 10, marginBottom: 10, fontSize: 12,
+                paddingLeft: 12, borderLeft: '2px solid rgba(212,175,55,0.3)',
+              }}>
+                <div style={{ minWidth: 50, color: '#d4af37', fontWeight: 'bold', fontSize: 11 }}>
+                  {entry.time || '—'}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: '#ccc', lineHeight: 1.4 }}>{entry.text}</div>
+                  {entry.source && entry.source !== 'case-file' && entry.source !== 'public-knowledge' && (
+                    <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>— {entry.source}</div>
+                  )}
+                </div>
+              </div>
+            )) : (
+              <div style={{ textAlign: 'center', padding: 20, color: '#666', fontSize: 12 }}>
+                Timeline data will appear as you investigate.
+              </div>
+            )}
+
+            {/* Contradictions section */}
+            <div style={{
+              marginTop: 16, paddingTop: 16,
+              borderTop: '1px solid rgba(231,76,60,0.3)',
+            }}>
+              <h3 style={{ margin: '0 0 10px', fontSize: 14, color: '#e74c3c', letterSpacing: 1 }}>
+                ⚠ CONTRADICTIONS ({contradictions.length})
+              </h3>
+              {contradictions.length > 0 ? contradictions.map(c => (
+                <div key={c.id} style={{
+                  background: 'rgba(231,76,60,0.08)', border: '1px solid rgba(231,76,60,0.2)',
+                  borderRadius: 4, padding: 10, marginBottom: 8,
+                }}>
+                  <div style={{ fontSize: 11, marginBottom: 6, color: '#d4af37' }}>
+                    {c.statement1.characterName} vs {c.statement2.characterName}
+                    <span style={{
+                      marginLeft: 8, fontSize: 9, padding: '1px 5px', borderRadius: 3,
+                      background: c.severity === 'major' ? '#e74c3c' : c.severity === 'significant' ? '#e67e22' : '#888',
+                      color: '#fff',
+                    }}>
+                      {c.severity.toUpperCase()}
+                    </span>
+                  </div>
+                  <div style={{
+                    display: 'flex', gap: 8, fontSize: 11, lineHeight: 1.4,
+                  }}>
+                    <div style={{
+                      flex: 1, padding: 6, background: 'rgba(0,0,0,0.3)', borderRadius: 3,
+                      borderLeft: '2px solid #e74c3c',
+                    }}>
+                      <div style={{ color: '#999', fontSize: 10, marginBottom: 2 }}>{c.statement1.characterName}</div>
+                      <div style={{ color: '#ddd' }}>"{c.statement1.content.slice(0, 100)}{c.statement1.content.length > 100 ? '…' : ''}"</div>
+                    </div>
+                    <div style={{
+                      flex: 1, padding: 6, background: 'rgba(0,0,0,0.3)', borderRadius: 3,
+                      borderLeft: '2px solid #e74c3c',
+                    }}>
+                      <div style={{ color: '#999', fontSize: 10, marginBottom: 2 }}>{c.statement2.characterName}</div>
+                      <div style={{ color: '#ddd' }}>"{c.statement2.content.slice(0, 100)}{c.statement2.content.length > 100 ? '…' : ''}"</div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 11, color: '#e8a0a0', marginTop: 6, fontStyle: 'italic' }}>
+                    {c.explanation}
+                  </div>
+                </div>
+              )) : (
+                <div style={{ fontSize: 12, color: '#666', fontStyle: 'italic' }}>
+                  No contradictions uncovered yet. Cross-reference suspect statements to find conflicts.
                 </div>
               )}
             </div>
-          )}
-
-          {/* Neural Map tab */}
-          {activeTab === 'neural-map' && (
-            <div className="h-full flex flex-col">
-              <div className="mb-4 p-3 bg-noir-gold/10 border border-noir-gold/30 rounded-sm">
-                <p className="text-noir-cream text-sm" style={{ fontFamily: 'Georgia, serif' }}>
-                  <span className="text-noir-gold font-medium">Neural Map:</span> Visualize the connections between the victim, suspects, and evidence. 
-                  Click nodes to explore relationships. Red lines indicate contradictions between suspects.
-                </p>
-              </div>
-              <div className="flex-1 min-h-0">
-                <NeuralMap width={850} height={450} />
-              </div>
-            </div>
-          )}
-
-          {/* Timeline tab */}
-          {activeTab === 'timeline' && (
-            <div className="relative">
-              <h3
-                className="text-noir-cream text-center mb-6"
-                style={{ fontFamily: 'Georgia, serif' }}
-              >
-                New Year's Eve, 1929 — The Night of the Murder
-              </h3>
-              {/* Timeline line */}
-              <div className="absolute left-[100px] top-16 bottom-4 w-0.5 bg-noir-slate/50" />
-              {/* Events */}
-              <div className="space-y-4">
-                {timelineEvents.map((event, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-start gap-4 ${event.important ? 'relative' : ''}`}
-                  >
-                    {/* Time */}
-                    <div
-                      className={`w-[80px] text-right shrink-0 ${
-                        event.important ? 'text-noir-gold font-bold' : 'text-noir-smoke'
-                      }`}
-                      style={{ fontFamily: 'Georgia, serif' }}
-                    >
-                      {event.time}
-                    </div>
-                    {/* Dot */}
-                    <div
-                      className={`w-3 h-3 rounded-full shrink-0 mt-1 ${
-                        event.important
-                          ? 'bg-noir-gold shadow-[0_0_8px_rgba(201,162,39,0.5)]'
-                          : 'bg-noir-slate'
-                      }`}
-                    />
-                    {/* Event */}
-                    <div className="flex-1">
-                      <p
-                        className={`${event.important ? 'text-noir-cream font-medium' : 'text-noir-cream/80'}`}
-                        style={{ fontFamily: 'Georgia, serif' }}
-                      >
-                        {event.event}
-                      </p>
-                      {event.suspects.length > 0 && (
-                        <p className="text-xs text-noir-smoke mt-1">
-                          Present: {event.suspects.map((s) => getCharacterName(s)).join(', ')}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Note */}
-              <div className="mt-8 p-4 bg-noir-blood/10 border border-noir-blood/30 rounded-sm">
-                <p className="text-noir-cream/80 text-sm italic" style={{ fontFamily: 'Georgia, serif' }}>
-                  Key question: Who had access to Edmund between 11:32 PM and 11:47 PM?
-                </p>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
-
-        {/* Pins decoration */}
-        <div className="absolute top-3 left-3 w-3 h-3 rounded-full bg-red-600 shadow-lg" />
-        <div className="absolute top-3 right-3 w-3 h-3 rounded-full bg-red-600 shadow-lg" />
-        <div className="absolute bottom-3 left-3 w-3 h-3 rounded-full bg-red-600 shadow-lg" />
-        <div className="absolute bottom-3 right-3 w-3 h-3 rounded-full bg-red-600 shadow-lg" />
       </div>
-
-      {/* Video Comparison Modal */}
-      {selectedContradiction && (
-        <VideoComparison
-          testimony1={selectedContradiction.testimony1}
-          testimony2={selectedContradiction.testimony2}
-          contradictionExplanation={selectedContradiction.explanation}
-          contradictionType={selectedContradiction.type}
-          onClose={() => setSelectedContradiction(null)}
-        />
-      )}
     </div>
   )
 }
