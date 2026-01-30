@@ -67,6 +67,14 @@ export interface ChatVideoResponse {
   }
 }
 
+// Active mystery ID for routing to universal character agent
+let _activeMysteryId: string | null = null
+
+/** Set the active mystery ID — routes chat to /api/mystery/:id/chat */
+export function setActiveMysteryId(id: string | null) {
+  _activeMysteryId = id
+}
+
 export async function sendMessage(
   characterId: string,
   message: string,
@@ -74,7 +82,12 @@ export async function sendMessage(
   evidenceId?: string | null,
   crossReferenceStatement?: { characterId: string; content: string } | null
 ): Promise<ChatResponse> {
-  const response = await fetch(`${API_BASE}/chat`, {
+  // Route to universal character agent if a generated mystery is active
+  const url = _activeMysteryId
+    ? `${API_BASE}/mystery/${_activeMysteryId}/chat`
+    : `${API_BASE}/chat`
+
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -83,7 +96,7 @@ export async function sendMessage(
       characterId, 
       message,
       tactic,
-      evidenceId,
+      evidenceId: evidenceId || undefined,
       crossReferenceStatement
     }),
   })

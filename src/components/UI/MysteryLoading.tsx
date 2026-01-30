@@ -78,9 +78,34 @@ function Particles() {
   )
 }
 
+const FLAVOR_TEXTS = [
+  'Crafting suspects, weaving secrets, planting evidence...',
+  'Forging alibis that almost hold up...',
+  'Scattering red herrings across the scene...',
+  'Writing confession letters that will never be sent...',
+  'Placing fingerprints where they shouldn\'t be...',
+  'Rehearsing lies until they sound like truth...',
+  'Hiding the murder weapon in plain sight...',
+  'Setting the clock to the time of death...',
+  'Mixing poison into the evening cocktail...',
+  'Drawing the curtains on a dark secret...',
+  'Whispering rumors through the hallways...',
+  'Locking doors that should stay open...',
+]
+
 export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoadingProps) {
   const { progress, isReady, portraits, portraitsReady } = useAssetLoader(mysteryId)
   const [showTitle, setShowTitle] = useState(false)
+  const [flavorIndex, setFlavorIndex] = useState(0)
+
+  // Rotate flavor text every 4 seconds during generation
+  useEffect(() => {
+    if (blueprint) return // Stop rotating once blueprint arrives
+    const interval = setInterval(() => {
+      setFlavorIndex(i => (i + 1) % FLAVOR_TEXTS.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [blueprint])
 
   useEffect(() => {
     if (blueprint?.title) {
@@ -134,9 +159,19 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
               >
                 THE MYSTERY ARCHITECT IS WORKING
               </h2>
-              <p className="text-noir-smoke text-sm italic" style={{ fontFamily: 'Georgia, serif' }}>
-                Crafting suspects, weaving secrets, planting evidence...
-              </p>
+              <AnimatePresence mode="wait">
+                <motion.p
+                  key={flavorIndex}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.5 }}
+                  className="text-noir-smoke text-sm italic"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  {FLAVOR_TEXTS[flavorIndex]}
+                </motion.p>
+              </AnimatePresence>
             </motion.div>
           )}
         </AnimatePresence>
@@ -237,13 +272,15 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
                     transition={{ duration: 0.5 }}
                   >
                     <motion.button
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(201,162,39,0.6)' }}
                       whileTap={{ scale: 0.95 }}
+                      animate={{ boxShadow: ['0 0 10px rgba(201,162,39,0.2)', '0 0 25px rgba(201,162,39,0.5)', '0 0 10px rgba(201,162,39,0.2)'] }}
+                      transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                       onClick={onEnter}
                       className="px-12 py-4 bg-noir-gold text-noir-black text-lg font-bold tracking-widest hover:bg-opacity-90 transition-all duration-300"
                       style={{ fontFamily: 'Georgia, serif' }}
                     >
-                      ENTER THE MYSTERY
+                      ✦ ENTER THE MYSTERY ✦
                     </motion.button>
                   </motion.div>
                 )}

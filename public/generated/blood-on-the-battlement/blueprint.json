@@ -1,0 +1,430 @@
+{
+  "id": "blood-on-the-battlement",
+  "title": "Blood on the Battlement",
+  "subtitle": "1347 — Ravenshollow Castle, England",
+  "era": "medieval",
+  "difficulty": "medium",
+  "setting": {
+    "location": "Ravenshollow Castle",
+    "atmosphere": "torchlit halls, cold stone, whispered conspiracies",
+    "weather": "Bitter winter wind howling through arrow slits"
+  },
+  "victim": {
+    "name": "Lord Edmund Blackwood",
+    "role": "Lord of Ravenshollow Castle",
+    "causeOfDeath": "Pushed from the east tower battlement",
+    "timeOfDeath": "Between 10:30 PM and 11:00 PM",
+    "description": "Cruel lord who taxed his people mercilessly during the plague years. Recently discovered to be selling information about English defenses to the French."
+  },
+  "characters": [
+    {
+      "id": "sir-roland-ashford",
+      "name": "Sir Roland Ashford",
+      "role": "Castle Knight and Captain of Guards",
+      "personality": "Honor-bound but haunted, struggles with conflicting loyalties",
+      "background": "Saved Lord Edmund's life at Crécy but discovered his treason. Torn between oath and duty to England.",
+      "motive": "Lord Edmund's treason endangered every English soldier, including Roland's own men",
+      "alibi": "Claims he was inspecting the night watch on the west wall",
+      "isGuilty": true,
+      "relationships": {
+        "lady-margaret-blackwood": "Secretly admires her strength, pities her marriage",
+        "brother-thomas": "Distrusts his ambitions for the castle",
+        "elara-moonweaver": "Respects her healing skills, knows she dabbles in poison",
+        "aldric-cooper": "Sees him as weak but useful for information",
+        "gwendolyn-shaw": "Protective of her, knows Edmund abused her"
+      },
+      "secretKnowledge": [
+        "Lord Edmund was meeting someone in the tower that night",
+        "The French spy's identity",
+        "Lord Edmund threatened to reveal Roland killed prisoners at Crécy"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Formal military bearing, occasionally slips into battlefield coarseness",
+      "greeting": "You there. State your business quickly — these are dark times and I have little patience for idle chatter. The lord's death has left us... vulnerable."
+    },
+    {
+      "id": "lady-margaret-blackwood",
+      "name": "Lady Margaret Blackwood",
+      "role": "Wife of the deceased lord",
+      "personality": "Intelligent, bitter, secretly relieved by her husband's death",
+      "background": "Forced into marriage at 14, endured years of cruelty. Recently learned Edmund killed her beloved brother.",
+      "motive": "Freedom from an abusive marriage and revenge for her brother's murder",
+      "alibi": "In the chapel praying with witnesses until 10:45 PM",
+      "isGuilty": false,
+      "relationships": {
+        "sir-roland-ashford": "Respects his honor, helped him discover the treason",
+        "brother-thomas": "Despises his greed and false piety",
+        "elara-moonweaver": "Her only true confidant, knows her herbs",
+        "aldric-cooper": "Father of her child, still loves him",
+        "gwendolyn-shaw": "Protective of her, sees her younger self"
+      },
+      "secretKnowledge": [
+        "Edmund was sterile, her son is the stable master's",
+        "Edmund planned to have her killed",
+        "She gave Roland the tower patrol schedule"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Refined speech with occasional cutting remarks, quotes scripture ironically",
+      "greeting": "Ah, another vulture come to pick at my husband's corpse? Or perhaps you seek truth in this den of liars? Either way, tread carefully."
+    },
+    {
+      "id": "brother-thomas",
+      "name": "Brother Thomas",
+      "role": "Castle Chaplain and Edmund's younger brother",
+      "personality": "Ambitious, manipulative, hides greed behind piety",
+      "background": "Second son who joined the church for power, not faith. Believes the castle should be his by right.",
+      "motive": "Inherit the castle as Edmund had no legitimate heir",
+      "alibi": "Leading evening prayers in the chapel until 10:30 PM",
+      "isGuilty": false,
+      "relationships": {
+        "sir-roland-ashford": "Fears his military power, tries to manipulate him",
+        "lady-margaret-blackwood": "Wants her gone, knows about her son",
+        "elara-moonweaver": "Suspects she's a witch, fears her knowledge",
+        "aldric-cooper": "Blackmails him about the affair",
+        "gwendolyn-shaw": "Lusts after her, makes her uncomfortable"
+      },
+      "secretKnowledge": [
+        "Edmund changed his will last week",
+        "The stable master is Lady Margaret's lover",
+        "Roland meets with French prisoners"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Quotes scripture frequently, unctuous tone, passive-aggressive",
+      "greeting": "Bless you, my child. In these times of trial, we must seek comfort in prayer. Though I wonder... do you come seeking absolution or accusation?"
+    },
+    {
+      "id": "elara-moonweaver",
+      "name": "Elara Moonweaver",
+      "role": "Castle Healer and Herbalist",
+      "personality": "Wise, secretive, fiercely protective of those she cares about",
+      "background": "Learned herb lore from her grandmother, rumored to practice old ways. Saved many during the plague.",
+      "motive": "Edmund threatened to burn her as a witch for refusing to poison his wife",
+      "alibi": "Tending to sick servants in the lower bailey",
+      "isGuilty": false,
+      "relationships": {
+        "sir-roland-ashford": "Treated his war wounds, knows his guilt",
+        "lady-margaret-blackwood": "Her closest ally, protects her secrets",
+        "brother-thomas": "Sees through his false faith, mutual antagonism",
+        "aldric-cooper": "Helped deliver his secret son",
+        "gwendolyn-shaw": "Teaching her herb lore, protective"
+      },
+      "secretKnowledge": [
+        "Which herbs can mimic death",
+        "Lady Margaret asked for moon tea",
+        "Edmund was slowly being poisoned already"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Soft-spoken with hints of old wisdom, sometimes speaks in riddles",
+      "greeting": "The stones whisper of blood tonight, and you seek answers among shadows. Be warned — some truths cut deeper than any blade."
+    },
+    {
+      "id": "aldric-cooper",
+      "name": "Aldric Cooper",
+      "role": "Castle Stable Master",
+      "personality": "Gentle, tormented by guilt, devoted to Lady Margaret",
+      "background": "Rose from peasant stock through skill with horses. Has loved Lady Margaret since youth.",
+      "motive": "Lord Edmund discovered the affair and threatened to have him flayed alive",
+      "alibi": "In the stables tending a sick horse, no witnesses",
+      "isGuilty": false,
+      "relationships": {
+        "sir-roland-ashford": "Fears him but respects his treatment of horses",
+        "lady-margaret-blackwood": "Desperately loves her, would die for her",
+        "brother-thomas": "Terrified of his blackmail",
+        "elara-moonweaver": "Grateful for her discretion about his son",
+        "gwendolyn-shaw": "Kind to her, sees her as a little sister"
+      },
+      "secretKnowledge": [
+        "His son with Lady Margaret",
+        "Edmund beat horses for pleasure",
+        "Saw Roland heading to the tower"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Common speech, stammers when nervous, avoids eye contact with nobility",
+      "greeting": "M-my lord/lady? I'm just a simple stable master... I don't know nothing about the high affairs of nobles. Best I tend to the horses and leave the rest be."
+    },
+    {
+      "id": "gwendolyn-shaw",
+      "name": "Gwendolyn Shaw",
+      "role": "Lady's Maid to Lady Margaret",
+      "personality": "Observant, loyal, harbors deep trauma and rage",
+      "background": "Orphaned by plague at 12, Lord Edmund took her in but abused her for years. Lady Margaret protected her.",
+      "motive": "Years of abuse and a recent assault by Lord Edmund that left her with child",
+      "alibi": "Preparing Lady Margaret's chambers for night, seen by other servants until 10:20 PM",
+      "isGuilty": false,
+      "relationships": {
+        "sir-roland-ashford": "Sees him as protector, told him about Edmund's abuse",
+        "lady-margaret-blackwood": "Devoted to her, would kill for her",
+        "brother-thomas": "Terrified of him, avoids being alone with him",
+        "elara-moonweaver": "Learning herbs from her, trusts her completely",
+        "aldric-cooper": "Sees as gentle soul, knows his secret"
+      },
+      "secretKnowledge": [
+        "Edmund's secret meeting schedule",
+        "Where Edmund hid French gold",
+        "Saw Brother Thomas near the tower"
+      ],
+      "artPrompt": "",
+      "speechPattern": "Soft and proper in public, drops to common dialect when emotional",
+      "greeting": "Begging your pardon, but I've duties to attend to. Unless... unless you're here about his lordship? I shouldn't speak ill of the dead, but... *wrings hands*"
+    }
+  ],
+  "locations": [
+    {
+      "id": "east-tower-battlement",
+      "name": "East Tower Battlement",
+      "description": "Wind-swept stone platform atop the highest tower. Dark bloodstains mark where Lord Edmund fell. The parapet is lower here, damaged in last winter's siege.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "great-hall",
+      "name": "Great Hall",
+      "description": "Massive chamber with vaulted ceiling and faded tapestries depicting the Blackwood arms. The lord's chair sits empty at the high table, wine cup still half-full.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "castle-chapel",
+      "name": "Castle Chapel",
+      "description": "Stone sanctuary with colored glass windows. Incense cannot mask the scent of fear. Prayer books lie scattered, and candle wax pools suggest recent vigil.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "lords-solar",
+      "name": "Lord's Solar",
+      "description": "Edmund's private study. Maps of English and French positions cover one wall. The hearth is cold, papers hastily burned leave readable fragments.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "herbarium",
+      "name": "Herbarium",
+      "description": "Elara's domain, filled with drying herbs and mysterious vials. Mortar and pestle show recent use. Books of herb lore mixed with older, stranger texts.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "castle-stables",
+      "name": "Castle Stables",
+      "description": "Warm despite winter, filled with hay and horse scent. Tack hangs neatly, but one stall shows signs of struggle. A hidden loose stone conceals secrets.",
+      "evidence": [],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "torn-surcoat",
+      "name": "Torn Surcoat Fragment",
+      "description": "A piece of blue and silver fabric caught on battlement stone",
+      "location": "east-tower-battlement",
+      "artPrompt": "",
+      "detailedDescription": "High-quality wool with the Ashford arms partially visible. Fresh tear suggests recent struggle. Thread count indicates knight's garment.",
+      "type": "physical",
+      "relatedCharacter": "sir-roland-ashford",
+      "pointsTo": "sir-roland-ashford"
+    },
+    {
+      "id": "french-gold",
+      "name": "Pouch of French Gold",
+      "description": "Hidden leather pouch with 30 French écus",
+      "location": "lords-solar",
+      "artPrompt": "",
+      "detailedDescription": "Coins dated 1346, after Crécy. Pouch bears French lily seal. Found with half-burned letter mentioning 'payment for castle plans'.",
+      "type": "physical",
+      "relatedCharacter": "lord-edmund-blackwood",
+      "pointsTo": null
+    },
+    {
+      "id": "prayer-book-annotation",
+      "name": "Annotated Prayer Book",
+      "description": "Brother Thomas's prayer book with suspicious notes",
+      "location": "castle-chapel",
+      "artPrompt": "",
+      "detailedDescription": "Margins contain inheritance law citations and calculations of castle income. One passage about 'fraternal duty' heavily underlined.",
+      "type": "document",
+      "relatedCharacter": "brother-thomas",
+      "pointsTo": "brother-thomas"
+    },
+    {
+      "id": "hemlock-residue",
+      "name": "Hemlock Residue",
+      "description": "Traces of processed hemlock in mortar",
+      "location": "herbarium",
+      "artPrompt": "",
+      "detailedDescription": "Fresh grinding of hemlock root, enough for several lethal doses. Mixed with honey to mask bitter taste. Preparation method suggests expertise.",
+      "type": "physical",
+      "relatedCharacter": "elara-moonweaver",
+      "pointsTo": "elara-moonweaver"
+    },
+    {
+      "id": "love-letter",
+      "name": "Hidden Love Letter",
+      "description": "Passionate letter in Lady Margaret's hand",
+      "location": "castle-stables",
+      "artPrompt": "",
+      "detailedDescription": "Addressed to 'My beloved A--', mentions 'our son' and 'when I am free'. Hidden in stable hay, ink still fresh.",
+      "type": "document",
+      "relatedCharacter": "lady-margaret-blackwood",
+      "pointsTo": "aldric-cooper"
+    },
+    {
+      "id": "witness-testimony-chapel",
+      "name": "Chapel Witness Statement",
+      "description": "Servant saw Lady Margaret in prayer until 10:45 PM",
+      "location": "castle-chapel",
+      "artPrompt": "",
+      "detailedDescription": "Kitchen maid Martha swears Lady Margaret remained in chapel from 10:00 to 10:45, praying fervently. Brother Thomas left at 10:30.",
+      "type": "testimony",
+      "relatedCharacter": "lady-margaret-blackwood",
+      "pointsTo": null
+    },
+    {
+      "id": "blood-under-fingernails",
+      "name": "Blood Under Victim's Nails",
+      "description": "Defensive wounds suggest struggle",
+      "location": "east-tower-battlement",
+      "artPrompt": "",
+      "detailedDescription": "Lord Edmund has blood and blue fabric under his nails. Pattern suggests he grabbed at his attacker's clothing during struggle.",
+      "type": "physical",
+      "relatedCharacter": "lord-edmund-blackwood",
+      "pointsTo": "sir-roland-ashford"
+    },
+    {
+      "id": "tower-guard-schedule",
+      "name": "Altered Guard Schedule",
+      "description": "Tonight's patrol routes with suspicious changes",
+      "location": "great-hall",
+      "artPrompt": "",
+      "detailedDescription": "Original schedule crossed out, rewritten to leave east tower unguarded 10:30-11:00. Roland's seal, but handwriting seems forced.",
+      "type": "document",
+      "relatedCharacter": "sir-roland-ashford",
+      "pointsTo": null
+    },
+    {
+      "id": "bruises-on-maid",
+      "name": "Gwendolyn's Hidden Bruises",
+      "description": "Fresh bruises on maid's arms match Edmund's hands",
+      "location": "castle-chapel",
+      "artPrompt": "",
+      "detailedDescription": "Distinctive finger-pattern bruising on upper arms, consistent with forceful grabbing. Healing suggests assault 2-3 days ago.",
+      "type": "physical",
+      "relatedCharacter": "gwendolyn-shaw",
+      "pointsTo": "gwendolyn-shaw"
+    },
+    {
+      "id": "muddy-boots",
+      "name": "Muddy Riding Boots",
+      "description": "Aldric's boots caked with fresh mud",
+      "location": "castle-stables",
+      "artPrompt": "",
+      "detailedDescription": "Mud from lower bailey, not stables. Pattern suggests running. Found hidden behind hay bales, still damp despite dry night.",
+      "type": "physical",
+      "relatedCharacter": "aldric-cooper",
+      "pointsTo": "aldric-cooper"
+    },
+    {
+      "id": "burned-letter-fragment",
+      "name": "Partially Burned Letter",
+      "description": "Fragment mentions meeting at tower tonight",
+      "location": "lords-solar",
+      "artPrompt": "",
+      "detailedDescription": "\"...meet at east tower when bell tolls eleven. Come alone or our arrangement...\" Rest burned. Edmund's seal visible.",
+      "type": "document",
+      "relatedCharacter": "lord-edmund-blackwood",
+      "pointsTo": null
+    },
+    {
+      "id": "confession-seal",
+      "name": "Broken Confessional Seal",
+      "description": "Brother Thomas's private confession notes",
+      "location": "castle-chapel",
+      "artPrompt": "",
+      "detailedDescription": "Records of castle confessions he should have destroyed. Notes about Roland's war guilt, Lady Margaret's affair, Edmund's treason.",
+      "type": "document",
+      "relatedCharacter": "brother-thomas",
+      "pointsTo": null
+    },
+    {
+      "id": "poisoned-wine",
+      "name": "Tainted Wine Cup",
+      "description": "Lord Edmund's cup shows traces of slow poison",
+      "location": "great-hall",
+      "artPrompt": "",
+      "detailedDescription": "Wolfsbane traces in residue, enough to weaken but not kill. Would explain Edmund's recent fatigue. Someone was already slowly poisoning him.",
+      "type": "physical",
+      "relatedCharacter": "elara-moonweaver",
+      "pointsTo": "elara-moonweaver"
+    },
+    {
+      "id": "witness-testimony-stable",
+      "name": "Stable Boy Statement",
+      "description": "Claims Aldric never left the stables",
+      "location": "castle-stables",
+      "artPrompt": "",
+      "detailedDescription": "Young Tom insists Aldric was with sick mare all evening. But Tom is known to hero-worship Aldric and lie for him.",
+      "type": "testimony",
+      "relatedCharacter": "aldric-cooper",
+      "pointsTo": null
+    },
+    {
+      "id": "rolands-journal",
+      "name": "Roland's War Journal",
+      "description": "Private thoughts about honor and duty",
+      "location": "great-hall",
+      "artPrompt": "",
+      "detailedDescription": "Recent entry: 'Cannot serve both crown and conscience. E's treachery dishonors all who died at Crécy. Tonight I must choose: oath to lord or duty to England.'",
+      "type": "document",
+      "relatedCharacter": "sir-roland-ashford",
+      "pointsTo": "sir-roland-ashford"
+    }
+  ],
+  "solution": {
+    "killerId": "sir-roland-ashford",
+    "method": "Pushed Lord Edmund from the east tower battlement during a confrontation about his treason",
+    "motive": "Lord Edmund's sale of castle defenses to the French would lead to countless English deaths. Roland's honor as a knight demanded action.",
+    "explanation": "Sir Roland discovered Lord Edmund was selling military intelligence to the French. After wrestling with his conscience, he confronted Edmund on the tower at 10:45 PM. Edmund threatened to reveal Roland's war crimes at Crécy. In the ensuing struggle, Roland pushed Edmund off the battlement. The torn surcoat, blood under Edmund's nails, and Roland's own journal entries confirm his guilt. He altered the guard schedule to ensure they'd be alone."
+  },
+  "timeline": [
+    {
+      "time": "10:00 PM",
+      "event": "Lady Margaret enters chapel for evening prayers"
+    },
+    {
+      "time": "10:20 PM",
+      "event": "Gwendolyn finishes preparing chambers, leaves servants' wing"
+    },
+    {
+      "time": "10:30 PM",
+      "event": "Brother Thomas concludes prayers and leaves chapel"
+    },
+    {
+      "time": "10:30 PM",
+      "event": "Guard change - east tower left unpatrolled per altered schedule"
+    },
+    {
+      "time": "10:35 PM",
+      "event": "Lord Edmund leaves solar, heads to east tower for meeting"
+    },
+    {
+      "time": "10:40 PM",
+      "event": "Sir Roland arrives at east tower"
+    },
+    {
+      "time": "10:45 PM",
+      "event": "Confrontation between Roland and Edmund begins"
+    },
+    {
+      "time": "10:50 PM",
+      "event": "Edmund pushed from battlement during struggle"
+    },
+    {
+      "time": "10:55 PM",
+      "event": "Roland returns to west wall, resumes 'inspection'"
+    },
+    {
+      "time": "11:15 PM",
+      "event": "Body discovered by returning patrol"
+    }
+  ]
+}

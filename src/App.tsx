@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useContext } from 'react'
+import { setActiveMysteryId } from './api/client'
 import { IntroSequence, CaseBoard, CharacterInterrogation } from './components/FMV'
 import { IntroVideo } from './components/VideoPlayer/IntroVideo'
 import { RoomExploration } from './components/FMV/RoomExploration'
@@ -237,6 +238,8 @@ function App() {
       await useMysteryStore.getState().loadMystery(loadingMysteryId)
       const mystery = useMysteryStore.getState().activeMystery
       if (mystery) {
+        // Route chat API to the universal character agent
+        setActiveMysteryId(mystery.id)
         initializeFromMystery(mystery)
         startGame()
       }
