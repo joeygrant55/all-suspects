@@ -1469,10 +1469,8 @@ app.post('/api/mystery/clear', async (_req, res) => {
  */
 app.get('/api/mysteries', async (_req, res) => {
   try {
-    // Import the registry from the frontend
-    // For now, return hardcoded list
-    // TODO: In the future, also include generated mysteries from the store
-    const mysteries = [
+    // Hardcoded mysteries
+    const mysteries: Array<Record<string, unknown>> = [
       {
         id: 'ashford-affair',
         title: 'The Ashford Affair',
@@ -1490,6 +1488,52 @@ app.get('/api/mysteries', async (_req, res) => {
         isGenerated: false,
       },
     ]
+
+    // Scan generated mysteries from disk
+    const generatedDir = path.join(process.cwd(), 'public', 'generated')
+    if (fs.existsSync(generatedDir)) {
+      const dirs = fs.readdirSync(generatedDir, { withFileTypes: true })
+        .filter(d => d.isDirectory())
+
+      for (const dir of dirs) {
+        const blueprintPath = path.join(generatedDir, dir.name, 'blueprint.json')
+        const portraitDir = path.join(generatedDir, dir.name, 'assets', 'portraits')
+
+        if (!fs.existsSync(blueprintPath)) continue
+
+        // Only list mysteries that have portrait art
+        let portraitCount = 0
+        try {
+          portraitCount = fs.readdirSync(portraitDir).length
+        } catch { /* no portraits dir */ }
+        if (portraitCount < 2) continue
+
+        try {
+          const blueprint = JSON.parse(fs.readFileSync(blueprintPath, 'utf-8'))
+          const roomDir = path.join(generatedDir, dir.name, 'assets', 'rooms')
+          const videoDir = path.join(generatedDir, dir.name, 'assets', 'videos')
+          let roomCount = 0, videoCount = 0
+          try { roomCount = fs.readdirSync(roomDir).length } catch {}
+          try { videoCount = fs.readdirSync(videoDir).length } catch {}
+
+          mysteries.push({
+            id: dir.name,
+            title: blueprint.title,
+            subtitle: `${blueprint.setting?.timePeriod || blueprint.era || ''} — ${blueprint.setting?.location || ''}`.trim(),
+            era: blueprint.era || blueprint.setting?.timePeriod || 'unknown',
+            difficulty: blueprint.difficulty || 'medium',
+            isGenerated: true,
+            portraitCount,
+            roomCount,
+            videoCount,
+            hasVideo: videoCount > 0,
+          })
+        } catch (err) {
+          console.warn(`[MYSTERY] Failed to load blueprint for ${dir.name}:`, err)
+        }
+      }
+    }
+
     res.json({ mysteries })
   } catch (error) {
     console.error('[MYSTERY] List failed:', error)
