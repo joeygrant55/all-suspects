@@ -45,29 +45,92 @@ export interface GeneratedAssets {
   evidence: Record<string, string>
 }
 
-const MYSTERY_GENERATOR_PROMPT = `You are a master mystery writer and game designer. Generate a complete, playable murder mystery in JSON format.
+const MYSTERY_GENERATOR_PROMPT = `You are a master mystery writer and game designer. Generate a complete, playable murder mystery as a single JSON object.
 
-REQUIREMENTS:
-1. The mystery MUST be solvable through logical deduction
-2. Every suspect needs a believable motive, alibi with holes, and secrets
-3. Evidence must form a clear logical chain pointing to the killer
-4. Include at least 2-3 red herrings that point to innocent suspects
-5. Each character needs a distinct personality, speech pattern, and pressure profile
-6. The timeline must be internally consistent — no contradictions unless intentional
-7. Include exactly 6 locations and the requested number of suspects
-8. One suspect MUST be guilty — their alibi must have a fatal flaw
-9. Physical evidence should have forensic details (fingerprints, timestamps)
-10. Each character should know something unique that helps solve the case
+## STRICT JSON SCHEMA — USE THESE EXACT FIELD NAMES
 
-CREATIVE GUIDELINES:
+You MUST return a JSON object with EXACTLY these top-level keys (no extras, no nesting under "metadata" or other wrappers):
+
+{
+  "id": "kebab-case-id-from-title",
+  "title": "Mystery Title",
+  "subtitle": "Date — Location",
+  "era": "1920s",
+  "difficulty": "medium",
+  "setting": {
+    "location": "The Blue Moon Speakeasy",
+    "atmosphere": "smoky, jazz-filled, dangerous",
+    "weather": "Rain hammering the windows"
+  },
+  "victim": {
+    "name": "Full Name",
+    "role": "Their role/occupation",
+    "causeOfDeath": "How they died",
+    "timeOfDeath": "Approximate time",
+    "description": "Who they were"
+  },
+  "characters": [
+    {
+      "id": "kebab-case-name",
+      "name": "Full Name",
+      "role": "Occupation or title",
+      "personality": "Core personality traits",
+      "speechPattern": "How they talk — formal, slang, etc.",
+      "background": "Their backstory",
+      "motive": "Why they might have done it",
+      "alibi": "Where they claim to have been",
+      "secretKnowledge": ["Things only they know"],
+      "relationships": {"other-character-id": "relationship description"},
+      "isGuilty": false,
+      "greeting": "What they say when you first approach them"
+    }
+  ],
+  "locations": [
+    {
+      "id": "kebab-case-name",
+      "name": "Room Name",
+      "description": "What the room looks like"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "kebab-case-name",
+      "name": "Evidence Name",
+      "description": "Brief description",
+      "detailedDescription": "Full forensic/detailed description",
+      "type": "physical|document|testimony",
+      "location": "location-id where this is found",
+      "relatedCharacter": "character-id this evidence relates to",
+      "pointsTo": "character-id this evidence implicates"
+    }
+  ],
+  "solution": {
+    "killerId": "character-id of the killer",
+    "method": "How they committed the murder",
+    "motive": "Why they did it",
+    "explanation": "Full solution narrative"
+  },
+  "timeline": [
+    {"time": "8:00 PM", "event": "What happened"}
+  ]
+}
+
+## MANDATORY RULES
+- "characters" array — NOT "suspects". The killer has "isGuilty": true.
+- "evidence" array at top level — NOT "clues", NOT nested in locations.
+- "solution.killerId" must match a character's "id" field exactly.
+- "evidence[].location" must match a location's "id" field exactly.
+- All IDs are kebab-case (lowercase, hyphens for spaces).
+- Return ONLY the JSON object. No markdown code fences. No explanation text.
+
+## CREATIVE GUIDELINES
 - Make characters feel REAL — complex motivations, not cartoon villains
 - Every suspect should seem potentially guilty at first
 - The solution should be satisfying — "of course!" not "huh?"
 - Include emotional depth — betrayal, love, fear, ambition
-- Speech patterns should be distinctive (formal vs casual, verbose vs terse)
-- Red herrings should be convincing but ultimately debunkable
-
-OUTPUT: Return ONLY valid JSON matching the MysteryBlueprint schema. No markdown, no explanation, just JSON.`
+- Speech patterns should be distinctive per character
+- Include 2-3 convincing red herrings among the evidence
+- Physical evidence should have forensic details`
 
 /**
  * Generate a complete mystery blueprint
