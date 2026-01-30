@@ -65,3 +65,7 @@ VEO3_FIX_SUMMARY.md
 WATSON_ARCHITECTURE.md
 WATSON_TEST_PLAN.md
 WATSON_WIRING_COMPLETE.md
+
+# Generated mystery assets (too large for git)
+public/generated/
+public/videos/generated/
