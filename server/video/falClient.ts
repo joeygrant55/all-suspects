@@ -7,8 +7,12 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
+import { fal } from '@fal-ai/client'
 
 const FAL_KEY = process.env.FAL_KEY || ''
+
+// Configure fal client
+fal.config({ credentials: FAL_KEY })
 const FAL_API_BASE = 'https://queue.fal.run'
 
 // Video output directory
@@ -137,6 +141,8 @@ async function pollQueue(model: FalModel, requestId: string, maxWaitMs: number =
       }
 
       const status = await res.json() as { status: string }
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(0)
+      console.log(`[FAL] Poll ${config.name} [${elapsed}s]: ${status.status}`)
 
       if (status.status === 'COMPLETED') {
         // Fetch the result
@@ -274,14 +280,51 @@ export async function generateFalVideo(request: FalVideoRequest): Promise<FalVid
 }
 
 /**
+ * Upload a local file to fal.ai storage and get a public URL
+ */
+export async function uploadToFal(localPath: string): Promise<string> {
+  const buffer = fs.readFileSync(localPath)
+  const ext = path.extname(localPath).slice(1)
+  const mimeType = ext === 'webp' ? 'image/webp' : ext === 'png' ? 'image/png' : 'image/jpeg'
+  const blob = new Blob([buffer], { type: mimeType })
+  const file = new File([blob], path.basename(localPath), { type: mimeType })
+  const url = await fal.storage.upload(file)
+  console.log(`[FAL] ✅ Uploaded ${path.basename(localPath)} → ${url}`)
+  return url
+}
+
+/**
  * Generate video from an image (image-to-video)
  * Great for animating generated room/portrait images
+ * Accepts local file paths OR URLs — auto-uploads local files to fal.ai storage
  */
 export async function generateImageToVideo(
-  imageUrl: string,
+  imagePathOrUrl: string,
   prompt: string,
   model: FalModel = 'kling-1.6'
 ): Promise<FalVideoResult> {
+  let imageUrl = imagePathOrUrl
+
+  // If it's a local path or localhost URL, upload to fal.ai first
+  if (imagePathOrUrl.startsWith('/') || imagePathOrUrl.startsWith('data:') || imagePathOrUrl.includes('localhost')) {
+    try {
+      // Extract local path from localhost URL if needed
+      let localPath = imagePathOrUrl
+      if (imagePathOrUrl.includes('localhost')) {
+        localPath = path.join(process.cwd(), 'public', new URL(imagePathOrUrl).pathname)
+      }
+      if (localPath.startsWith('data:')) {
+        // data URLs can be passed directly — some models accept them
+        imageUrl = localPath
+      } else {
+        imageUrl = await uploadToFal(localPath)
+      }
+    } catch (err) {
+      console.error(`[FAL] Upload failed:`, err)
+      return { success: false, error: `File upload failed: ${err instanceof Error ? err.message : String(err)}`, model }
+    }
+  }
+
   return generateFalVideo({
     prompt,
     imageUrl,

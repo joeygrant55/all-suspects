@@ -322,10 +322,8 @@ async function startVideoPhase(state: PipelineState, blueprint: MysteryBlueprint
     try {
       console.log(`[ArtPipeline] 🎬 Animating ${roomId}...`)
 
-      // Need to serve the image as a URL for fal.ai
-      // Use the local path relative to public/
-      const publicRelPath = room.path!.replace(state.outputDir, `/generated/${state.mysteryId}/assets`)
-      const imageUrl = `http://localhost:3001${publicRelPath}`
+      // Pass the local file path directly — falClient auto-uploads to fal.ai storage
+      const imageUrl = room.path!
 
       const result = await generateImageToVideo(
         imageUrl,
