@@ -44,6 +44,17 @@ const MODEL_CONFIGS: Record<FalModel, FalModelConfig> = {
   },
 }
 
+/**
+ * Extract the base model ID from a full endpoint path.
+ * fal.ai queue API uses the full path for submit but ONLY the model_id for status/result.
+ * e.g. "fal-ai/kling-video/v1.6/standard/text-to-video" → "fal-ai/kling-video"
+ */
+function getModelId(endpoint: string): string {
+  // Model ID is namespace/model-name (first two segments)
+  const parts = endpoint.split('/')
+  return parts.slice(0, 2).join('/')
+}
+
 export interface FalVideoRequest {
   prompt: string
   duration?: number // seconds
@@ -105,8 +116,9 @@ async function submitToQueue(model: FalModel, payload: Record<string, unknown>):
  */
 async function pollQueue(model: FalModel, requestId: string, maxWaitMs: number = 300000): Promise<FalVideoResult> {
   const config = MODEL_CONFIGS[model]
-  const statusUrl = `${FAL_API_BASE}/${config.endpoint}/requests/${requestId}/status`
-  const resultUrl = `https://queue.fal.run/${config.endpoint}/requests/${requestId}`
+  const modelId = getModelId(config.endpoint)
+  const statusUrl = `${FAL_API_BASE}/${modelId}/requests/${requestId}/status`
+  const resultUrl = `${FAL_API_BASE}/${modelId}/requests/${requestId}`
   const startTime = Date.now()
   const pollInterval = 5000
 
