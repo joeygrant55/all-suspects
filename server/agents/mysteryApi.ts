@@ -149,11 +149,17 @@ router.get('/list', (_req, res) => {
     for (const dir of dirs) {
       if (dir.isDirectory()) {
         const blueprintPath = path.join(GENERATED_DIR, dir.name, 'blueprint.json')
+        const portraitsDir = path.join(GENERATED_DIR, dir.name, 'assets', 'portraits')
         if (fs.existsSync(blueprintPath)) {
+          // Only list mysteries that have at least some portrait art
+          const hasPortraits = fs.existsSync(portraitsDir) && 
+            fs.readdirSync(portraitsDir).filter(f => f.endsWith('.png')).length > 0
+          if (!hasPortraits) continue
+
           try {
             const bp = JSON.parse(fs.readFileSync(blueprintPath, 'utf-8'))
             mysteries.push({
-              id: bp.id,
+              id: bp.id || dir.name,
               title: bp.title,
               subtitle: bp.subtitle,
               era: bp.era,
