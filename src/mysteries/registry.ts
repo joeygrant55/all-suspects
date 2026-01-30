@@ -178,12 +178,38 @@ function createHollywoodEvidence(): Record<string, EvidenceData> {
 }
 
 /**
- * Get list of all available mysteries
+ * Get list of all available mysteries (hardcoded only — sync)
  */
 export function getAvailableMysteries(): MysteryInfo[] {
-  // Start with hardcoded mysteries
   return [...HARDCODED_MYSTERIES]
+}
+
+/**
+ * Fetch generated mysteries from the API and merge with hardcoded
+ */
+export async function fetchAllMysteries(): Promise<MysteryInfo[]> {
+  const hardcoded = [...HARDCODED_MYSTERIES]
   
-  // In the future, we could fetch generated mysteries from the API
-  // and append them here
+  try {
+    const hostname = window.location.hostname
+    const res = await fetch(`http://${hostname}:3001/api/mystery/list`)
+    if (res.ok) {
+      const generated: Array<{ id: string; title: string; subtitle?: string; era?: string; difficulty?: string }> = await res.json()
+      const generatedInfos: MysteryInfo[] = generated
+        .filter(g => !hardcoded.some(h => h.id === g.id))
+        .map(g => ({
+          id: g.id,
+          title: g.title,
+          subtitle: g.subtitle || g.era || '',
+          era: g.era || 'Custom',
+          difficulty: (g.difficulty as 'easy' | 'medium' | 'hard') || 'medium',
+          isGenerated: true,
+        }))
+      return [...hardcoded, ...generatedInfos]
+    }
+  } catch {
+    // API not available — return hardcoded only
+  }
+  
+  return hardcoded
 }

@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useMysteryStore } from '../../game/mysteryState'
 import { useGameStore } from '../../game/state'
-import { getAvailableMysteries } from '../../mysteries/registry'
+import { fetchAllMysteries } from '../../mysteries/registry'
+import { setActiveMysteryId } from '../../api/client'
 
 interface MysterySelectProps {
   onCreateNew?: () => void
@@ -21,11 +22,11 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
   const initializeFromMystery = useGameStore((state) => state.initializeFromMystery)
   const startGame = useGameStore((state) => state.startGame)
 
-  // Load available mysteries on mount
+  // Load available mysteries on mount (including generated ones)
   useEffect(() => {
-    const mysteries = getAvailableMysteries()
-    // Update the store with hardcoded mysteries
-    useMysteryStore.setState({ availableMysteries: mysteries })
+    fetchAllMysteries().then(mysteries => {
+      useMysteryStore.setState({ availableMysteries: mysteries })
+    })
   }, [])
 
   const handleSelectMystery = async (id: string) => {
@@ -33,6 +34,11 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
       await loadMystery(id)
       const mystery = useMysteryStore.getState().activeMystery
       if (mystery) {
+        // Route chat to universal character agent for generated mysteries
+        const info = availableMysteries.find(m => m.id === id)
+        if (info?.isGenerated) {
+          setActiveMysteryId(id)
+        }
         // Initialize the game store with this mystery
         initializeFromMystery(mystery)
         // Start the game (shows intro sequence)
@@ -120,6 +126,13 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
 
               {/* Content */}
               <div className="relative">
+                {/* AI badge for generated mysteries */}
+                {mystery.isGenerated && (
+                  <span className="absolute -top-2 -right-2 text-xs bg-noir-gold text-noir-black px-2 py-0.5 font-bold tracking-wider">
+                    ✨ AI
+                  </span>
+                )}
+
                 {/* Title */}
                 <h3 className="text-xl font-bold text-noir-gold mb-2">
                   {mystery.title}

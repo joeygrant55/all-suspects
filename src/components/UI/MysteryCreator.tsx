@@ -2,12 +2,12 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const ERAS = [
-  { id: '1920s', label: '1920s Noir', icon: '🎷', color: '#c9a227', desc: 'Speakeasies, jazz, and shadows' },
-  { id: '1940s', label: '1940s Hollywood', icon: '🎬', color: '#e5533d', desc: 'Glamour, scandal, and silver screens' },
-  { id: '1970s', label: '1970s Disco', icon: '🪩', color: '#e879f9', desc: 'Glitter, secrets, and groove' },
-  { id: 'victorian', label: 'Victorian Gothic', icon: '🕯️', color: '#94a3b8', desc: 'Fog, gaslight, and dark manors' },
-  { id: '2050s', label: '2050s Space Station', icon: '🚀', color: '#38bdf8', desc: 'Isolation, tech, and zero gravity' },
-  { id: 'custom', label: 'Custom...', icon: '✏️', color: '#a78bfa', desc: 'Describe your own setting' },
+  { id: '1920s', label: '1920s Noir', icon: '🎷', color: '#c9a227', desc: 'Speakeasies, jazz, and shadows', gradient: 'linear-gradient(135deg, rgba(201,162,39,0.15) 0%, rgba(30,20,0,0.8) 100%)' },
+  { id: '1940s', label: '1940s Hollywood', icon: '🎬', color: '#e5533d', desc: 'Glamour, scandal, and silver screens', gradient: 'linear-gradient(135deg, rgba(229,83,61,0.15) 0%, rgba(30,10,10,0.8) 100%)' },
+  { id: '1970s', label: '1970s Disco', icon: '🪩', color: '#e879f9', desc: 'Glitter, secrets, and groove', gradient: 'linear-gradient(135deg, rgba(232,121,249,0.15) 0%, rgba(30,10,40,0.8) 100%)' },
+  { id: 'victorian', label: 'Victorian Gothic', icon: '🕯️', color: '#94a3b8', desc: 'Fog, gaslight, and dark manors', gradient: 'linear-gradient(135deg, rgba(148,163,184,0.15) 0%, rgba(15,15,20,0.8) 100%)' },
+  { id: '2050s', label: '2050s Space Station', icon: '🚀', color: '#38bdf8', desc: 'Isolation, tech, and zero gravity', gradient: 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(5,10,30,0.8) 100%)' },
+  { id: 'custom', label: 'Custom...', icon: '✏️', color: '#a78bfa', desc: 'Describe your own setting', gradient: 'linear-gradient(135deg, rgba(167,139,250,0.1) 0%, rgba(15,10,25,0.8) 100%)' },
 ]
 
 const DIFFICULTIES = [
@@ -108,10 +108,10 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
                   onClick={() => setEra(e.id)}
                   className={`group relative p-6 border-2 transition-all duration-300 text-left ${
                     era === e.id
-                      ? 'border-noir-gold bg-noir-gold/10'
-                      : 'border-noir-slate/40 hover:border-noir-slate bg-noir-black/50'
+                      ? 'border-noir-gold shadow-lg shadow-noir-gold/10'
+                      : 'border-noir-slate/40 hover:border-noir-slate'
                   }`}
-                  style={{ fontFamily: 'Georgia, serif' }}
+                  style={{ fontFamily: 'Georgia, serif', background: era === e.id ? e.gradient : 'rgba(10,10,10,0.7)' }}
                 >
                   <div className="text-3xl mb-3">{e.icon}</div>
                   <div className="text-lg font-bold mb-1" style={{ color: era === e.id ? e.color : '#f5f0e8' }}>
@@ -222,11 +222,29 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
               Optional — guide the mystery architect
             </p>
 
+            {/* Quick-select theme tags */}
+            <div className="flex flex-wrap justify-center gap-2 mb-6">
+              {[
+                'Love triangle', 'Secret society', 'Revenge plot', 'Locked room',
+                'Inheritance dispute', 'Double life', 'Blackmail', 'Forbidden affair',
+                'Political conspiracy', 'Old grudge',
+              ].map(tag => (
+                <button
+                  key={tag}
+                  onClick={() => setTheme(prev => prev ? `${prev}, ${tag.toLowerCase()}` : tag.toLowerCase())}
+                  className="px-3 py-1.5 border border-noir-slate/50 text-noir-smoke text-xs tracking-wider hover:border-noir-gold hover:text-noir-gold hover:bg-noir-gold/5 transition-all duration-200"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+
             <textarea
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
-              placeholder={`"I want a love triangle gone wrong"\n"Make it extra spooky"\n"Include a secret society"\n"The victim was beloved by everyone"`}
-              rows={4}
+              placeholder={`Or type your own request...\n"The victim was beloved by everyone"\n"Make it extra spooky"`}
+              rows={3}
               className="w-full bg-noir-black border-2 border-noir-slate/50 focus:border-noir-gold text-noir-cream px-4 py-3 text-sm outline-none transition-colors resize-none mb-10"
               style={{ fontFamily: 'Georgia, serif' }}
             />
