@@ -325,7 +325,7 @@ export function InterrogationExperience({
     <AnimatePresence mode="wait">
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 bg-noir-black overflow-hidden"
+          className="fixed inset-0 z-50 bg-noir-black overflow-hidden flex flex-col"
           variants={containerVariants}
           initial="hidden"
           animate={isExiting ? 'exit' : 'visible'}
@@ -338,7 +338,7 @@ export function InterrogationExperience({
         >
           {/* Letterbox top bar - 10vh */}
           <motion.header
-            className="h-[10vh] flex items-center justify-between px-8 border-b border-noir-gold/20"
+            className="h-auto min-h-[10vh] flex items-center justify-between px-4 sm:px-8 py-3 sm:py-0 border-b border-noir-gold/20"
             variants={headerVariants}
             style={{
               background: 'linear-gradient(to bottom, rgba(201, 162, 39, 0.05), transparent)',
@@ -362,7 +362,7 @@ export function InterrogationExperience({
               <div>
                 <TypewriterText
                   text={characterName}
-                  className="text-2xl font-serif text-noir-cream tracking-wide"
+                  className="text-lg sm:text-2xl font-serif text-noir-cream tracking-wide"
                   delay={300}
                 />
                 <p className="text-sm text-noir-ash mt-0.5">
@@ -430,12 +430,12 @@ export function InterrogationExperience({
 
           {/* Video Theater - 70vh */}
           <motion.main
-            className="h-[70vh] flex items-center justify-center px-8 py-4"
+            className="flex-1 flex items-center justify-center px-4 sm:px-8 py-4 overflow-hidden"
             variants={videoVariants}
           >
-            <div className="max-w-[1400px] w-full h-full relative flex gap-6">
+            <div className="max-w-[1400px] w-full h-full relative flex flex-col lg:flex-row gap-4 lg:gap-6 overflow-hidden">
               {/* Character Portrait (Left Side - 60%) */}
-              <div className="flex-[3] h-full flex items-center justify-center">
+              <div className="flex-1 lg:flex-[3] h-full flex items-center justify-center">
                 <div
                   className="relative bg-noir-charcoal rounded-sm overflow-hidden border border-noir-smoke/20 h-full w-full"
                   style={{ maxWidth: '800px' }}
@@ -470,7 +470,7 @@ export function InterrogationExperience({
               </div>
 
               {/* Dialogue Panel (Right Side - 40%) */}
-              <div className="flex-[2] h-full flex flex-col justify-end pb-8">
+              <div className="flex-1 lg:flex-[2] h-full flex flex-col justify-end pb-4 lg:pb-8">
                 {/* Observable tells from the character */}
                 {currentEmotion?.tells && currentEmotion.tells.length > 0 && (
                   <motion.div
@@ -524,7 +524,7 @@ export function InterrogationExperience({
 
           {/* Question Bar - 20vh */}
           <motion.footer
-            className="h-[20vh] border-t border-noir-gold/20 px-8 py-4"
+            className="h-auto min-h-[15vh] sm:min-h-[20vh] border-t border-noir-gold/20 px-4 sm:px-8 py-3 sm:py-4"
             variants={footerVariants}
             style={{
               background: 'linear-gradient(to top, rgba(201, 162, 39, 0.03), transparent)',
