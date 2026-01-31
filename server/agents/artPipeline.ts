@@ -270,6 +270,13 @@ function getOutputPath(baseDir: string, asset: ArtAsset): string {
  * Takes each room's static image and creates a cinematic loop via image-to-video
  */
 async function startVideoPhase(state: PipelineState, blueprint: MysteryBlueprint): Promise<void> {
+  // DISABLED: Auto video generation turned off to save fal.ai credits
+  // Videos will be generated on-demand when users actually enter rooms
+  // This allows us to measure real demand through actual usage
+  console.log('[ArtPipeline] ⏭️  Phase 2: Skipping auto video generation (on-demand only)')
+  return
+
+  // Original code below (kept for reference, but unreachable)
   if (!isFalConfigured()) {
     console.log('[ArtPipeline] Skipping video phase — FAL_KEY not configured')
     return
