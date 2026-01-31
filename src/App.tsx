@@ -178,8 +178,9 @@ function App() {
     setLoadingMysteryId('generating')
 
     try {
-      const API_BASE = 'http://localhost:3001'
-      const res = await fetch(`${API_BASE}/api/mystery/generate`, {
+      // Use production API URL or fallback to localhost for dev
+      const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`
+      const res = await fetch(`${API_BASE}/mystery/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config),
@@ -199,7 +200,7 @@ function App() {
         // Also try polling in case the blueprint wasn't in the response
         const pollBlueprint = async () => {
           try {
-            const bpRes = await fetch(`${API_BASE}/api/mystery/${data.mysteryId}/blueprint`)
+            const bpRes = await fetch(`${API_BASE}/mystery/${data.mysteryId}/blueprint`)
             if (bpRes.ok) {
               const bp = await bpRes.json()
               if (bp && bp.title) {
