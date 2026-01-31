@@ -152,7 +152,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                   >
                     <span className="text-noir-gold">📋</span>
                     <span className="text-noir-cream text-xs md:text-sm">
-                      Evidence: {totalEvidence}/9
+                      Ev: {totalEvidence}
                     </span>
                   </motion.button>
                   
@@ -178,7 +178,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                   whileHover={accusationUnlocked ? { scale: 1.05 } : {}}
                   whileTap={accusationUnlocked ? { scale: 0.95 } : {}}
                 >
-                  {accusationUnlocked ? 'MAKE ACCUSATION' : 'GATHER MORE EVIDENCE'}
+                  {accusationUnlocked ? 'ACCUSE' : 'GATHER EVIDENCE'}
                 </motion.button>
               </div>
             </div>
@@ -282,7 +282,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
               >
                 <span className="text-noir-gold">📋</span>
                 <span className="text-noir-cream text-xs md:text-sm">
-                  Evidence: {totalEvidence}/9
+                  Ev: {totalEvidence}
                 </span>
               </motion.button>
               
@@ -336,7 +336,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
               whileHover={accusationUnlocked ? { scale: 1.05 } : {}}
               whileTap={accusationUnlocked ? { scale: 0.95 } : {}}
             >
-              {accusationUnlocked ? 'MAKE ACCUSATION' : 'GATHER MORE EVIDENCE'}
+              {accusationUnlocked ? 'ACCUSE' : 'GATHER EVIDENCE'}
             </motion.button>
             </div>
           </div>
@@ -361,7 +361,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
           </div>
 
           {/* Suspect grid - 3x2, constrained to fit viewport */}
-          <div className="grid grid-cols-3 grid-rows-2 gap-1.5 md:gap-2 flex-1 min-h-0 max-h-[calc(100vh-140px)]">
+          <div className="grid grid-cols-2 sm:grid-cols-3 sm:grid-rows-2 grid-rows-3 gap-1.5 md:gap-2 flex-1 min-h-0 max-h-[calc(100vh-140px)]">
             {suspectIds.map((id, index) => {
               const character = getCharacter(id)
               if (!character) return null
