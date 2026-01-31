@@ -20,6 +20,7 @@ import * as path from 'path'
 import type { MysteryBlueprint } from '../../shared/types/MysteryBlueprint'
 import { generateArtPrompts } from './mysteryGenerator'
 import { generateImageToVideo, isFalConfigured } from '../video/falClient'
+import { generateVideo as generateVeoVideo, getGenerationStatus } from '../video/veoClient'
 
 // Lazy — dotenv may not have loaded yet at import time
 function getGeminiKey() { return process.env.GEMINI_API_KEY || '' }
@@ -322,14 +323,51 @@ async function startVideoPhase(state: PipelineState, blueprint: MysteryBlueprint
     try {
       console.log(`[ArtPipeline] 🎬 Animating ${roomId}...`)
 
-      // Pass the local file path directly — falClient auto-uploads to fal.ai storage
+      // Try fal.ai first (best quality/speed)
       const imageUrl = room.path!
 
-      const result = await generateImageToVideo(
+      let result = await generateImageToVideo(
         imageUrl,
         videoPrompt,
         'kling-1.6' // Best quality for room atmospheres
       )
+
+      // If fal.ai failed (balance exhausted or other error), fall back to Veo 3
+      if (!result.success || !result.videoUrl) {
+        console.log(`[ArtPipeline] 🎬 fal.ai failed, falling back to Veo 3...`)
+        
+        try {
+          const veoResult = await generateVeoVideo({
+            prompt: videoPrompt,
+            characterId: `room-${roomId}`,
+            testimonyId: 'atmosphere',
+            duration: 5,
+            aspectRatio: '16:9',
+          })
+
+          if (veoResult.success && veoResult.generationId) {
+            // Wait for Veo to complete
+            console.log(`[ArtPipeline] 🎬 Veo generation started for ${roomId}, waiting for completion...`)
+            const videoUrl = await waitForVeoCompletion(veoResult.generationId, 120000)
+            
+            if (videoUrl) {
+              result = {
+                success: true,
+                videoUrl,
+                model: 'veo-3',
+                error: undefined,
+              }
+            } else {
+              throw new Error('Veo generation timed out or failed')
+            }
+          } else {
+            throw new Error(veoResult.error || 'Veo generation failed')
+          }
+        } catch (veoErr) {
+          console.error(`[ArtPipeline] 🎬 ❌ Veo fallback also failed:`, veoErr)
+          throw veoErr
+        }
+      }
 
       if (result.success && result.videoUrl) {
         // Copy/move from the fal download location to our asset dir
@@ -409,4 +447,37 @@ export function getAssetPath(state: PipelineState, assetId: string): string | nu
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Wait for Veo generation to complete (with timeout)
+ */
+async function waitForVeoCompletion(generationId: string, maxWaitMs: number = 120000): Promise<string | null> {
+  const startTime = Date.now()
+  const pollInterval = 5000
+
+  while (Date.now() - startTime < maxWaitMs) {
+    const status = getGenerationStatus(generationId)
+    
+    if (!status) {
+      console.warn(`[ArtPipeline] Veo generation ${generationId} not found`)
+      return null
+    }
+
+    if (status.status === 'completed' && status.videoUrl) {
+      console.log(`[ArtPipeline] ✅ Veo completed in ${((Date.now() - startTime) / 1000).toFixed(1)}s`)
+      return status.videoUrl
+    }
+
+    if (status.status === 'failed') {
+      console.error(`[ArtPipeline] Veo generation failed: ${status.error}`)
+      return null
+    }
+
+    // Still processing
+    await sleep(pollInterval)
+  }
+
+  console.warn(`[ArtPipeline] Veo generation timed out after ${maxWaitMs / 1000}s`)
+  return null
 }

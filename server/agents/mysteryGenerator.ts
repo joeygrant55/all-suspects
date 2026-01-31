@@ -205,7 +205,6 @@ Generate the complete MysteryBlueprint JSON now.`
     config: {
       maxOutputTokens: 12000,
       responseMimeType: 'application/json',
-      thinkingConfig: { thinkingBudget: 0 },
     },
   })
   
