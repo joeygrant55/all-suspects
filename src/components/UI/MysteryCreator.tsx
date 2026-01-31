@@ -6,49 +6,37 @@ const ERAS = [
     id: '1920s', 
     label: '1920s Noir', 
     color: '#c9a227', 
-    desc: 'Speakeasies, jazz, and shadows', 
-    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(10,10,10,0.9)), radial-gradient(ellipse at 30% 40%, rgba(201,162,39,0.15), transparent 60%)',
-    bgPattern: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(201,162,39,0.03) 2px, rgba(201,162,39,0.03) 4px)'
+    desc: 'Speakeasies, jazz, and shadows'
   },
   { 
     id: '1940s', 
     label: '1940s Hollywood', 
     color: '#e5533d', 
-    desc: 'Glamour, scandal, and silver screens', 
-    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(15,5,5,0.9)), radial-gradient(ellipse at 70% 30%, rgba(229,83,61,0.15), transparent 60%)',
-    bgPattern: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(229,83,61,0.03) 10px, rgba(229,83,61,0.03) 20px)'
+    desc: 'Glamour, scandal, and silver screens'
   },
   { 
     id: '1970s', 
     label: '1970s Disco', 
     color: '#e879f9', 
-    desc: 'Glitter, secrets, and groove', 
-    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(15,5,20,0.9)), radial-gradient(ellipse at 50% 50%, rgba(232,121,249,0.15), transparent 60%)',
-    bgPattern: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(232,121,249,0.04) 8px, rgba(232,121,249,0.04) 16px)'
+    desc: 'Glitter, secrets, and groove'
   },
   { 
     id: 'victorian', 
     label: 'Victorian Gothic', 
     color: '#94a3b8', 
-    desc: 'Fog, gaslight, and dark manors', 
-    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(8,8,10,0.95)), radial-gradient(ellipse at 20% 60%, rgba(148,163,184,0.1), transparent 50%)',
-    bgPattern: 'repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(148,163,184,0.02) 3px, rgba(148,163,184,0.02) 6px)'
+    desc: 'Fog, gaslight, and dark manors'
   },
   { 
     id: '2050s', 
     label: '2050s Space Station', 
     color: '#38bdf8', 
-    desc: 'Isolation, tech, and zero gravity', 
-    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(2,5,15,0.95)), radial-gradient(ellipse at 60% 40%, rgba(56,189,248,0.12), transparent 55%)',
-    bgPattern: 'repeating-linear-gradient(30deg, transparent, transparent 15px, rgba(56,189,248,0.03) 15px, rgba(56,189,248,0.03) 30px)'
+    desc: 'Isolation, tech, and zero gravity'
   },
   { 
     id: 'custom', 
     label: 'Custom...', 
     color: '#a78bfa', 
-    desc: 'Describe your own setting', 
-    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(8,5,12,0.9)), radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.1), transparent 60%)',
-    bgPattern: 'repeating-linear-gradient(60deg, transparent, transparent 12px, rgba(167,139,250,0.03) 12px, rgba(167,139,250,0.03) 24px)'
+    desc: 'Describe your own setting'
   },
 ]
 
@@ -157,25 +145,34 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
                           ? 'border-noir-gold shadow-lg shadow-noir-gold/10'
                           : 'border-noir-slate/40 hover:border-noir-slate'
                       }`}
-                      style={{ 
-                        fontFamily: 'Georgia, serif',
-                        background: e.bgImage,
-                        position: 'relative'
-                      }}
+                      style={{ fontFamily: 'Georgia, serif' }}
                     >
-                      {/* Background pattern layer */}
+                      {/* Cinematic background image */}
                       <div 
-                        className="absolute inset-0 pointer-events-none"
-                        style={{ background: e.bgPattern }}
+                        className="absolute inset-0"
+                        style={{
+                          backgroundImage: `url(/ui/eras/${e.id}.png)`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          opacity: era === e.id ? 0.6 : 0.4
+                        }}
                       />
                       
-                      {/* Content with text shadow for readability */}
+                      {/* Dark overlay for text readability */}
+                      <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{ 
+                          background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), rgba(0,0,0,0.85))'
+                        }}
+                      />
+                      
+                      {/* Content with enhanced shadows */}
                       <div className="relative z-10">
                         <div 
                           className="text-base sm:text-lg font-bold mb-1" 
                           style={{ 
                             color: era === e.id ? e.color : '#f5f0e8',
-                            textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)'
+                            textShadow: '0 2px 8px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,1)'
                           }}
                         >
                           {e.label}
@@ -183,8 +180,8 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
                         <div 
                           className="text-xs" 
                           style={{ 
-                            color: '#c8c8c8',
-                            textShadow: '0 1px 4px rgba(0,0,0,0.9)'
+                            color: '#d0d0d0',
+                            textShadow: '0 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8)'
                           }}
                         >
                           {e.desc}
