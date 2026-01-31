@@ -88,7 +88,7 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
       <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 w-12 h-12 sm:w-16 sm:h-16 border-r-2 border-b-2 border-noir-gold opacity-30" />
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center pb-24">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center pb-32">
         <div className="w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col items-center">
           
           {/* Step indicator */}
@@ -332,13 +332,16 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
             )}
           </AnimatePresence>
           
-          {/* Bottom spacer to ensure content clears fixed nav */}
-          <div className="h-6 sm:h-8" />
+          {/* Bottom spacer to ensure content clears fixed nav + browser chrome */}
+          <div className="h-12 sm:h-8" />
         </div>
       </div>
 
-      {/* Navigation - fixed at bottom */}
-      <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4 px-4 py-4 sm:py-6 border-t border-noir-slate/20 bg-noir-black/80 backdrop-blur-sm">
+      {/* Navigation - fixed at bottom with safe area padding */}
+      <div 
+        className="relative z-10 flex items-center justify-center gap-3 sm:gap-4 px-4 py-4 sm:py-6 border-t border-noir-slate/20 bg-noir-black/80 backdrop-blur-sm"
+        style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}
+      >
         <button
           onClick={() => (step > 1 ? setStep(step - 1) : onBack())}
           className="px-5 sm:px-6 py-2.5 sm:py-3 border border-noir-slate text-noir-slate text-xs sm:text-sm tracking-wider hover:border-noir-gold hover:text-noir-gold transition-all duration-300 min-h-[48px]"
