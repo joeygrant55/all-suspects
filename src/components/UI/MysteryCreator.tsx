@@ -2,12 +2,54 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const ERAS = [
-  { id: '1920s', label: '1920s Noir', icon: '🎷', color: '#c9a227', desc: 'Speakeasies, jazz, and shadows', gradient: 'linear-gradient(135deg, rgba(201,162,39,0.15) 0%, rgba(30,20,0,0.8) 100%)' },
-  { id: '1940s', label: '1940s Hollywood', icon: '🎬', color: '#e5533d', desc: 'Glamour, scandal, and silver screens', gradient: 'linear-gradient(135deg, rgba(229,83,61,0.15) 0%, rgba(30,10,10,0.8) 100%)' },
-  { id: '1970s', label: '1970s Disco', icon: '🪩', color: '#e879f9', desc: 'Glitter, secrets, and groove', gradient: 'linear-gradient(135deg, rgba(232,121,249,0.15) 0%, rgba(30,10,40,0.8) 100%)' },
-  { id: 'victorian', label: 'Victorian Gothic', icon: '🕯️', color: '#94a3b8', desc: 'Fog, gaslight, and dark manors', gradient: 'linear-gradient(135deg, rgba(148,163,184,0.15) 0%, rgba(15,15,20,0.8) 100%)' },
-  { id: '2050s', label: '2050s Space Station', icon: '🚀', color: '#38bdf8', desc: 'Isolation, tech, and zero gravity', gradient: 'linear-gradient(135deg, rgba(56,189,248,0.15) 0%, rgba(5,10,30,0.8) 100%)' },
-  { id: 'custom', label: 'Custom...', icon: '✏️', color: '#a78bfa', desc: 'Describe your own setting', gradient: 'linear-gradient(135deg, rgba(167,139,250,0.1) 0%, rgba(15,10,25,0.8) 100%)' },
+  { 
+    id: '1920s', 
+    label: '1920s Noir', 
+    color: '#c9a227', 
+    desc: 'Speakeasies, jazz, and shadows', 
+    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(10,10,10,0.9)), radial-gradient(ellipse at 30% 40%, rgba(201,162,39,0.15), transparent 60%)',
+    bgPattern: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(201,162,39,0.03) 2px, rgba(201,162,39,0.03) 4px)'
+  },
+  { 
+    id: '1940s', 
+    label: '1940s Hollywood', 
+    color: '#e5533d', 
+    desc: 'Glamour, scandal, and silver screens', 
+    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(15,5,5,0.9)), radial-gradient(ellipse at 70% 30%, rgba(229,83,61,0.15), transparent 60%)',
+    bgPattern: 'repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(229,83,61,0.03) 10px, rgba(229,83,61,0.03) 20px)'
+  },
+  { 
+    id: '1970s', 
+    label: '1970s Disco', 
+    color: '#e879f9', 
+    desc: 'Glitter, secrets, and groove', 
+    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(15,5,20,0.9)), radial-gradient(ellipse at 50% 50%, rgba(232,121,249,0.15), transparent 60%)',
+    bgPattern: 'repeating-linear-gradient(90deg, transparent, transparent 8px, rgba(232,121,249,0.04) 8px, rgba(232,121,249,0.04) 16px)'
+  },
+  { 
+    id: 'victorian', 
+    label: 'Victorian Gothic', 
+    color: '#94a3b8', 
+    desc: 'Fog, gaslight, and dark manors', 
+    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(8,8,10,0.95)), radial-gradient(ellipse at 20% 60%, rgba(148,163,184,0.1), transparent 50%)',
+    bgPattern: 'repeating-linear-gradient(180deg, transparent, transparent 3px, rgba(148,163,184,0.02) 3px, rgba(148,163,184,0.02) 6px)'
+  },
+  { 
+    id: '2050s', 
+    label: '2050s Space Station', 
+    color: '#38bdf8', 
+    desc: 'Isolation, tech, and zero gravity', 
+    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.8), rgba(2,5,15,0.95)), radial-gradient(ellipse at 60% 40%, rgba(56,189,248,0.12), transparent 55%)',
+    bgPattern: 'repeating-linear-gradient(30deg, transparent, transparent 15px, rgba(56,189,248,0.03) 15px, rgba(56,189,248,0.03) 30px)'
+  },
+  { 
+    id: 'custom', 
+    label: 'Custom...', 
+    color: '#a78bfa', 
+    desc: 'Describe your own setting', 
+    bgImage: 'linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(8,5,12,0.9)), radial-gradient(ellipse at 50% 50%, rgba(167,139,250,0.1), transparent 60%)',
+    bgPattern: 'repeating-linear-gradient(60deg, transparent, transparent 12px, rgba(167,139,250,0.03) 12px, rgba(167,139,250,0.03) 24px)'
+  },
 ]
 
 const DIFFICULTIES = [
@@ -58,7 +100,7 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
       <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 w-12 h-12 sm:w-16 sm:h-16 border-r-2 border-b-2 border-noir-gold opacity-30" />
 
       {/* Scrollable content area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden flex flex-col items-center pb-24">
         <div className="w-full max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col items-center">
           
           {/* Step indicator */}
@@ -110,18 +152,45 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setEra(e.id)}
-                      className={`group relative p-5 sm:p-6 border-2 transition-all duration-300 text-left min-h-[120px] sm:min-h-[140px] ${
+                      className={`group relative p-5 sm:p-6 border-2 transition-all duration-300 text-left min-h-[120px] sm:min-h-[140px] overflow-hidden ${
                         era === e.id
                           ? 'border-noir-gold shadow-lg shadow-noir-gold/10'
                           : 'border-noir-slate/40 hover:border-noir-slate'
                       }`}
-                      style={{ fontFamily: 'Georgia, serif', background: era === e.id ? e.gradient : 'rgba(10,10,10,0.7)' }}
+                      style={{ 
+                        fontFamily: 'Georgia, serif',
+                        background: e.bgImage,
+                        position: 'relative'
+                      }}
                     >
-                      <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">{e.icon}</div>
-                      <div className="text-base sm:text-lg font-bold mb-1" style={{ color: era === e.id ? e.color : '#f5f0e8' }}>
-                        {e.label}
+                      {/* Background pattern layer */}
+                      <div 
+                        className="absolute inset-0 pointer-events-none"
+                        style={{ background: e.bgPattern }}
+                      />
+                      
+                      {/* Content with text shadow for readability */}
+                      <div className="relative z-10">
+                        <div 
+                          className="text-base sm:text-lg font-bold mb-1" 
+                          style={{ 
+                            color: era === e.id ? e.color : '#f5f0e8',
+                            textShadow: '0 2px 8px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.6)'
+                          }}
+                        >
+                          {e.label}
+                        </div>
+                        <div 
+                          className="text-xs" 
+                          style={{ 
+                            color: '#c8c8c8',
+                            textShadow: '0 1px 4px rgba(0,0,0,0.9)'
+                          }}
+                        >
+                          {e.desc}
+                        </div>
                       </div>
-                      <div className="text-xs text-noir-smoke">{e.desc}</div>
+                      
                       {era === e.id && (
                         <motion.div
                           layoutId="era-selected"
@@ -265,6 +334,9 @@ export function MysteryCreator({ onGenerate, onBack }: MysteryCreatorProps) {
               </motion.div>
             )}
           </AnimatePresence>
+          
+          {/* Bottom spacer to ensure content clears fixed nav */}
+          <div className="h-6 sm:h-8" />
         </div>
       </div>
 
