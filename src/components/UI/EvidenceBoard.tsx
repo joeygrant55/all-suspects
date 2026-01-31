@@ -107,7 +107,7 @@ export function EvidenceBoard({ isOpen, onClose }: EvidenceBoardProps) {
     const ws = activeMystery?.worldState
     if (ws) {
       if (ws.timeOfDeath) entries.push({ time: ws.timeOfDeath, text: `Victim (${ws.victim}) found dead at ${ws.location}`, source: 'case-file' })
-      ws.publicKnowledge?.forEach((fact, i) => {
+      ws.publicKnowledge?.forEach((fact, _i) => {
         entries.push({ time: '', text: fact, source: 'public-knowledge' })
       })
     }

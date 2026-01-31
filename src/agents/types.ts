@@ -11,6 +11,7 @@ export interface CharacterProfile {
   alibi: string
   relationships: Record<string, string>
   isGuilty: boolean
+  motive?: string // Why they might have committed the crime
 }
 
 export interface WorldState {

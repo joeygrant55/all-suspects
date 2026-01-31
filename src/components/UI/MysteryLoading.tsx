@@ -94,7 +94,7 @@ const FLAVOR_TEXTS = [
 ]
 
 export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoadingProps) {
-  const { progress, isReady, portraits, portraitsReady } = useAssetLoader(mysteryId)
+  const { progress, isReady, portraits, portraitsReady: _portraitsReady } = useAssetLoader(mysteryId)
   const [showTitle, setShowTitle] = useState(false)
   const [flavorIndex, setFlavorIndex] = useState(0)
 

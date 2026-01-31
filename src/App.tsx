@@ -377,7 +377,7 @@ function App() {
           {(() => {
             const mystery = useMysteryStore.getState().activeMystery
             if (mystery?.isGenerated && mystery.blueprint) {
-              const chars = mystery.blueprint.characters || mystery.blueprint.suspects || []
+              const chars = mystery.blueprint.characters || []
               return (
                 <AccusationPanel
                   isOpen={accusationOpen}

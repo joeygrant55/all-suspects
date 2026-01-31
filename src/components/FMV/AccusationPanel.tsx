@@ -42,7 +42,7 @@ export function AccusationPanel({
   const [result, setResult] = useState<any>(null)
   const [attempts, setAttempts] = useState(0)
   const [lastHint, setLastHint] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [_loading, setLoading] = useState(false)
 
   const selectedSuspect = suspects.find(s => s.id === selectedId)
 

@@ -9,7 +9,7 @@ interface MysterySelectProps {
 }
 
 export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
-  const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
+  const [selectedDifficulty, _setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const {
     availableMysteries,
     loadMystery,

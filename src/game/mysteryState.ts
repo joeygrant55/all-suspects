@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import type { CharacterProfile, WorldState } from '../agents/types'
 import type { EvidenceData } from '../types/evidence'
+import type { MysteryBlueprint } from '../../shared/types/MysteryBlueprint'
 import { loadMysteryById, getAvailableMysteries } from '../mysteries/registry'
 
 export interface MysteryInfo {
@@ -24,6 +25,10 @@ export interface LoadedMystery {
   evidenceDialogueUnlocks: Record<string, Array<{ characterId: string; prompt: string }>>
   rooms: string[]
   killerId: string
+  // For dynamically generated mysteries
+  isGenerated?: boolean
+  blueprint?: MysteryBlueprint
+  locations?: Array<{ id: string; name: string; description: string }>
 }
 
 export interface MysteryState {
