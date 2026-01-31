@@ -460,12 +460,14 @@ export function generateArtPrompts(blueprint: MysteryBlueprint) {
     evidence: Record<string, string>
     titleScreen: string
     caseBoard: string
+    eraBackground: string
   } = {
     portraits: {},
     rooms: {},
     evidence: {},
     titleScreen: '',
     caseBoard: '',
+    eraBackground: '',
   }
 
   // Character portrait prompts
@@ -496,6 +498,9 @@ export function generateArtPrompts(blueprint: MysteryBlueprint) {
 
   // Case board
   prompts.caseBoard = `Detective investigation cork board for a ${blueprint.era} murder mystery. Pinned polaroid suspect photos connected by red string. Evidence photos, newspaper clippings, handwritten notes. Moody amber lighting. Film grain. Professional game UI. 16:9 landscape.`
+
+  // Era background (cinematic atmospheric trailer-style)
+  prompts.eraBackground = `Cinematic ${blueprint.era} mystery game background for ${setting.location}. ${setting.atmosphere} atmosphere, ${setting.weather}. Dramatic noir lighting, mysterious shadows, ${blueprint.era} era aesthetic. Wide cinematic composition, atmospheric depth, moody color palette. No people, no text. Game UI background style.`
 
   return prompts
 }

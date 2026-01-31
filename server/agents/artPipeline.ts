@@ -59,6 +59,13 @@ export function startArtPipeline(
 
   // Priority 1: UI backgrounds (seen during intro)
   assets.push({
+    id: 'era-background',
+    category: 'ui',
+    prompt: prompts.eraBackground,
+    status: 'pending',
+    priority: priority++,
+  })
+  assets.push({
     id: 'title-screen',
     category: 'ui',
     prompt: prompts.titleScreen,
