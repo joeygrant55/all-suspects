@@ -132,13 +132,13 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
       {/* Film grain */}
       <div className="absolute inset-0 film-grain pointer-events-none" />
 
-      {/* Corner decorations */}
-      <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-noir-gold opacity-20" />
-      <div className="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-noir-gold opacity-20" />
-      <div className="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-noir-gold opacity-20" />
-      <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-noir-gold opacity-20" />
+      {/* Corner decorations - responsive */}
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-8 w-12 h-12 sm:w-16 sm:h-16 border-l-2 border-t-2 border-noir-gold opacity-20" />
+      <div className="absolute top-4 right-4 sm:top-8 sm:right-8 w-12 h-12 sm:w-16 sm:h-16 border-r-2 border-t-2 border-noir-gold opacity-20" />
+      <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 w-12 h-12 sm:w-16 sm:h-16 border-l-2 border-b-2 border-noir-gold opacity-20" />
+      <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 w-12 h-12 sm:w-16 sm:h-16 border-r-2 border-b-2 border-noir-gold opacity-20" />
 
-      <div className="relative z-10 text-center max-w-2xl w-full px-8">
+      <div className="relative z-10 text-center max-w-2xl w-full px-4 sm:px-6 lg:px-8">
         {/* Generating state */}
         <AnimatePresence>
           {!blueprint && (
@@ -149,12 +149,12 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
               exit={{ opacity: 0, y: -20 }}
             >
               <motion.div
-                className="w-16 h-16 border-2 border-noir-gold border-t-transparent rounded-full mx-auto mb-6"
+                className="w-14 h-14 sm:w-16 sm:h-16 border-2 border-noir-gold border-t-transparent rounded-full mx-auto mb-6"
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
               />
               <h2
-                className="text-2xl font-bold text-noir-gold mb-3 tracking-wider"
+                className="text-xl sm:text-2xl font-bold text-noir-gold mb-3 tracking-wider px-4"
                 style={{ fontFamily: 'Georgia, serif' }}
               >
                 THE MYSTERY ARCHITECT IS WORKING
@@ -166,7 +166,7 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
                   transition={{ duration: 0.5 }}
-                  className="text-noir-smoke text-sm italic"
+                  className="text-noir-smoke text-xs sm:text-sm italic px-4"
                   style={{ fontFamily: 'Georgia, serif' }}
                 >
                   {FLAVOR_TEXTS[flavorIndex]}
@@ -185,12 +185,12 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              {/* Title */}
+              {/* Title - responsive sizing */}
               {showTitle && (
                 <motion.h1
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className="text-5xl md:text-6xl font-bold mb-4"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 px-2 leading-tight"
                   style={{
                     fontFamily: 'Georgia, serif',
                     color: '#c9a227',
@@ -201,31 +201,31 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
                 </motion.h1>
               )}
 
-              {/* Meta info */}
+              {/* Meta info - responsive */}
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 2 }}
-                className="flex items-center justify-center gap-6 text-sm text-noir-smoke mb-8"
+                className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 text-xs sm:text-sm text-noir-smoke mb-6 sm:mb-8 px-2"
                 style={{ fontFamily: 'Georgia, serif' }}
               >
-                {blueprint.setting && <span>{blueprint.setting}</span>}
+                {blueprint.setting && <span className="text-center">{blueprint.setting}</span>}
                 {blueprint.era && (
                   <>
-                    <span className="text-noir-gold/30">•</span>
+                    <span className="text-noir-gold/30 hidden sm:inline">•</span>
                     <span>{blueprint.era}</span>
                   </>
                 )}
                 {blueprint.suspectCount && (
                   <>
-                    <span className="text-noir-gold/30">•</span>
+                    <span className="text-noir-gold/30 hidden sm:inline">•</span>
                     <span>{blueprint.suspectCount} Suspects</span>
                   </>
                 )}
               </motion.div>
 
               {/* Progress bar */}
-              <div className="mb-8">
+              <div className="mb-6 sm:mb-8 px-2">
                 <div className="flex items-center justify-between text-xs text-noir-smoke mb-2" style={{ fontFamily: 'Georgia, serif' }}>
                   <span>Generating artwork...</span>
                   <span>{progress}%</span>
@@ -240,21 +240,21 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
                 </div>
               </div>
 
-              {/* Asset thumbnails */}
+              {/* Asset thumbnails - responsive grid */}
               {portraitEntries.length > 0 && (
-                <div className="flex items-center justify-center gap-3 mb-10 flex-wrap">
+                <div className="flex items-center justify-center gap-2 sm:gap-3 mb-8 sm:mb-10 flex-wrap px-2">
                   {portraitEntries.map(([id, url]) => (
                     <motion.div
                       key={id}
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: url ? 1 : 0.3, scale: 1 }}
                       transition={{ duration: 0.5 }}
-                      className="w-14 h-14 rounded border border-noir-slate/50 overflow-hidden bg-noir-slate/20"
+                      className="w-12 h-12 sm:w-14 sm:h-14 rounded border border-noir-slate/50 overflow-hidden bg-noir-slate/20"
                     >
                       {url ? (
                         <img src={url} alt={id} className="w-full h-full object-cover" />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center text-noir-slate text-lg">
+                        <div className="w-full h-full flex items-center justify-center text-noir-slate text-base sm:text-lg">
                           👤
                         </div>
                       )}
@@ -263,13 +263,14 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
                 </div>
               )}
 
-              {/* Enter button */}
+              {/* Enter button - responsive */}
               <AnimatePresence>
                 {isReady && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5 }}
+                    className="px-2"
                   >
                     <motion.button
                       whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(201,162,39,0.6)' }}
@@ -277,7 +278,7 @@ export function MysteryLoading({ mysteryId, blueprint, onEnter }: MysteryLoading
                       animate={{ boxShadow: ['0 0 10px rgba(201,162,39,0.2)', '0 0 25px rgba(201,162,39,0.5)', '0 0 10px rgba(201,162,39,0.2)'] }}
                       transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
                       onClick={onEnter}
-                      className="px-12 py-4 bg-noir-gold text-noir-black text-lg font-bold tracking-widest hover:bg-opacity-90 transition-all duration-300"
+                      className="w-full sm:w-auto px-8 sm:px-12 py-3 sm:py-4 bg-noir-gold text-noir-black text-base sm:text-lg font-bold tracking-widest hover:bg-opacity-90 transition-all duration-300"
                       style={{ fontFamily: 'Georgia, serif' }}
                     >
                       ✦ ENTER THE MYSTERY ✦
