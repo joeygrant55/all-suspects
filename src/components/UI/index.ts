@@ -13,3 +13,4 @@ export { EvidenceNotification, useEvidenceNotification } from './EvidenceNotific
 export { VictoryScreen } from './VictoryScreen'
 export { GameTimer } from './GameTimer'
 export { Paywall, FreeTierBadge } from './Paywall'
+export { UpgradeSuccess } from './UpgradeSuccess'

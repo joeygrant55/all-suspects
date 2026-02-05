@@ -1,5 +1,6 @@
 import { useContext } from 'react'
 import { AudioContext } from '../../hooks/useAudioManager'
+import { FreeTierBadge } from './Paywall'
 
 interface TitleScreenProps {
   onNewGame?: () => void
@@ -103,6 +104,11 @@ export function TitleScreen({ onNewGame }: TitleScreenProps) {
         <p className="text-noir-slate text-sm mt-16 tracking-wide">
           New Year's Eve, 1929 — Ashford Manor
         </p>
+      </div>
+
+      {/* Subscription badge */}
+      <div className="absolute top-6 right-6 z-20">
+        <FreeTierBadge />
       </div>
 
       {/* Bottom attribution */}

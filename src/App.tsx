@@ -14,7 +14,11 @@ import {
   VictoryScreen,
   EvidenceNotification,
   useEvidenceNotification,
+  Paywall,
+  UpgradeSuccess,
 } from './components/UI'
+import { useSubscriptionStore } from './game/subscriptionState'
+import { createCheckoutSession } from './api/client'
 import { WatsonWhisper, WatsonDesk } from './components/Watson'
 import { AccusationPanel } from './components/FMV/AccusationPanel'
 import { useGameStore } from './game/state'
@@ -73,6 +77,45 @@ function App() {
   const [evidenceBoardOpen, setEvidenceBoardOpen] = useState(false)
   const [accusationOpen, setAccusationOpen] = useState(false)
   const [tutorialOpen, setTutorialOpen] = useState(false)
+  const [paywallOpen, setPaywallOpen] = useState(false)
+  const [checkoutSessionId, setCheckoutSessionId] = useState<string | null>(null)
+
+  // Subscription state
+  const { canPlayMystery, recordMysteryPlay, visitorId } = useSubscriptionStore()
+
+  // Check for checkout success redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const sessionId = params.get('session_id')
+    if (sessionId) {
+      setCheckoutSessionId(sessionId)
+      // Clean up URL
+      window.history.replaceState({}, '', window.location.pathname)
+    }
+  }, [])
+
+  // Handle upgrade to premium
+  const handleUpgrade = async () => {
+    try {
+      const { url } = await createCheckoutSession(visitorId)
+      if (url) {
+        window.location.href = url
+      }
+    } catch (error) {
+      console.error('Failed to create checkout session:', error)
+      alert('Unable to start checkout. Please try again.')
+    }
+  }
+
+  // Check if user can start a new mystery (with paywall gate)
+  const checkAndStartMystery = (startFn: () => void) => {
+    if (canPlayMystery()) {
+      recordMysteryPlay()
+      startFn()
+    } else {
+      setPaywallOpen(true)
+    }
+  }
   const [victoryOpen, setVictoryOpen] = useState(false)
   const [showCharacterIntro, setShowCharacterIntro] = useState<string | null>(null)
   const [seenIntros, setSeenIntros] = useState<Set<string>>(new Set())
@@ -268,8 +311,20 @@ function App() {
             />
           ) : mysterySelectOpen ? (
             <MysterySelect onCreateNew={() => { setMysterySelectOpen(false); setCreatorOpen(true) }} />
+          ) : checkoutSessionId ? (
+            <UpgradeSuccess 
+              sessionId={checkoutSessionId} 
+              onContinue={() => setCheckoutSessionId(null)} 
+            />
           ) : (
-            <TitleScreen onNewGame={() => setMysterySelectOpen(true)} />
+            <>
+              <TitleScreen onNewGame={() => checkAndStartMystery(() => setMysterySelectOpen(true))} />
+              <Paywall 
+                isOpen={paywallOpen} 
+                onClose={() => setPaywallOpen(false)} 
+                onUpgrade={handleUpgrade}
+              />
+            </>
           )}
         </VoiceContext.Provider>
       </AudioContext.Provider>
