@@ -1,9 +1,10 @@
-import { useState, useEffect, useContext, useMemo, useCallback } from 'react'
+import { useState, useEffect, useContext, useMemo, useCallback, useRef } from 'react'
 import { useGameStore } from '../../game/state'
 import { sendChatVideo, healthCheck, generateVoice, type ChatVideoResponse } from '../../api/client'
 import { VoiceContext } from '../../hooks/useVoice'
 import { EVIDENCE_DIALOGUE_UNLOCKS } from '../../data/evidence'
 import { CHARACTER_GREETINGS } from '../../../mysteries/ashford-affair/characters'
+import analytics from '../../lib/analytics'
 
 import { CinematicEffects, GoldBorder, ModalBackdrop } from './CinematicEffects'
 import { QuestionCards } from './QuestionCards'
@@ -35,6 +36,9 @@ export function InterrogationModal() {
     videoUrl: string | null
     analysis: ChatVideoResponse['analysis'] | null
   } | null>(null)
+
+  // Analytics tracking
+  const questionCountRef = useRef(0)
 
   // Game state
   const currentConversation = useGameStore((state) => state.currentConversation)
@@ -138,6 +142,10 @@ export function InterrogationModal() {
       introComplete.has(currentConversation) &&
       !hasShownGreeting.has(currentConversation)
     ) {
+      // Track interrogation start
+      analytics.interrogationStarted(currentConversation, currentCharacter?.name)
+      questionCountRef.current = 0
+      
       const greeting = CHARACTER_GREETINGS[currentConversation]
       if (greeting) {
         addMessage({
@@ -185,11 +193,16 @@ export function InterrogationModal() {
   }, [currentConversation])
 
   const handleClose = useCallback(() => {
+    // Track interrogation end
+    if (currentConversation) {
+      analytics.interrogationEnded(currentConversation, questionCountRef.current)
+    }
+    
     voiceManager?.stop()
     endConversation()
     setCurrentResponse(null)
     setShowCustomInput(false)
-  }, [voiceManager, endConversation])
+  }, [voiceManager, endConversation, currentConversation])
 
   // Handle keyboard shortcuts (Escape to close)
   useEffect(() => {
@@ -222,6 +235,10 @@ export function InterrogationModal() {
 
   const submitQuestion = async (question: string) => {
     if (!currentConversation) return
+
+    // Track question
+    questionCountRef.current++
+    analytics.questionAsked(currentConversation)
 
     // Add player message
     addMessage({
@@ -261,6 +278,15 @@ export function InterrogationModal() {
         const firstContradiction = response.contradictions[0]
         setNewContradiction(firstContradiction.explanation)
         setTimeout(() => setNewContradiction(null), 6000)
+        
+        // Track contradictions found
+        response.contradictions.forEach(c => {
+          analytics.contradictionFound(
+            c.statement1.characterId,
+            c.statement2.characterId,
+            c.severity
+          )
+        })
       }
 
       // Handle pressure update

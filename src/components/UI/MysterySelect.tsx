@@ -3,6 +3,7 @@ import { useMysteryStore } from '../../game/mysteryState'
 import { useGameStore } from '../../game/state'
 import { fetchAllMysteries } from '../../mysteries/registry'
 import { setActiveMysteryId } from '../../api/client'
+import analytics from '../../lib/analytics'
 
 interface MysterySelectProps {
   onCreateNew?: () => void
@@ -32,14 +33,17 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
 
   const handleSelectMystery = async (id: string) => {
     try {
+      const info = availableMysteries.find(m => m.id === id)
+      analytics.mysterySelected(id, info?.title)
+      
       await loadMystery(id)
       const mystery = useMysteryStore.getState().activeMystery
       if (mystery) {
-        const info = availableMysteries.find(m => m.id === id)
         if (info?.isGenerated) {
           setActiveMysteryId(id)
         }
         initializeFromMystery(mystery)
+        analytics.gameStarted(id, { isGenerated: info?.isGenerated, difficulty: info?.difficulty })
         startGame()
       }
     } catch (error) {
@@ -49,10 +53,12 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
 
   const handleGenerateMystery = async () => {
     try {
+      analytics.mysterySelected('generated', 'AI Generated Mystery')
       await generateNewMystery(selectedDifficulty)
       const mystery = useMysteryStore.getState().activeMystery
       if (mystery) {
         initializeFromMystery(mystery)
+        analytics.gameStarted(mystery.id || 'generated', { isGenerated: true, difficulty: selectedDifficulty })
         startGame()
       }
     } catch (error) {

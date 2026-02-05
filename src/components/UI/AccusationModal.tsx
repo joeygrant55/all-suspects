@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useGameStore } from '../../game/state'
 import { CharacterPortrait } from './CharacterPortrait'
 import { EVIDENCE_DATABASE } from '../../data/evidence'
+import analytics from '../../lib/analytics'
 
 interface AccusationModalProps {
   isOpen: boolean
@@ -63,6 +64,20 @@ export function AccusationModal({ isOpen, onClose, onVictory }: AccusationModalP
       const correct = selectedSuspect === KILLER_ID
       setIsCorrect(correct)
       recordAccusationAttempt(selectedSuspect!, correct)
+      
+      // Track accusation
+      analytics.accusationMade(selectedSuspect!, correct, accusationAttempts + 1)
+      
+      if (correct) {
+        // Track game completion
+        analytics.gameCompleted(true, selectedSuspect!, {
+          questionsAsked: undefined, // Could get from state if tracked
+          suspectsInterrogated: characters.length, // Approximate
+          evidenceCollected: collectedEvidence.length,
+          accusationAttempts: accusationAttempts + 1
+        })
+      }
+      
       setStage('result')
     }, 3000)
   }
