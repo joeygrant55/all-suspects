@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
+import stripeRoutes from './stripe'
 import * as fs from 'fs'
 import * as path from 'path'
 import Anthropic from '@anthropic-ai/sdk'
@@ -1731,6 +1732,9 @@ app.use('/api/portraits', portraitRoutes)
 
 // Room atmosphere routes
 app.use('/api/atmosphere', atmosphereRoutes)
+
+// Stripe payment routes
+app.use('/api/stripe', stripeRoutes)
 
 // Start cache cleanup interval
 startCacheCleanup()

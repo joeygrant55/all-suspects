@@ -791,3 +791,44 @@ export async function pregenerateAtmospheres(
 
   return response.json()
 }
+
+// ── Stripe / Subscription ──────────────────────────────────────────────────
+
+export interface CheckoutSessionResponse {
+  sessionId: string
+  url: string
+}
+
+export interface SubscriptionStatusResponse {
+  isPremium: boolean
+  customerId?: string
+  subscriptionId?: string
+  expiresAt?: number
+  visitorId?: string
+}
+
+export async function createCheckoutSession(visitorId: string): Promise<CheckoutSessionResponse> {
+  const response = await fetch(`${API_BASE}/stripe/create-checkout-session`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ visitorId }),
+  })
+  
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to create checkout session')
+  }
+  
+  return response.json()
+}
+
+export async function getSubscriptionStatus(sessionId: string): Promise<SubscriptionStatusResponse> {
+  const response = await fetch(`${API_BASE}/stripe/subscription-status?session_id=${sessionId}`)
+  
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.error || 'Failed to get subscription status')
+  }
+  
+  return response.json()
+}
