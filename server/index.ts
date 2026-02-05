@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import stripeRoutes from './stripe'
+import analyticsRoutes from './analyticsRoutes'
 import * as fs from 'fs'
 import * as path from 'path'
 import Anthropic from '@anthropic-ai/sdk'
@@ -92,6 +93,9 @@ app.use(express.json())
 // Mystery generation API
 import mysteryRouter from './agents/mysteryApi'
 app.use('/api/mystery', mysteryRouter)
+
+// Analytics API
+app.use('/api/analytics', analyticsRoutes)
 
 // Initialize Anthropic client
 const anthropic = new Anthropic()
