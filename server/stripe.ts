@@ -4,8 +4,17 @@ import Stripe from 'stripe'
 const router = express.Router()
 
 // Initialize Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+const stripeKey = process.env.STRIPE_SECRET_KEY
+const stripe = stripeKey ? new Stripe(stripeKey, {
   apiVersion: '2024-11-20.acacia',
+}) : null
+
+// Guard: if Stripe isn't configured, all routes return 503
+router.use((_req, res, next) => {
+  if (!stripe) {
+    return res.status(503).json({ error: 'Stripe not configured' })
+  }
+  next()
 })
 
 const PRICE_ID = process.env.STRIPE_PRICE_ID // Monthly subscription price
