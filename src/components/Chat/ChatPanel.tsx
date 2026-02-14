@@ -340,7 +340,6 @@ export function ChatPanel() {
           </div>
         )}
         <div ref={messagesEndRef} />
-        <div ref={messagesEndRef} />
       </div>
 
       {/* Suggested questions */}

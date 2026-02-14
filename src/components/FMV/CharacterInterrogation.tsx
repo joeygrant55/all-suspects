@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
 import { useMysteryStore } from '../../game/mysteryState'
 import { CharacterPortrait } from '../UI/CharacterPortrait'
-import { sendMessage, analyzeWithWatson, checkVideoStatus } from '../../api/client'
+import { chatStream, type ChatResponse, analyzeWithWatson, checkVideoStatus } from '../../api/client'
 import { EVIDENCE_DATABASE } from '../../data/evidence'
 import { useVoiceContext } from '../../hooks/useVoice'
 import { CinematicMoment, CinematicGenerating } from './CinematicMoment'
@@ -119,6 +119,9 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [_error, setError] = useState<string | null>(null)
+  const [streamingText, setStreamingText] = useState('')
+  const [isStreamingResponse, setIsStreamingResponse] = useState(false)
+  const streamAbortRef = useRef<AbortController | null>(null)
   const [evidenceToast, setEvidenceToast] = useState<{ title: string; description: string } | null>(null)
   const [watsonWhisper, setWatsonWhisper] = useState<string | null>(null)
   const [lastQuestion, setLastQuestion] = useState<string | null>(null)
@@ -171,6 +174,144 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     }
   }, [psychology.pressureLevel])
 
+  const applyChatResponse = async (response: ChatResponse, question: string) => {
+    if (!character) return
+    if (response.isFallback) {
+      addMessage({
+        role: 'character',
+        characterId,
+        content: response.message,
+      })
+      setError("The suspect doesn't seem to want to answer. Try again?")
+      setShowRetry(true)
+      return
+    }
+
+    // Success! Add real character response
+    addMessage({
+      role: 'character',
+      characterId,
+      content: response.message,
+    })
+
+    // Speak the response with ElevenLabs if voice is enabled
+    if (voiceEnabled) {
+      const cleanedText = cleanTextForSpeech(response.message)
+      speak(characterId, cleanedText).catch((err) => {
+        console.log('Voice playback failed:', err)
+      })
+    }
+
+    // Update pressure if returned
+    if (response.pressure) {
+      updateCharacterPressure(characterId, response.pressure)
+      setRawPressure(response.pressure.level)
+      let convertedLevel: 1 | 2 | 3 | 4 | 5 = 1
+      if (response.pressure.level <= 15) {
+        convertedLevel = 1
+      } else if (response.pressure.level <= 35) {
+        convertedLevel = 2
+      } else if (response.pressure.level <= 60) {
+        convertedLevel = 3
+      } else if (response.pressure.level <= 80) {
+        convertedLevel = 4
+      } else {
+        convertedLevel = 5
+      }
+
+      updatePsychology({
+        pressureLevel: convertedLevel,
+      })
+    }
+
+    // Add evidence from conversation
+    if (response.statementId) {
+      const evidenceSource = `${characterId}-${response.statementId}`
+      const evidenceData = EVIDENCE_DATABASE[evidenceSource]
+
+      addEvidence({
+        type: 'testimony',
+        description: `${character.name}: "${response.message.substring(0, 100)}..."`,
+        source: evidenceSource,
+      })
+
+      setEvidenceToast({
+        title: evidenceData?.name || 'Testimony Recorded',
+        description: evidenceData?.description || `Key statement from ${character.name}`,
+      })
+
+      const watsonMessages = [
+        "That's significant, Detective. I've noted it in our case files.",
+        'Interesting... This could be important.',
+        'This might be a crucial piece of the puzzle.',
+        'Pay attention to that detail, Detective.',
+      ]
+      const randomWhisper = watsonMessages[Math.floor(Math.random() * watsonMessages.length)]
+      setTimeout(() => setWatsonWhisper(randomWhisper), 500)
+    }
+
+    // Handle contradictions
+    if (response.contradictions && response.contradictions.length > 0) {
+      addContradictions(response.contradictions)
+      updatePsychology({ isLying: true })
+    } else {
+      updatePsychology({ isLying: false })
+    }
+
+    if (response.cinematicMoment && response.videoGenerationId) {
+      console.log('[CINEMATIC] Moment detected! Starting video poll:', response.videoGenerationId)
+      setIsGeneratingVideo(true)
+      setVideoGenerationId(response.videoGenerationId)
+      setCinematicText(response.message)
+      startVideoPolling(response.videoGenerationId, response.message)
+    }
+
+    try {
+      const watsonAnalysis = await analyzeWithWatson(
+        characterId,
+        character.name,
+        response.message,
+        question,
+        response.pressure?.level || 0
+      )
+
+      if (watsonAnalysis.success) {
+        const { newContradictions } = watsonAnalysis.analysis
+
+        if (newContradictions && newContradictions.length > 0) {
+          const formattedContradictions = newContradictions.map((c: any) => ({
+            id: c.id,
+            statement1: {
+              characterId: c.statement1.characterId,
+              characterName: c.statement1.characterName,
+              content: c.statement1.content,
+              playerQuestion: '',
+            },
+            statement2: {
+              characterId: c.statement2.characterId,
+              characterName: c.statement2.characterName,
+              content: c.statement2.content,
+              playerQuestion: '',
+            },
+            explanation: c.explanation,
+            severity: c.severity === 'critical' ? 'major' : c.severity,
+            discoveredAt: Date.now(),
+          }))
+
+          addContradictions(formattedContradictions)
+        }
+      }
+    } catch (watsonError) {
+      console.error('Watson analysis failed:', watsonError)
+    }
+  }
+
+
+  const errorToMessage = (err: unknown) => {
+    if (err instanceof Error) return err.message
+    return 'Unknown error'
+  }
+
   const handleSendMessage = async (retryQuestion?: string, tacticOverride?: InterrogationTactic) => {
     const question = retryQuestion || inputValue
     const tactic = tacticOverride || activeTactic
@@ -200,6 +341,8 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     }
 
     setIsTyping(true)
+    setIsStreamingResponse(true)
+    setStreamingText('')
 
     // Reset tactic state after message is sent
     setActiveTactic(null)
@@ -208,168 +351,56 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     setSelectedEvidence(null)
     setSelectedStatement(null)
 
+    // cancel any existing stream
+    if (streamAbortRef.current) {
+      streamAbortRef.current.abort()
+      streamAbortRef.current = null
+    }
+
     try {
-      // Call the real AI backend with tactic parameter
-      const response = await sendMessage(characterId, question, tactic, selectedEvidence, selectedStatement)
-      
-      // Check if this is a fallback response (API failure)
-      if (response.isFallback) {
-        // Backend explicitly reports a failed response - offer retry
-        addMessage({
-          role: 'character',
-          characterId,
-          content: response.message,
-        })
-        setError("The suspect doesn't seem to want to answer. Try again?")
-        setShowRetry(true)
-        setIsTyping(false)
-        return
-      }
-      
-      // Success! Add real character response
+      await new Promise<void>((resolve, reject) => {
+        streamAbortRef.current = chatStream(
+          {
+            characterId,
+            message: question,
+            tactic,
+            evidenceId: selectedEvidence,
+            crossReferenceStatement: selectedStatement,
+          },
+          (text) => {
+            setStreamingText((prev) => `${prev}${text}`)
+          },
+          async (response) => {
+            setStreamingText('')
+            setIsStreamingResponse(false)
+            try {
+              await applyChatResponse(response, question)
+            } finally {
+              resolve()
+            }
+          },
+          (err) => {
+            if (streamAbortRef.current?.signal.aborted) {
+              resolve()
+              return
+            }
+            reject(err)
+          }
+        )
+      })
+    } catch (err) {
+      console.error('Chat error:', err)
+      setError("The suspect doesn't seem to want to answer. Try again?")
+      setShowRetry(true)
       addMessage({
         role: 'character',
         characterId,
-        content: response.message,
+        content: errorToMessage(err),
       })
-
-      // Speak the response with ElevenLabs if voice is enabled
-      if (voiceEnabled) {
-        const cleanedText = cleanTextForSpeech(response.message)
-        speak(characterId, cleanedText).catch(err => {
-          console.log('Voice playback failed:', err)
-          // Non-critical - continue without voice
-        })
-      }
-
-      // Update pressure if returned
-      if (response.pressure) {
-        updateCharacterPressure(characterId, response.pressure)
-        setRawPressure(response.pressure.level)
-        // Convert 0-100 scale to 1-5 scale with better responsiveness
-        // Thresholds: 0-15=1, 16-35=2, 36-60=3, 61-80=4, 81+=5
-        let convertedLevel: 1|2|3|4|5 = 1
-        if (response.pressure.level <= 15) {
-          convertedLevel = 1
-        } else if (response.pressure.level <= 35) {
-          convertedLevel = 2
-        } else if (response.pressure.level <= 60) {
-          convertedLevel = 3
-        } else if (response.pressure.level <= 80) {
-          convertedLevel = 4
-        } else {
-          convertedLevel = 5
-        }
-        
-        updatePsychology({ 
-          pressureLevel: convertedLevel
-        })
-      }
-
-      // Add evidence from conversation
-      if (response.statementId) {
-        const evidenceSource = `${characterId}-${response.statementId}`
-        const evidenceData = EVIDENCE_DATABASE[evidenceSource]
-        
-        addEvidence({
-          type: 'testimony',
-          description: `${character.name}: "${response.message.substring(0, 100)}..."`,
-          source: evidenceSource,
-        })
-        
-        // Show enhanced evidence notification
-        setEvidenceToast({
-          title: evidenceData?.name || 'Testimony Recorded',
-          description: evidenceData?.description || `Key statement from ${character.name}`
-        })
-        
-        // Show Watson whisper
-        const watsonMessages = [
-          "That's significant, Detective. I've noted it.",
-          "Interesting... This could be important.",
-          "I've recorded that in our case files.",
-          "This might be a crucial piece of the puzzle.",
-          "Pay attention to that detail, Detective."
-        ]
-        const randomWhisper = watsonMessages[Math.floor(Math.random() * watsonMessages.length)]
-        setTimeout(() => setWatsonWhisper(randomWhisper), 500)
-      }
-
-      // Handle contradictions
-      if (response.contradictions && response.contradictions.length > 0) {
-        addContradictions(response.contradictions)
-        updatePsychology({ isLying: true })
-      } else {
-        updatePsychology({ isLying: false })
-      }
-
-      // Handle cinematic moments
-      if (response.cinematicMoment && response.videoGenerationId) {
-        console.log('[CINEMATIC] Moment detected! Starting video poll:', response.videoGenerationId)
-        setIsGeneratingVideo(true)
-        setVideoGenerationId(response.videoGenerationId)
-        setCinematicText(response.message)
-        
-        // Start polling for video completion
-        startVideoPolling(response.videoGenerationId, response.message)
-      }
-
-      // Run Watson analysis
-      try {
-        const watsonAnalysis = await analyzeWithWatson(
-          characterId,
-          character.name,
-          response.message,
-          question,
-          response.pressure?.level || 0
-        )
-        
-        if (watsonAnalysis.success) {
-          const { newContradictions } = watsonAnalysis.analysis
-          
-          // Store contradictions in game state if not already added
-          if (newContradictions && newContradictions.length > 0) {
-            const formattedContradictions = newContradictions.map((c: any) => ({
-              id: c.id,
-              statement1: {
-                characterId: c.statement1.characterId,
-                characterName: c.statement1.characterName,
-                content: c.statement1.content,
-                playerQuestion: '',
-              },
-              statement2: {
-                characterId: c.statement2.characterId,
-                characterName: c.statement2.characterName,
-                content: c.statement2.content,
-                playerQuestion: '',
-              },
-              explanation: c.explanation,
-              severity: c.severity === 'critical' ? 'major' : c.severity,
-              discoveredAt: Date.now(),
-            }))
-            
-            addContradictions(formattedContradictions)
-          }
-        }
-      } catch (watsonError) {
-        console.error('Watson analysis failed:', watsonError)
-        // Non-critical - continue without Watson
-      }
-
-    } catch (err) {
-      console.error('Chat error:', err)
-      const timedOut = err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'))
-      setError("The suspect doesn't seem to want to answer. Try again?")
-      setShowRetry(true)
-      if (!timedOut) {
-        addMessage({
-          role: 'character',
-          characterId,
-          content: "The suspect doesn't seem to want to answer. Try again?",
-        })
-      }
     } finally {
       setIsTyping(false)
+      setIsStreamingResponse(false)
+      streamAbortRef.current = null
     }
   }
 
@@ -448,6 +479,10 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   // Cleanup timeout and polling on unmount
   useEffect(() => {
     return () => {
+      if (streamAbortRef.current) {
+        streamAbortRef.current.abort()
+        streamAbortRef.current = null
+      }
       if (retryTimeoutRef.current) {
         clearTimeout(retryTimeoutRef.current)
       }
@@ -778,29 +813,19 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               className="flex justify-start"
             >
               <div className="max-w-2xl px-6 py-4 bg-noir-charcoal/70 border-2 border-noir-gold/40 rounded shadow-lg">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">💭</span>
-                  <p className="text-noir-gold text-sm sm:text-base font-serif">
-                    {character.name} is considering your question...
-                  </p>
-                  <div className="flex gap-1">
-                    <motion.div 
-                      className="w-2 h-2 rounded-full bg-noir-gold"
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-noir-gold"
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
-                    />
-                    <motion.div
-                      className="w-2 h-2 rounded-full bg-noir-gold"
-                      animate={{ opacity: [0.3, 1, 0.3] }}
-                      transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
-                    />
-                  </div>
-                </div>
+                <p className="text-noir-gold text-sm sm:text-base font-serif">
+                  {isStreamingResponse ? (
+                    <>
+                      {streamingText.length > 0 ? streamingText : '...'}
+                      <span className="ml-1 inline-block animate-pulse">▌</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xl mr-2">💭</span>
+                      {character.name} is considering your question...
+                    </>
+                  )}
+                </p>
               </div>
             </motion.div>
           )}

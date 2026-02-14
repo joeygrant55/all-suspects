@@ -280,7 +280,7 @@ export function InterrogationModal() {
         setTimeout(() => setNewContradiction(null), 6000)
         
         // Track contradictions found
-        response.contradictions.forEach(c => {
+        response.contradictions.forEach((c: any) => {
           analytics.contradictionFound(
             c.statement1.characterId,
             c.statement2.characterId,

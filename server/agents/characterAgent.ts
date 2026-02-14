@@ -327,6 +327,166 @@ async function handleToolUse(
   }
 }
 
+
+/**
+ * Stream a message with the same tool-use behavior as processAgentMessage()
+ */
+export async function processAgentMessageStream(
+  anthropic: Anthropic,
+  character: Character,
+  message: string,
+  conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }>,
+  onToken: (text: string) => void,
+  pressureModifier: string = ''
+): Promise<AgentResponse> {
+  const systemPrompt = buildEnhancedSystemPrompt(character, pressureModifier)
+  const toolsUsed: string[] = []
+
+  // Process any mentions of other characters in the detective's message
+  const allCharacterNames = [
+    'Victoria',
+    'Thomas',
+    'Eleanor',
+    'Marcus',
+    'Lillian',
+    'James',
+  ]
+  processDetectiveMention(character.id, message, allCharacterNames)
+
+  // Filter out any empty messages from history to avoid API errors
+  const validHistory = conversationHistory.filter((msg) => msg.content && msg.content.trim() !== '')
+
+  // Add the new message to history
+  const messages: Anthropic.MessageParam[] = [...validHistory, { role: 'user', content: message }]
+
+  // Helper to stream one Claude call and return the final message
+  const runStreamingRequest = async (
+    requestMessages: Anthropic.MessageParam[],
+    includeTools: boolean
+  ): Promise<Anthropic.Message> => {
+    const stream = anthropic.messages.stream({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      system: systemPrompt,
+      tools: includeTools ? CHARACTER_TOOLS : undefined,
+      messages: requestMessages,
+    })
+
+    for await (const event of stream) {
+      if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+        const token = event.delta.text
+        if (token) onToken(token)
+      }
+    }
+
+    return await stream.finalMessage() as Anthropic.Message
+  }
+
+  let response = await runStreamingRequest(messages, true)
+
+  // Handle tool use loop (max 3 iterations)
+  let iterations = 0
+  const maxIterations = 3
+  const toolMessages: Anthropic.MessageParam[] = [...messages]
+
+  while (response.stop_reason === 'tool_use' && iterations < maxIterations) {
+    iterations++
+
+    // Collect tool uses from this response
+    const toolUseBlocks = response.content.filter(
+      (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+    )
+
+    // Add assistant response with tool use to messages
+    toolMessages.push({
+      role: 'assistant',
+      content: response.content,
+    })
+
+    // Process each tool use and build tool results
+    const toolResults: Anthropic.ToolResultBlockParam[] = []
+    for (const toolUse of toolUseBlocks) {
+      toolsUsed.push(toolUse.name)
+      const result = await handleToolUse(
+        character.id,
+        character,
+        toolUse.name,
+        toolUse.input as Record<string, string>
+      )
+      toolResults.push({
+        type: 'tool_result',
+        tool_use_id: toolUse.id,
+        content: result,
+      })
+    }
+
+    // Add tool results
+    toolMessages.push({
+      role: 'user',
+      content: toolResults,
+    })
+
+    // Continue the conversation
+    response = await runStreamingRequest(toolMessages, true)
+  }
+
+  // If still tool_use after max iterations, make a final call without tools
+  if (response.stop_reason === 'tool_use') {
+    const toolUseBlocks = response.content.filter(
+      (block): block is Anthropic.ToolUseBlock => block.type === 'tool_use'
+    )
+
+    if (toolUseBlocks.length > 0) {
+      toolMessages.push({
+        role: 'assistant',
+        content: response.content,
+      })
+
+      const toolResults: Anthropic.ToolResultBlockParam[] = []
+      for (const toolUse of toolUseBlocks) {
+        toolsUsed.push(toolUse.name)
+        const result = await handleToolUse(
+          character.id,
+          character,
+          toolUse.name,
+          toolUse.input as Record<string, string>
+        )
+        toolResults.push({
+          type: 'tool_result',
+          tool_use_id: toolUse.id,
+          content: result,
+        })
+      }
+
+      toolMessages.push({
+        role: 'user',
+        content: toolResults,
+      })
+    }
+
+    response = await runStreamingRequest(toolMessages, false)
+  }
+
+  // Extract final text response
+  const textBlock = response.content.find(
+    (block): block is Anthropic.TextBlock => block.type === 'text'
+  )
+  const finalMessage = textBlock?.text || 'I... I need a moment to collect my thoughts.'
+
+  // Record this exchange in memory
+  recordQuestionAsked(character.id, message, finalMessage)
+
+  // Get the most recent internal monologue if one was recorded during this exchange
+  const internalMonologue = getRecentInternalMonologue(character.id)
+
+  return {
+    message: finalMessage,
+    toolsUsed,
+    memoryUpdated: true,
+    internalMonologue: internalMonologue || undefined,
+  }
+}
+
 export interface AgentResponse {
   message: string
   toolsUsed: string[]

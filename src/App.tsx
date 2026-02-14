@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useContext } from 'react'
-import { setActiveMysteryId } from './api/client'
+import { getApiBase, setActiveMysteryId } from './api/client'
 import { IntroSequence, CaseBoard, CharacterInterrogation } from './components/FMV'
 import { IntroVideo } from './components/VideoPlayer/IntroVideo'
 import { RoomExploration } from './components/FMV/RoomExploration'
@@ -228,7 +228,7 @@ function App() {
 
     try {
       // Use production API URL or fallback to localhost for dev
-      const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:3001/api`
+      const API_BASE = getApiBase()
       const res = await fetch(`${API_BASE}/mystery/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

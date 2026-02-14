@@ -1,7 +1,7 @@
 import type { Contradiction } from '../game/state'
 
 // Use VITE_API_URL for production (Vercel → Railway), otherwise auto-detect for local dev
-const getApiBase = () => {
+export const getApiBase = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
   // In production (Vercel), use relative /api path (Vercel rewrites to Railway)
   // In local dev, use localhost:3001
@@ -35,6 +35,17 @@ export interface PressureData {
   evidencePresented: number
   contradictionsExposed: number
 }
+
+export interface ChatStreamResponse extends ChatResponse {}
+
+export interface ChatRequestParams {
+  characterId: string
+  message: string
+  tactic?: 'alibi' | 'present_evidence' | 'cross_reference' | 'bluff' | null
+  evidenceId?: string | null
+  crossReferenceStatement?: { characterId: string; content: string } | null
+}
+
 
 export type EmotionalState = 'composed' | 'nervous' | 'defensive' | 'breaking' | 'relieved' | 'hostile'
 
@@ -128,10 +139,142 @@ export async function sendMessage(
   return response.json()
 }
 
-/**
- * Send a message and get video-first response (voice + video generation)
- * Returns immediately with voice audio, video generates in background
- */
+export async function resetConversation(characterId?: string): Promise<void> {
+  await fetch(`${API_BASE}/reset`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ characterId }),
+  })
+}
+
+
+export function chatStream(
+  params: ChatRequestParams,
+  onToken: (text: string) => void,
+  onDone: (response: ChatResponse) => void,
+  onError?: (error: unknown) => void
+): AbortController {
+  const controller = new AbortController()
+
+  // Generated mystery endpoints don't yet support streaming; fall back to normal chat
+  if (_activeMysteryId) {
+    sendMessage(
+      params.characterId,
+      params.message,
+      params.tactic,
+      params.evidenceId,
+      params.crossReferenceStatement
+    )
+      .then((response) => onDone(response))
+      .catch((err) => {
+        if (onError) {
+          onError(err)
+        }
+      })
+    return controller
+  }
+
+  const responsePromise = fetch(`${API_BASE}/chat/stream`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    signal: controller.signal,
+    body: JSON.stringify({
+      characterId: params.characterId,
+      message: params.message,
+      tactic: params.tactic,
+      evidenceId: params.evidenceId || undefined,
+      crossReferenceStatement: params.crossReferenceStatement || undefined,
+    }),
+  })
+
+  ;(async () => {
+    try {
+      const response = await responsePromise
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(errorText || response.statusText)
+      }
+      if (!response.body) {
+        throw new Error('No response stream available')
+      }
+
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let doneParsed = false
+
+      const parseBlock = (block: string) => {
+        const lines = block.split('\\n')
+        let eventName = 'message'
+        let data = ''
+
+        for (const line of lines) {
+          if (line.startsWith('event: ')) {
+            eventName = line.slice(7).trim()
+          } else if (line.startsWith('data: ')) {
+            data += line.slice(6)
+          }
+        }
+
+        if (!data) return
+
+        const payload = JSON.parse(data)
+
+        if (eventName === 'token' && payload && typeof payload.text === 'string') {
+          onToken(payload.text)
+        } else if (eventName === 'done') {
+          doneParsed = true
+          onDone(payload as ChatResponse)
+        } else if (eventName === 'error') {
+          doneParsed = true
+          throw new Error((payload as { error?: string }).error || 'Stream error')
+        }
+      }
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) {
+          break
+        }
+
+        buffer += decoder.decode(value, { stream: true })
+
+        let boundary = buffer.indexOf('\\n\\n')
+        while (boundary !== -1) {
+          parseBlock(buffer.slice(0, boundary))
+          buffer = buffer.slice(boundary + 2)
+          boundary = buffer.indexOf('\\n\\n')
+        }
+      }
+
+      if (!doneParsed && buffer.trim()) {
+        parseBlock(buffer.trim())
+      }
+
+      if (!doneParsed) {
+        throw new Error('Stream ended before completion')
+      }
+    } catch (error) {
+      if (onError) {
+        onError(error)
+      }
+    }
+  })()
+
+  return controller
+}
+
+
+// ============================================================
+// VIDEO GENERATION API
+// ============================================================
+
+
 export async function sendChatVideo(
   characterId: string,
   message: string,
@@ -147,20 +290,10 @@ export async function sendChatVideo(
 
   if (!response.ok) {
     const error = await response.json()
-    throw new Error(error.message || error.error || `API error: ${response.statusText}`)
+    throw new Error(error.message || error.error || `Video generation failed`)
   }
 
   return response.json()
-}
-
-export async function resetConversation(characterId?: string): Promise<void> {
-  await fetch(`${API_BASE}/reset`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ characterId }),
-  })
 }
 
 export async function healthCheck(): Promise<boolean> {
@@ -171,10 +304,6 @@ export async function healthCheck(): Promise<boolean> {
     return false
   }
 }
-
-// ============================================================
-// VIDEO GENERATION API
-// ============================================================
 
 export interface VideoGenerationResponse {
   success: boolean

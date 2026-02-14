@@ -27,6 +27,7 @@ import {
 } from './pressureSystem'
 import {
   processAgentMessage,
+  processAgentMessageStream,
   showEvidenceToCharacter,
   buildEnhancedSystemPrompt,
 } from './agents/characterAgent'
@@ -276,7 +277,7 @@ app.post('/api/chat', async (req, res) => {
       const evidenceData = EVIDENCE_DATABASE[evidenceId]
       tacticPrompt = `\n\nDETECTIVE TACTIC: The detective is showing you physical evidence: "${evidenceData?.name || 'evidence'}". React to seeing this evidence. If it implicates you, show fear/defensiveness. If it's irrelevant to you, show confusion or offer explanations. The detective is watching your reaction closely.`
     } else if (tactic === 'cross_reference') {
-      const otherCharName = characters.find(c => c.id === crossReferenceStatement?.characterId)?.name || 'another suspect'
+      const otherCharName = CHARACTERS.find((c) => c.id === crossReferenceStatement?.characterId)?.name || 'another suspect'
       tacticPrompt = `\n\nDETECTIVE TACTIC: The detective is confronting you with what ${otherCharName} said: "${crossReferenceStatement?.content}". This directly contradicts or challenges your story. You must either explain the discrepancy, admit to lying, or accuse the other person of lying. This is HIGH PRESSURE.`
     } else if (tactic === 'bluff') {
       tacticPrompt = `\n\nDETECTIVE TACTIC: The detective is BLUFFING - claiming to have evidence or knowledge they may not actually possess. If their bluff is close to the truth (something you actually did), you should show panic or slip up. If their bluff is completely wrong, you might become confident and call them out on it, or be confused. Evaluate how close their bluff is to reality.`
@@ -484,6 +485,338 @@ app.post('/api/chat', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate response', details: errorMessage })
   }
 })
+
+
+// Streaming chat endpoint - streams response text via SSE
+app.post('/api/chat/stream', async (req, res) => {
+  const startTime = Date.now()
+
+  // SSE setup
+  res.setHeader('Content-Type', 'text/event-stream')
+  res.setHeader('Cache-Control', 'no-cache')
+  res.setHeader('Connection', 'keep-alive')
+
+  const sendEvent = (eventName: string, payload: unknown) => {
+    res.write(`event: ${eventName}\n`)
+    res.write(`data: ${JSON.stringify(payload)}\n`)
+    res.write('\n')
+  }
+
+  sendEvent('start', {})
+
+  let doneSent = false
+
+  try {
+    const { characterId, message, evidenceId, tactic, crossReferenceStatement } = req.body
+
+    if (!characterId || !message) {
+      sendEvent('error', { error: 'Missing characterId or message' })
+      return res.end()
+    }
+
+    const character = CHARACTERS.find((c) => c.id === characterId)
+    if (!character) {
+      sendEvent('error', { error: 'Character not found' })
+      return res.end()
+    }
+
+    // Get or create conversation history for this character
+    if (!conversationHistory.has(characterId)) {
+      conversationHistory.set(characterId, [])
+    }
+    const history = conversationHistory.get(characterId)!
+
+    // Detect if this is the first question to this character
+    const isFirstQuestion = history.length === 0
+
+    // Track pressure from this confrontation with tactic-specific bonuses
+    let tacticPressureBonus = 0
+
+    // Apply tactic-specific pressure bonuses
+    switch (tactic) {
+      case 'alibi':
+        tacticPressureBonus = 5
+        break
+      case 'present_evidence':
+        tacticPressureBonus = 15
+        break
+      case 'cross_reference':
+        tacticPressureBonus = 20
+        break
+      case 'bluff':
+        // Bluff is risky - will be evaluated later based on how close to truth
+        tacticPressureBonus = 0 // Will be adjusted after AI response
+        break
+    }
+
+    recordConfrontation(characterId, message, tacticPressureBonus)
+
+    // If evidence was presented, track it
+    if (evidenceId) {
+      showEvidenceToCharacter(characterId, evidenceId, message)
+      recordPressureEvidence(characterId, evidenceId)
+    }
+
+    // Check for accusations in the message
+    const messageLower = message.toLowerCase()
+    if (messageLower.includes('you killed') || messageLower.includes('you murdered') ||
+        messageLower.includes("you're the killer") || messageLower.includes('you are guilty')) {
+      recordAccusation(characterId, message)
+    }
+
+    // Get current pressure state
+    const pressureState = getPressureState(characterId)
+    let pressureModifier = getPressurePromptModifier(pressureState.level, character.isGuilty)
+
+    // Build tactic-specific prompt modifiers
+    let tacticPrompt = ''
+    if (tactic === 'alibi') {
+      tacticPrompt = `
+
+DETECTIVE TACTIC: The detective is asking for detailed alibi information. Provide specific timeline details, locations, and who you were with. If you're guilty, you must construct a believable lie with specific details. If innocent but hiding something, be defensive but truthful about your location.`
+    } else if (tactic === 'present_evidence') {
+      const evidenceData = EVIDENCE_DATABASE[evidenceId]
+      tacticPrompt = `
+
+DETECTIVE TACTIC: The detective is showing you physical evidence: "${evidenceData?.name || 'evidence'}". React to seeing this evidence. If it implicates you, show fear/defensiveness. If it's irrelevant to you, show confusion or offer explanations. The detective is watching your reaction closely.`
+    } else if (tactic === 'cross_reference') {
+      const otherCharName = CHARACTERS.find(c => c.id === crossReferenceStatement?.characterId)?.name || 'another suspect'
+      tacticPrompt = `
+
+DETECTIVE TACTIC: The detective is confronting you with what ${otherCharName} said: "${crossReferenceStatement?.content}". This directly contradicts or challenges your story. You must either explain the discrepancy, admit to lying, or accuse the other person of lying. This is HIGH PRESSURE.`
+    } else if (tactic === 'bluff') {
+      tacticPrompt = `
+
+DETECTIVE TACTIC: The detective is BLUFFING - claiming to have evidence or knowledge they may not actually possess. If their bluff is close to the truth (something you actually did), you should show panic or slip up. If their bluff is completely wrong, you might become confident and call them out on it, or be confused. Evaluate how close their bluff is to reality.`
+    }
+
+    pressureModifier = pressureModifier + tacticPrompt
+
+    // Streamed AI response
+    let agentResponse
+    let isFallback = false
+    const streamedText: string[] = []
+
+    const onToken = (text: string) => {
+      streamedText.push(text)
+      sendEvent('token', { text })
+    }
+
+    try {
+      agentResponse = await withRetry(
+        async () => {
+          return await processAgentMessageStream(
+            anthropic,
+            character,
+            message,
+            history,
+            onToken,
+            pressureModifier
+          )
+        },
+        2,
+        isFirstQuestion ? 2000 : 1000 // Longer delay for first question
+      )
+    } catch (apiError) {
+      // All retries failed - use fallback response
+      console.error('[API FAILURE] All retries exhausted, using fallback:', apiError)
+      isFallback = true
+      agentResponse = {
+        message: `*${character.name} pauses, seemingly lost in thought*
+
+I... I need a moment to collect my thoughts. Perhaps you could ask me that again?`,
+        toolsUsed: [],
+      }
+
+      // Ensure fallback appears as a single streamed chunk if nothing streamed yet
+      if (streamedText.length === 0) {
+        const fallbackText = agentResponse.message
+        sendEvent('token', { text: fallbackText })
+      }
+    }
+
+    // Add messages to history (only if not a fallback)
+    if (!isFallback) {
+      history.push({ role: 'user', content: message })
+      history.push({ role: 'assistant', content: agentResponse.message })
+
+      // Keep history manageable (last 20 exchanges)
+      if (history.length > 40) {
+        history.splice(0, 2)
+      }
+    }
+
+    // Track this statement for contradiction detection (only if not fallback)
+    let statement
+    let newContradictions: DetectedContradiction[] = []
+
+    if (!isFallback) {
+      statement = addStatement(characterId, character.name, message, agentResponse.message)
+
+      // Check for contradictions with other characters' statements
+      try {
+        newContradictions = await checkForContradictions(anthropic, statement)
+
+        // Track contradictions for pressure system
+        newContradictions.forEach((contradiction) => {
+          recordContradiction(contradiction.statement1.characterId)
+          recordContradiction(contradiction.statement2.characterId)
+        })
+      } catch (contradictionError) {
+        console.error('Error checking contradictions:', contradictionError)
+      }
+    }
+
+    // Evaluate bluff effectiveness (if bluff tactic was used)
+    if (tactic === 'bluff' && !isFallback) {
+      // Simple heuristic: if the response shows panic/fear/defensiveness, the bluff was close to truth
+      const responseLower = agentResponse.message.toLowerCase()
+      const panicWords = ['what', 'how did you', "that's not", "you can't", 'impossible', 'where did', 'i swear', "i didn't", '*nervous', '*panic', '*sweat', '*pale']
+      const confidentWords = ['nonsense', 'ridiculous', 'absurd', 'wrong', 'lying', 'proof', 'show me', "don't have"]
+
+      const panicCount = panicWords.filter(w => responseLower.includes(w)).length
+      const confidentCount = confidentWords.filter(w => responseLower.includes(w)).length
+
+      if (panicCount > confidentCount) {
+        // Bluff was close to truth - add pressure
+        tacticPressureBonus = 10
+        console.log('[BLUFF] Effective! Adding +10 pressure')
+      } else {
+        // Bluff was obviously wrong - suspect gets cocky, reduce pressure
+        tacticPressureBonus = -5
+        console.log('[BLUFF] Failed! Reducing -5 pressure')
+      }
+
+      // Apply bluff pressure adjustment
+      recordConfrontation(characterId, message, tacticPressureBonus)
+    }
+
+    // Get updated pressure state after all tracking
+    const finalPressureState = getPressureState(characterId)
+
+    // Analyze emotional state for cinematic portrait selection (only if not fallback)
+    let emotionalState: Omit<StructuredCharacterResponse, 'dialogue'> | null = null
+    if (!isFallback) {
+      try {
+        const recentContext = history.slice(-6).map(h => `${h.role}: ${h.content}`).join('\\n')
+        emotionalState = await analyzeEmotionalState(
+          anthropic,
+          characterId,
+          character.isGuilty,
+          finalPressureState.level,
+          agentResponse.message,
+          message,
+          recentContext
+        )
+      } catch (emotionError) {
+        console.error('Error analyzing emotional state:', emotionError)
+      }
+    }
+
+    const responseTime = Date.now() - startTime
+    console.log(`[RESPONSE TIME] ${characterId}: ${responseTime}ms${isFallback ? ' (FALLBACK)' : ''} [STREAM]`)
+
+    // Detect cinematic moments and trigger video generation
+    let cinematicMoment = false
+    let videoGenerationId: string | undefined
+
+    if (!isFallback) {
+      try {
+        const { detectCinematicMoment, shouldGenerateVideo } = await import('./video/cinematicDetection')
+        const { analyzeTestimony, buildVideoPrompt } = await import('./video/promptBuilder')
+        const { generateVideo } = await import('./video/veoClient')
+
+        const detection = detectCinematicMoment(
+          characterId,
+          agentResponse.message,
+          message,
+          pressureState.level, // Previous pressure
+          finalPressureState.level, // Current pressure
+          newContradictions.length > 0,
+          history.length / 2 // Approximate message count
+        )
+
+        console.log(`[CINEMATIC DETECTION] ${characterId}: ${detection.confidence}% - ${detection.reason || 'Not cinematic'}`)
+
+        if (shouldGenerateVideo(detection)) {
+          cinematicMoment = true
+
+          try {
+            // Analyze testimony for video prompt
+            const analysis = await analyzeTestimony(
+              anthropic,
+              agentResponse.message,
+              characterId,
+              message
+            )
+
+            // Build video prompt
+            const videoPrompt = buildVideoPrompt(analysis, characterId, false)
+
+            // Generate video in background (non-blocking)
+            const videoResult = await generateVideo({
+              prompt: videoPrompt.fullPrompt,
+              characterId,
+              testimonyId: statement?.id || `streaming-${Date.now()}`,
+              duration: 5,
+              aspectRatio: '16:9',
+            })
+
+            if (videoResult.success || videoResult.generationId) {
+              videoGenerationId = videoResult.generationId
+              console.log(`[CINEMATIC VIDEO] Started generation: ${videoGenerationId}`)
+            }
+          } catch (videoError) {
+            console.error('[CINEMATIC VIDEO] Generation failed:', videoError)
+            // Non-critical - continue without video
+          }
+        }
+      } catch (cinematicError) {
+        console.error('[CINEMATIC DETECTION ERROR]', cinematicError)
+      }
+    }
+
+    const donePayload = {
+      message: agentResponse.message,
+      characterName: character.name,
+      statementId: statement?.id,
+      contradictions: newContradictions,
+      toolsUsed: agentResponse.toolsUsed,
+      isFallback, // NEW: Flag to indicate this is a fallback response
+      pressure: {
+        level: finalPressureState.level,
+        confrontations: finalPressureState.confrontations,
+        evidencePresented: finalPressureState.evidencePresented.length,
+        contradictionsExposed: finalPressureState.contradictionsExposed,
+      },
+      // Cinematic: emotional state for portrait selection
+      emotion: emotionalState ? {
+        primary: emotionalState.emotion.primary,
+        intensity: emotionalState.emotion.intensity,
+        tells: emotionalState.emotion.tells,
+        voice: emotionalState.voice,
+        observableHint: emotionalState.observableHint,
+      } : null,
+      // Cinematic video generation
+      cinematicMoment,
+      videoGenerationId,
+    }
+
+    doneSent = true
+    sendEvent('done', donePayload)
+    res.end()
+  } catch (error) {
+    console.error('Error generating streamed response:', error)
+    if (!doneSent) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      try {
+        sendEvent('error', { error: 'Failed to generate response', details: errorMessage })
+      } catch {}
+      res.end()
+    }
+  }
+})
+
 
 // Get all characters endpoint
 app.get('/api/characters', (_req, res) => {
