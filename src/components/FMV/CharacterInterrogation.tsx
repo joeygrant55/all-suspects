@@ -560,6 +560,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   }
   
   const suggestedQuestions = getSuggestedQuestions()
+  const mobileSuggestedQuestions = suggestedQuestions.slice(0, 2)
 
   if (!character) {
     return null
@@ -658,19 +659,31 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       </motion.button>
 
       {/* Main layout */}
-      <div className="h-full flex flex-col pt-12 pb-12">
-        {/* Character portrait section - more compact */}
-        <div className="flex-shrink-0 flex items-center justify-center py-4 border-b border-noir-slate/30">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full px-3 sm:px-0">
-            <div className="relative">
-              <CharacterPortrait
-                characterId={character.id}
-                name={character.name}
-                role={character.role}
-                size="medium"
-                isActive={true}
-                mood={getMoodFromPressure(rawPressure)}
-              />
+      <div className="h-[100dvh] flex flex-col pt-12 md:pb-0 pb-12">
+        {/* Character portrait section - mobile compact, desktop expanded */}
+        <div className="flex-shrink-0 flex items-center justify-center pt-3 pb-4 border-b border-noir-slate/30">
+          <div className="flex w-full px-3 items-center gap-3 md:gap-4">
+            <div className="relative shrink-0">
+              <div className="sm:hidden">
+                <CharacterPortrait
+                  characterId={character.id}
+                  name={character.name}
+                  role={character.role}
+                  size="small"
+                  isActive={true}
+                  mood={getMoodFromPressure(rawPressure)}
+                />
+              </div>
+              <div className="hidden sm:block">
+                <CharacterPortrait
+                  characterId={character.id}
+                  name={character.name}
+                  role={character.role}
+                  size="medium"
+                  isActive={true}
+                  mood={getMoodFromPressure(rawPressure)}
+                />
+              </div>
               {/* Voice playing indicator */}
               {isPlaying && (
                 <motion.div
@@ -684,77 +697,142 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
             </div>
 
             {/* Character info and emotional state */}
-            <div className="text-left max-w-full">
-              <h2 className="text-noir-cream font-serif text-xl">{character.name}</h2>
-              <p className="text-noir-smoke text-sm italic">{character.role}</p>
-              
-              {/* Pressure meter - Enhanced with colors and animation */}
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-noir-smoke text-xs">Pressure:</span>
-                <motion.div 
-                  className="flex gap-0.5"
-                  animate={pressureIncreased ? { scale: [1, 1.15, 1] } : {}}
-                  transition={{ duration: 0.4 }}
-                >
-                  {[1, 2, 3, 4, 5].map((level) => {
-                    const isActive = level <= psychology.pressureLevel
-                    
-                    // Color gradient based on pressure level
-                    let barColor = 'bg-noir-slate'
-                    if (isActive) {
-                      if (psychology.pressureLevel === 1) {
-                        barColor = 'bg-green-500' // Low pressure - green
-                      } else if (psychology.pressureLevel === 2) {
-                        barColor = level <= 2 ? 'bg-yellow-400' : 'bg-noir-slate' // Medium - yellow
-                      } else if (psychology.pressureLevel === 3) {
-                        barColor = level <= 3 ? 'bg-orange-500' : 'bg-noir-slate' // High - orange
-                      } else if (psychology.pressureLevel >= 4) {
-                        barColor = level <= psychology.pressureLevel ? 'bg-red-600' : 'bg-noir-slate' // Critical - red
-                      }
-                    }
-                    
-                    return (
-                      <motion.div
-                        key={level}
-                        className={`w-3 h-4 ${barColor} ${
-                          isActive ? 'shadow-sm' : ''
-                        }`}
-                        animate={
-                          pressureIncreased && isActive
-                            ? {
-                                opacity: [0.7, 1, 0.7, 1],
-                                boxShadow: [
-                                  '0 0 0px rgba(255,255,255,0)',
-                                  '0 0 8px rgba(255,255,255,0.6)',
-                                  '0 0 0px rgba(255,255,255,0)',
-                                ],
-                              }
-                            : {}
-                        }
-                        transition={{ duration: 0.6 }}
-                      />
-                    )
-                  })}
-                </motion.div>
-                {/* Pressure level indicator */}
-                <span className={`text-xs font-semibold ${
+            <div className="min-w-0 flex-1">
+              <div className="sm:hidden">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-noir-cream font-serif text-base truncate">{character.name}</h2>
+                  <span className="text-noir-smoke text-xs">|</span>
+                  <span className="text-noir-smoke text-xs italic truncate">{character.role}</span>
+                  <span className={`text-xs font-semibold shrink-0 ${
                   psychology.pressureLevel === 1 ? 'text-green-400' :
                   psychology.pressureLevel === 2 ? 'text-yellow-300' :
                   psychology.pressureLevel === 3 ? 'text-orange-400' :
                   'text-red-500'
                 }`}>
-                  {psychology.pressureLevel === 1 && 'Calm'}
-                  {psychology.pressureLevel === 2 && 'Uneasy'}
-                  {psychology.pressureLevel === 3 && 'Stressed'}
-                  {psychology.pressureLevel === 4 && 'Rattled'}
-                  {psychology.pressureLevel === 5 && 'Breaking'}
-                </span>
+                    {psychology.pressureLevel === 1 && 'Calm'}
+                    {psychology.pressureLevel === 2 && 'Uneasy'}
+                    {psychology.pressureLevel === 3 && 'Stressed'}
+                    {psychology.pressureLevel === 4 && 'Rattled'}
+                    {psychology.pressureLevel === 5 && 'Breaking'}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center gap-1.5">
+                  <motion.div 
+                    className="flex gap-0.5"
+                    animate={pressureIncreased ? { scale: [1, 1.15, 1] } : {}}
+                    transition={{ duration: 0.4 }}
+                  >
+                    {[1, 2, 3, 4, 5].map((level) => {
+                      const isActive = level <= psychology.pressureLevel
+                      let barColor = 'bg-noir-slate'
+                      if (isActive) {
+                        if (psychology.pressureLevel === 1) {
+                          barColor = 'bg-green-500'
+                        } else if (psychology.pressureLevel === 2) {
+                          barColor = level <= 2 ? 'bg-yellow-400' : 'bg-noir-slate'
+                        } else if (psychology.pressureLevel === 3) {
+                          barColor = level <= 3 ? 'bg-orange-500' : 'bg-noir-slate'
+                        } else if (psychology.pressureLevel >= 4) {
+                          barColor = level <= psychology.pressureLevel ? 'bg-red-600' : 'bg-noir-slate'
+                        }
+                      }
+
+                      return (
+                        <motion.div
+                          key={level}
+                          className={`w-2 h-3 ${barColor} ${
+                            isActive ? 'shadow-sm' : ''
+                          }`}
+                          animate={
+                            pressureIncreased && isActive
+                              ? {
+                                  opacity: [0.7, 1, 0.7, 1],
+                                  boxShadow: [
+                                    '0 0 0px rgba(255,255,255,0)',
+                                    '0 0 8px rgba(255,255,255,0.6)',
+                                    '0 0 0px rgba(255,255,255,0)',
+                                  ],
+                                }
+                              : {}
+                          }
+                          transition={{ duration: 0.6 }}
+                        />
+                      )
+                    })}
+                  </motion.div>
+                </div>
               </div>
-              {psychology.isLying && (
-                <p className="text-xs text-noir-blood mt-1 italic">
-                  Something feels off...
-                </p>
-              )}
+
+              <div className="hidden sm:block">
+                <h2 className="text-noir-cream font-serif text-xl">{character.name}</h2>
+                <p className="text-noir-smoke text-sm italic">{character.role}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-noir-smoke text-xs">Pressure:</span>
+                  <motion.div 
+                    className="flex gap-0.5"
+                    animate={pressureIncreased ? { scale: [1, 1.15, 1] } : {}}
+                    transition={{ duration: 0.4 }}
+                  >
+                    {[1, 2, 3, 4, 5].map((level) => {
+                      const isActive = level <= psychology.pressureLevel
+
+                      // Color gradient based on pressure level
+                      let barColor = 'bg-noir-slate'
+                      if (isActive) {
+                        if (psychology.pressureLevel === 1) {
+                          barColor = 'bg-green-500' // Low pressure - green
+                        } else if (psychology.pressureLevel === 2) {
+                          barColor = level <= 2 ? 'bg-yellow-400' : 'bg-noir-slate' // Medium - yellow
+                        } else if (psychology.pressureLevel === 3) {
+                          barColor = level <= 3 ? 'bg-orange-500' : 'bg-noir-slate' // High - orange
+                        } else if (psychology.pressureLevel >= 4) {
+                          barColor = level <= psychology.pressureLevel ? 'bg-red-600' : 'bg-noir-slate' // Critical - red
+                        }
+                      }
+
+                      return (
+                        <motion.div
+                          key={level}
+                          className={`w-3 h-4 ${barColor} ${
+                            isActive ? 'shadow-sm' : ''
+                          }`}
+                          animate={
+                            pressureIncreased && isActive
+                              ? {
+                                  opacity: [0.7, 1, 0.7, 1],
+                                  boxShadow: [
+                                    '0 0 0px rgba(255,255,255,0)',
+                                    '0 0 8px rgba(255,255,255,0.6)',
+                                    '0 0 0px rgba(255,255,255,0)',
+                                  ],
+                                }
+                              : {}
+                          }
+                          transition={{ duration: 0.6 }}
+                        />
+                      )
+                    })}
+                  </motion.div>
+                  {/* Pressure level indicator */}
+                  <span className={`text-xs font-semibold ${
+                    psychology.pressureLevel === 1 ? 'text-green-400' :
+                    psychology.pressureLevel === 2 ? 'text-yellow-300' :
+                    psychology.pressureLevel === 3 ? 'text-orange-400' :
+                    'text-red-500'
+                  }`}>
+                    {psychology.pressureLevel === 1 && 'Calm'}
+                    {psychology.pressureLevel === 2 && 'Uneasy'}
+                    {psychology.pressureLevel === 3 && 'Stressed'}
+                    {psychology.pressureLevel === 4 && 'Rattled'}
+                    {psychology.pressureLevel === 5 && 'Breaking'}
+                  </span>
+                </div>
+                {psychology.isLying && (
+                  <p className="text-xs text-noir-blood mt-1 italic">
+                    Something feels off...
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -762,7 +840,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
         {/* Conversation area - scrollable */}
         <div 
           ref={conversationRef}
-          className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 space-y-4 scroll-smooth"
+          className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 space-y-4 scroll-smooth pb-72 md:pb-4"
           style={{ scrollBehavior: 'smooth' }}
         >
           <AnimatePresence>
@@ -853,9 +931,9 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
         )}
 
         {/* Input area */}
-        <div className="flex-shrink-0 px-8 pb-6 space-y-4">
+        <div className="fixed inset-x-0 bottom-12 z-20 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-2 space-y-2 bg-noir-black/95 backdrop-blur border-t border-noir-slate/30 max-h-[58vh] overflow-y-auto md:static md:z-auto md:px-8 md:pb-6 md:pt-0 md:space-y-4 md:bg-transparent md:border-0 md:backdrop-blur-none">
           {/* Interrogation Tactics Bar */}
-          <div className="flex gap-3 justify-center max-w-4xl mx-auto">
+          <div className="md:flex-row flex flex-nowrap gap-2 justify-center md:justify-center max-w-4xl mx-auto md:gap-3">
             {/* Ask About Alibi */}
             <motion.button
               onClick={() => {
@@ -863,7 +941,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 setInputValue('Where were you at the time of the murder? Give me specific details about your movements.')
               }}
               disabled={isTyping}
-              className={`w-full px-3 sm:px-4 py-3 border-2 transition-all ${
+              className={`w-[23%] min-w-[60px] px-2 py-2 rounded border transition-all ${
                 activeTactic === 'alibi'
                   ? 'bg-blue-500/20 border-blue-500 text-blue-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-blue-500/50 text-noir-smoke hover:text-blue-300'
@@ -872,9 +950,9 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               whileTap={!isTyping ? { scale: 0.98 } : {}}
               title="Ask for detailed timeline and movements (+5 pressure)"
             >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-lg sm:text-xl">🕐</span>
-                <span className="text-[11px] sm:text-xs font-serif">Alibi</span>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-base sm:text-xl">🕐</span>
+                <span className="text-[10px] leading-tight text-center sm:text-xs font-serif">Alibi</span>
               </div>
             </motion.button>
 
@@ -889,7 +967,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 setShowStatementPicker(false)
               }}
               disabled={isTyping || collectedEvidence.length === 0}
-              className={`w-full px-3 sm:px-4 py-3 border-2 transition-all ${
+              className={`w-[23%] min-w-[60px] px-2 py-2 rounded border transition-all ${
                 showEvidencePicker
                   ? 'bg-amber-500/20 border-amber-500 text-amber-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-amber-500/50 text-noir-smoke hover:text-amber-300'
@@ -898,9 +976,9 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               whileTap={!isTyping && collectedEvidence.length > 0 ? { scale: 0.98 } : {}}
               title="Show collected evidence to the suspect (+15 pressure)"
             >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-xl">📋</span>
-                <span className="text-xs font-serif">Present</span>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-base sm:text-xl">📋</span>
+                <span className="text-[10px] leading-tight text-center sm:text-xs font-serif">Present</span>
               </div>
             </motion.button>
 
@@ -915,7 +993,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 setShowEvidencePicker(false)
               }}
               disabled={isTyping || messages.filter(m => m.role === 'character' && m.characterId !== characterId).length === 0}
-              className={`w-full px-3 sm:px-4 py-3 border-2 transition-all ${
+              className={`w-[23%] min-w-[60px] px-2 py-2 rounded border transition-all ${
                 showStatementPicker
                   ? 'bg-orange-500/20 border-orange-500 text-orange-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-orange-500/50 text-noir-smoke hover:text-orange-300'
@@ -924,9 +1002,9 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               whileTap={!isTyping && messages.filter(m => m.role === 'character' && m.characterId !== characterId).length > 0 ? { scale: 0.98 } : {}}
               title="Confront with another suspect's testimony (+20 pressure)"
             >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-xl">🔄</span>
-                <span className="text-xs font-serif">Cross-Ref</span>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-base sm:text-xl">🔄</span>
+                <span className="text-[10px] leading-tight text-center sm:text-xs font-serif">Cross-Ref</span>
               </div>
             </motion.button>
 
@@ -937,7 +1015,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 setInputValue('We have evidence that proves you were involved. Want to explain yourself?')
               }}
               disabled={isTyping}
-              className={`w-full px-3 sm:px-4 py-3 border-2 transition-all ${
+              className={`w-[23%] min-w-[60px] px-2 py-2 rounded border transition-all ${
                 activeTactic === 'bluff'
                   ? 'bg-red-500/20 border-red-500 text-red-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-red-500/50 text-noir-smoke hover:text-red-300'
@@ -946,9 +1024,9 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               whileTap={!isTyping ? { scale: 0.98 } : {}}
               title="Lie to provoke a reaction (risky: +10 if close to truth, -5 if wrong)"
             >
-              <div className="flex flex-col items-center gap-1">
-                <span className="text-xl">🃏</span>
-                <span className="text-xs font-serif">Bluff</span>
+              <div className="flex flex-col items-center gap-0.5">
+                <span className="text-base sm:text-xl">🃏</span>
+                <span className="text-[10px] leading-tight text-center sm:text-xs font-serif">Bluff</span>
               </div>
             </motion.button>
           </div>
@@ -1033,19 +1111,36 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
 
           {/* Suggested questions */}
           {conversationMessages.length === 0 && (
-            <div className="flex flex-wrap gap-2 justify-center px-1">
-              {suggestedQuestions.map((question) => (
-                <motion.button
-                  key={question}
-                  onClick={() => setInputValue(question)}
-                  className="px-4 py-2 bg-noir-charcoal/50 border border-noir-slate/50 hover:border-noir-gold/50 text-noir-smoke hover:text-noir-cream text-sm transition-colors"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {question}
-                </motion.button>
-              ))}
-            </div>
+            <>
+              <div className="sm:hidden">
+                <div className="flex gap-2 overflow-x-auto pb-1">
+                  {mobileSuggestedQuestions.map((question) => (
+                    <motion.button
+                      key={question}
+                      onClick={() => setInputValue(question)}
+                      className="px-3 py-2 rounded bg-noir-charcoal/50 border border-noir-slate/50 hover:border-noir-gold/50 text-noir-smoke hover:text-noir-cream text-xs whitespace-nowrap transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {question}
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+              <div className="hidden sm:flex flex-wrap gap-2 justify-center px-1">
+                {suggestedQuestions.map((question) => (
+                  <motion.button
+                    key={question}
+                    onClick={() => setInputValue(question)}
+                    className="px-4 py-2 bg-noir-charcoal/50 border border-noir-slate/50 hover:border-noir-gold/50 text-noir-smoke hover:text-noir-cream text-sm transition-colors"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {question}
+                  </motion.button>
+                ))}
+              </div>
+            </>
           )}
 
           {/* Active Tactic Indicator */}
@@ -1091,20 +1186,20 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
           )}
 
           {/* Input field */}
-          <div className="flex gap-3 sm:gap-4 max-w-4xl mx-auto">
+          <div className="flex gap-2 sm:gap-4 max-w-4xl mx-auto">
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask a question..."
-              className="flex-1 min-w-0 px-4 sm:px-6 py-3 sm:py-4 bg-noir-charcoal/50 border-2 border-noir-slate/50 focus:border-noir-gold/50 text-noir-cream placeholder-noir-smoke outline-none transition-colors font-serif text-sm"
+              className="flex-1 min-w-0 px-3 sm:px-6 py-3 sm:py-4 bg-noir-charcoal/50 border-2 border-noir-slate/50 focus:border-noir-gold/50 text-noir-cream placeholder-noir-smoke outline-none transition-colors font-serif text-sm"
               style={{ fontFamily: 'var(--font-serif)' }}
             />
             <motion.button
               onClick={() => handleSendMessage()}
               disabled={!inputValue.trim() || isTyping}
-              className="px-4 sm:px-6 py-3 sm:py-4 bg-noir-gold/20 border-2 border-noir-gold/50 text-noir-gold hover:bg-noir-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-serif"
+              className="px-3 sm:px-6 py-3 sm:py-4 bg-noir-gold/20 border-2 border-noir-gold/50 text-noir-gold hover:bg-noir-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-serif"
               whileHover={inputValue.trim() && !isTyping ? { scale: 1.05 } : {}}
               whileTap={inputValue.trim() && !isTyping ? { scale: 0.95 } : {}}
             >
