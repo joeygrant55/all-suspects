@@ -214,7 +214,7 @@ export function chatStream(
       let doneParsed = false
 
       const parseBlock = (block: string) => {
-        const lines = block.split('\\n')
+        const lines = block.split('\n')
         let eventName = 'message'
         let data = ''
 
@@ -249,11 +249,11 @@ export function chatStream(
 
         buffer += decoder.decode(value, { stream: true })
 
-        let boundary = buffer.indexOf('\\n\\n')
+        let boundary = buffer.indexOf('\n\n')
         while (boundary !== -1) {
           parseBlock(buffer.slice(0, boundary))
           buffer = buffer.slice(boundary + 2)
-          boundary = buffer.indexOf('\\n\\n')
+          boundary = buffer.indexOf('\n\n')
         }
       }
 
