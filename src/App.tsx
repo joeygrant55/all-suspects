@@ -16,6 +16,7 @@ import {
   useEvidenceNotification,
   Paywall,
   UpgradeSuccess,
+  LandingPage,
 } from './components/UI'
 import { useSubscriptionStore } from './game/subscriptionState'
 import { createCheckoutSession } from './api/client'
@@ -45,6 +46,7 @@ function App() {
     resetGame,
   } = useGameStore()
 
+  const [showLanding, setShowLanding] = useState(true)
   const [mysterySelectOpen, setMysterySelectOpen] = useState(false)
   const [creatorOpen, setCreatorOpen] = useState(false)
   const [loadingMysteryId, setLoadingMysteryId] = useState<string | null>(null)
@@ -105,6 +107,10 @@ function App() {
       console.error('Failed to create checkout session:', error)
       alert('Unable to start checkout. Please try again.')
     }
+  }
+
+  const handleStartInvestigation = () => {
+    setShowLanding(false)
   }
 
   // Check if user can start a new mystery (with paywall gate)
@@ -291,6 +297,16 @@ function App() {
     } catch (err) {
       console.error('Failed to enter mystery:', err)
     }
+  }
+
+  if (showLanding) {
+    return (
+      <AudioContext.Provider value={audioManager}>
+        <VoiceContext.Provider value={voiceManager}>
+          <LandingPage onStartInvestigation={handleStartInvestigation} />
+        </VoiceContext.Provider>
+      </AudioContext.Provider>
+    )
   }
 
   // Title screen and mystery selection
