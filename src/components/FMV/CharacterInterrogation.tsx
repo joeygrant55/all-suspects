@@ -570,7 +570,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     <div className="fixed inset-0 bg-noir-black z-50">
       {/* Interrogation room atmospheric background */}
       <div 
-        className="absolute inset-0 pointer-events-none"
+        className="absolute inset-0 pointer-events-none hidden md:block"
         style={{
           backgroundImage: 'url(/ui/interrogation-bg.png)',
           backgroundSize: 'cover',
