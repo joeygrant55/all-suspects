@@ -176,7 +176,12 @@ export function chatStream(
     return controller
   }
 
-  const responsePromise = fetch(`${API_BASE}/chat/stream`, {
+  // Stream directly to Railway to avoid Vercel's 10s proxy timeout
+  const streamBase = import.meta.env.DEV 
+    ? 'http://localhost:3001/api' 
+    : 'https://all-suspects-production.up.railway.app/api'
+  
+  const responsePromise = fetch(`${streamBase}/chat/stream`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
