@@ -63,7 +63,7 @@ export function ChatModal() {
     healthCheck().then(setApiConnected)
   }, [])
 
-  // Show greeting when starting conversation
+  // Show greeting when conversation starts
   useEffect(() => {
     if (currentConversation && !hasShownGreeting.has(currentConversation)) {
       const greeting = CHARACTER_GREETINGS[currentConversation]
@@ -154,7 +154,7 @@ export function ChatModal() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 md:p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-noir-black/80 backdrop-blur-sm"
@@ -162,32 +162,32 @@ export function ChatModal() {
       />
 
       {/* Modal */}
-      <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col bg-noir-charcoal border border-noir-slate/50 rounded-lg shadow-2xl overflow-hidden">
+      <div className="relative w-full h-full md:w-full md:max-w-2xl md:max-h-[85vh] md:h-auto md:min-h-0 flex flex-col bg-noir-charcoal border border-noir-slate/50 rounded-none md:rounded-lg shadow-2xl overflow-hidden">
         {/* Decorative top border */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-noir-gold to-transparent" />
 
         {/* Header */}
-        <div className="relative px-6 py-4 border-b border-noir-slate/30 bg-noir-black/50">
+        <div className="relative px-4 sm:px-6 py-4 border-b border-noir-slate/30 bg-noir-black/50">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               {/* Character portrait placeholder */}
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-noir-slate to-noir-charcoal flex items-center justify-center border-2 border-noir-gold/40 shadow-lg">
-                <span className="text-xl font-serif text-noir-gold">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-br from-noir-slate to-noir-charcoal flex items-center justify-center border-2 border-noir-gold/40 shadow-lg">
+                <span className="text-lg sm:text-xl font-serif text-noir-gold">
                   {currentCharacter.name.split(' ').map(n => n[0]).join('')}
                 </span>
               </div>
               <div>
-                <h2 className="text-noir-gold font-serif text-xl">{currentCharacter.name}</h2>
+                <h2 className="text-noir-gold font-serif text-lg sm:text-xl">{currentCharacter.name}</h2>
                 <p className="text-noir-smoke text-sm">{currentCharacter.role}</p>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               {/* Pressure meter */}
               {currentCharacter.pressure && currentCharacter.pressure.level > 0 && (
-                <div className="text-right">
+                <div className="text-right hidden sm:block">
                   <p className="text-[10px] text-noir-smoke uppercase tracking-wider mb-1">Pressure</p>
-                  <div className="w-24 h-2 bg-noir-slate/50 rounded-full overflow-hidden">
+                  <div className="w-20 h-2 bg-noir-slate/50 rounded-full overflow-hidden">
                     <div
                       className={`h-full transition-all duration-500 ${
                         currentCharacter.pressure.level >= 80 ? 'bg-noir-blood animate-pulse' :
@@ -204,6 +204,7 @@ export function ChatModal() {
               <button
                 onClick={handleClose}
                 className="w-8 h-8 flex items-center justify-center text-noir-smoke hover:text-noir-gold hover:bg-noir-slate/50 rounded transition-all"
+                aria-label="Close chat"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -223,7 +224,7 @@ export function ChatModal() {
 
         {/* Contradiction alert */}
         {newContradiction && (
-          <div className="px-6 py-3 bg-noir-blood/20 border-b border-noir-blood/30">
+          <div className="px-4 sm:px-6 py-3 bg-noir-blood/20 border-b border-noir-blood/30">
             <div className="flex items-start gap-3">
               <span className="text-noir-blood text-lg">⚠</span>
               <div className="flex-1">
@@ -236,24 +237,22 @@ export function ChatModal() {
         )}
 
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-[300px]">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
           {conversationMessages.map((message) => (
             <div
               key={message.id}
               className={message.role === 'player' ? 'flex justify-end' : ''}
             >
               {message.role === 'player' ? (
-                <div className="max-w-[80%]">
+                <div className="max-w-[82%]">
                   <div className="px-4 py-3 bg-noir-gold/15 border border-noir-gold/30 rounded-2xl rounded-br-md">
                     <p className="text-sm text-noir-cream">{message.content}</p>
                   </div>
                 </div>
               ) : (
-                <div className="max-w-[85%]">
+                <div className="max-w-[84%]">
                   <div className="px-4 py-3 bg-noir-slate/30 border border-noir-slate/40 rounded-2xl rounded-bl-md">
-                    <p className="text-sm text-noir-cream whitespace-pre-wrap leading-relaxed">
-                      {message.content}
-                    </p>
+                    <p className="text-sm text-noir-cream whitespace-pre-wrap leading-relaxed">{message.content}</p>
                   </div>
                 </div>
               )}
@@ -261,7 +260,7 @@ export function ChatModal() {
           ))}
 
           {isLoading && (
-            <div className="max-w-[80%]">
+            <div className="max-w-[82%]">
               <div className="px-4 py-3 bg-noir-slate/30 border border-noir-slate/40 rounded-2xl rounded-bl-md">
                 <div className="flex items-center gap-3 text-noir-ash">
                   <div className="flex gap-1">
@@ -279,7 +278,7 @@ export function ChatModal() {
 
         {/* Suggested questions */}
         {suggestedQuestions.length > 0 && !isLoading && conversationMessages.length <= 2 && (
-          <div className="px-6 py-3 border-t border-noir-slate/20 bg-noir-black/30">
+          <div className="px-4 sm:px-6 py-3 border-t border-noir-slate/20 bg-noir-black/30">
             <p className="text-[10px] text-noir-smoke uppercase tracking-wider mb-2">Ask about...</p>
             <div className="flex flex-wrap gap-2">
               {suggestedQuestions.map((question, i) => (

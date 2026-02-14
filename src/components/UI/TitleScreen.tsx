@@ -10,19 +10,16 @@ export function TitleScreen({ onNewGame }: TitleScreenProps) {
   const audioManager = useContext(AudioContext)
 
   const handleStart = () => {
-    // Initialize audio on user interaction (required by browsers)
     audioManager?.initializeAudio()
-    audioManager?.toggleMusic() // Enable music (starts disabled due to autoplay policy)
+    audioManager?.toggleMusic()
     audioManager?.playSfx('click')
-    // Show mystery selection screen
     if (onNewGame) {
       onNewGame()
     }
   }
 
   return (
-    <div className="h-screen w-screen bg-noir-black flex flex-col items-center justify-center relative overflow-hidden">
-      {/* Background image */}
+    <div className="h-screen w-screen bg-noir-black flex flex-col items-center justify-center relative overflow-hidden px-4">
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -32,13 +29,8 @@ export function TitleScreen({ onNewGame }: TitleScreenProps) {
           opacity: 0.4,
         }}
       />
-      {/* Dark overlay for readability */}
       <div className="absolute inset-0 bg-noir-black/60 pointer-events-none" />
-
-      {/* Film grain */}
       <div className="absolute inset-0 film-grain pointer-events-none" />
-
-      {/* Vignette overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -46,8 +38,6 @@ export function TitleScreen({ onNewGame }: TitleScreenProps) {
             'radial-gradient(ellipse at center, transparent 0%, transparent 40%, rgba(0,0,0,0.8) 100%)',
         }}
       />
-
-      {/* Fog effect */}
       <div
         className="absolute inset-0 pointer-events-none opacity-20"
         style={{
@@ -57,70 +47,63 @@ export function TitleScreen({ onNewGame }: TitleScreenProps) {
         }}
       />
 
-      {/* Title */}
-      <div className="relative z-10 text-center">
+      <div className="relative z-10 text-center max-w-[90%]">
         <h1
-          className="text-7xl md:text-8xl font-bold tracking-[0.25em] mb-2"
+          className="text-4xl sm:text-7xl md:text-8xl font-bold tracking-[0.2em] sm:tracking-[0.25em] mb-2"
           style={{
             fontFamily: 'Georgia, "Playfair Display", serif',
             color: '#c9a227',
             textShadow: '0 0 40px rgba(201, 162, 39, 0.5), 0 0 80px rgba(201, 162, 39, 0.3), 0 2px 4px rgba(0,0,0,0.8)',
-            letterSpacing: '0.25em',
+            letterSpacing: '0.2em',
           }}
         >
           ALL SUSPECTS
         </h1>
         <div
-          className="text-noir-cream/70 text-base md:text-lg tracking-[0.2em] italic mb-4"
+          className="text-noir-cream/70 text-sm sm:text-base md:text-lg tracking-[0.14em] sm:tracking-[0.2em] italic mb-4"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           Everyone has a secret. Nobody is innocent.
         </div>
         <div
-          className="text-noir-cream text-xl tracking-[0.3em] mb-12"
+          className="text-noir-cream text-base sm:text-xl tracking-[0.2em] sm:tracking-[0.3em] mb-10 sm:mb-12"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           A MURDER MYSTERY
         </div>
 
-        {/* Decorative line */}
-        <div className="flex items-center justify-center gap-4 mb-12">
-          <div className="h-px w-24 bg-gradient-to-r from-transparent to-noir-gold" />
+        <div className="flex items-center justify-center gap-4 mb-10 sm:mb-12">
+          <div className="h-px w-16 sm:w-24 bg-gradient-to-r from-transparent to-noir-gold" />
           <div className="w-2 h-2 rotate-45 bg-noir-gold" />
-          <div className="h-px w-24 bg-gradient-to-l from-transparent to-noir-gold" />
+          <div className="h-px w-16 sm:w-24 bg-gradient-to-l from-transparent to-noir-gold" />
         </div>
 
-        {/* Start button */}
         <button
           onClick={handleStart}
-          className="group relative px-12 py-4 border-2 border-noir-gold text-noir-gold text-lg tracking-widest transition-all duration-300 hover:bg-noir-gold hover:text-noir-black"
+          className="group relative w-full sm:w-auto px-6 sm:px-12 py-4 border-2 border-noir-gold text-noir-gold text-base sm:text-lg tracking-[0.12em] sm:tracking-widest transition-all duration-300 hover:bg-noir-gold hover:text-noir-black"
           style={{ fontFamily: 'Georgia, serif' }}
         >
           BEGIN INVESTIGATION
           <span className="absolute inset-0 bg-noir-gold opacity-0 group-hover:opacity-10 transition-opacity" />
         </button>
 
-        {/* Subtitle */}
-        <p className="text-noir-slate text-sm mt-16 tracking-wide">
+        <p className="text-noir-slate text-xs sm:text-sm mt-10 sm:mt-16 tracking-wide">
           New Year's Eve, 1929 — Ashford Manor
         </p>
       </div>
 
-      {/* Subscription badge */}
-      <div className="absolute top-6 right-6 z-20">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
         <FreeTierBadge />
       </div>
 
-      {/* Bottom attribution */}
-      <div className="absolute bottom-6 text-noir-slate text-xs tracking-wider">
+      <div className="absolute bottom-4 sm:bottom-6 text-noir-slate text-[11px] sm:text-xs tracking-wider">
         Powered by Claude AI
       </div>
 
-      {/* Corner decorations */}
-      <div className="absolute top-8 left-8 w-16 h-16 border-l-2 border-t-2 border-noir-gold opacity-50" />
-      <div className="absolute top-8 right-8 w-16 h-16 border-r-2 border-t-2 border-noir-gold opacity-50" />
-      <div className="absolute bottom-8 left-8 w-16 h-16 border-l-2 border-b-2 border-noir-gold opacity-50" />
-      <div className="absolute bottom-8 right-8 w-16 h-16 border-r-2 border-b-2 border-noir-gold opacity-50" />
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-8 w-8 h-8 sm:w-16 sm:h-16 border-l-2 border-t-2 border-noir-gold opacity-50" />
+      <div className="absolute top-4 right-4 sm:top-8 sm:right-8 w-8 h-8 sm:w-16 sm:h-16 border-r-2 border-t-2 border-noir-gold opacity-50" />
+      <div className="absolute bottom-4 left-4 sm:bottom-8 sm:left-8 w-8 h-8 sm:w-16 sm:h-16 border-l-2 border-b-2 border-noir-gold opacity-50" />
+      <div className="absolute bottom-4 right-4 sm:bottom-8 sm:right-8 w-8 h-8 sm:w-16 sm:h-16 border-r-2 border-b-2 border-noir-gold opacity-50" />
     </div>
   )
 }

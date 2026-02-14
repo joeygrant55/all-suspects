@@ -17,7 +17,7 @@ export function ConversationThread({ messages, characterName, isLoading }: Conve
 
   return (
     <div
-      className="flex-1 overflow-y-auto px-8 py-6 space-y-5"
+      className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 space-y-5"
       onWheel={(e) => e.stopPropagation()}
       style={{
         // Subtle inner shadow at top/bottom for depth
@@ -73,14 +73,14 @@ function MessageBubble({ message }: { message: Message }) {
     // Player message - right aligned with gold tint
     return (
       <div className="flex justify-end animate-fadeIn">
-        <div className="max-w-[75%]">
+        <div className="max-w-[75%] sm:max-w-[85%]">
           <div
             className="px-5 py-3 bg-noir-gold/15 border border-noir-gold/30 rounded-2xl rounded-br-sm"
             style={{
               boxShadow: '0 2px 10px rgba(201, 162, 39, 0.1)',
             }}
           >
-            <p className="text-sm text-noir-cream leading-relaxed">{message.content}</p>
+            <p className="text-sm sm:text-base text-noir-cream leading-relaxed">{message.content}</p>
           </div>
         </div>
       </div>
@@ -90,16 +90,14 @@ function MessageBubble({ message }: { message: Message }) {
   // Character message - left aligned, dialogue style
   return (
     <div className="flex justify-start animate-fadeIn">
-      <div className="max-w-[85%]">
+      <div className="max-w-[82%] sm:max-w-[85%]">
         <div
           className="px-5 py-4 bg-noir-slate/20 border border-noir-slate/30 rounded-2xl rounded-bl-sm"
           style={{
             boxShadow: '0 2px 10px rgba(0, 0, 0, 0.2)',
           }}
         >
-          <p className="text-sm text-noir-cream whitespace-pre-wrap leading-relaxed">
-            {renderContent(message.content)}
-          </p>
+          <p className="text-sm sm:text-base text-noir-cream whitespace-pre-wrap leading-relaxed">{renderContent(message.content)}</p>
         </div>
       </div>
     </div>

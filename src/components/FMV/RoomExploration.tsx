@@ -183,12 +183,12 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-noir-smoke hover:text-noir-gold transition-colors group"
+            className="flex items-center gap-2 text-xs sm:text-sm text-noir-smoke hover:text-noir-gold transition-colors group"
           >
             <svg className="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            <span className="text-sm">Back to Manor</span>
+            <span className="text-[11px] sm:text-sm">Back to Manor</span>
           </button>
           
           <h2 
@@ -203,7 +203,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
             className="flex items-center gap-2 px-3 py-1.5 bg-noir-charcoal/40 backdrop-blur-sm border border-noir-slate/40 hover:border-noir-gold/50 transition-all"
           >
             <span className="text-noir-gold">📋</span>
-            <span className="text-noir-cream text-sm">Evidence</span>
+            <span className="text-noir-cream text-[11px] sm:text-sm">Evidence</span>
           </button>
         </div>
       </div>
@@ -214,7 +214,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
           
           {/* Room status */}
           <div className="text-center mb-6">
-            <p className="text-noir-smoke text-sm italic" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
+            <p className="text-noir-smoke text-xs sm:text-sm italic" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
               {allDiscovered 
                 ? "You've thoroughly searched this room."
                 : "Click on items to examine them closely..."
@@ -234,7 +234,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
 
           {/* Evidence items grid */}
           {evidenceItems.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 gap-4 sm:gap-5">
               {evidenceItems.map((evidence, index) => {
                 const isDiscovered = discoveredEvidenceIds.includes(evidence.id)
                 const isCollected = isEvidenceCollected(evidence.id)
@@ -257,7 +257,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
                     <div 
                       className="relative overflow-hidden transition-all duration-300"
                       style={{
-                        minHeight: '200px',
+                        minHeight: '160px',
                         background: isHovered
                           ? 'linear-gradient(145deg, rgba(62,50,30,0.95) 0%, rgba(40,32,18,0.95) 100%)'
                           : 'linear-gradient(145deg, rgba(50,40,24,0.85) 0%, rgba(32,25,14,0.85) 100%)',
@@ -294,7 +294,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
                       <div className="p-4 pb-2">
                         {evidence.image ? (
                           <div
-                            className="w-full h-24 bg-cover bg-center rounded-sm mb-3 transition-all duration-500"
+                            className="w-full h-20 sm:h-24 bg-cover bg-center rounded-sm mb-3 transition-all duration-500"
                             style={{
                               backgroundImage: `url(${evidence.image})`,
                               filter: isHovered ? 'sepia(0) brightness(1)' : 'sepia(0.6) brightness(0.85)',
@@ -325,7 +325,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
                         </h3>
 
                         {/* Item description */}
-                        <p className="text-noir-smoke/70 text-xs italic leading-relaxed">
+                        <p className="text-noir-smoke/70 text-[11px] sm:text-xs italic leading-relaxed">
                           {evidence.description}
                         </p>
                       </div>
@@ -333,7 +333,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
                       {/* "Examined" stamp for discovered items */}
                       {isDiscovered && (
                         <div
-                          className="absolute top-3 right-3 pointer-events-none"
+                          className="absolute top-2 right-2 sm:top-3 sm:right-3 pointer-events-none"
                           style={{
                             transform: 'rotate(-12deg)',
                           }}
@@ -355,7 +355,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
                       {/* Undiscovered badge */}
                       {!isDiscovered && (
                         <motion.div
-                          className="absolute top-3 right-3"
+                          className="absolute top-2 right-2 sm:top-3 sm:right-3"
                           animate={{ scale: [1, 1.2, 1] }}
                           transition={{ duration: 2, repeat: Infinity }}
                         >
@@ -367,7 +367,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
 
                       {/* Collected check */}
                       {isCollected && (
-                        <div className="absolute top-3 left-3">
+                        <div className="absolute top-2 left-2 sm:top-3 sm:left-3">
                           <div className="w-5 h-5 bg-green-700/80 rounded-full flex items-center justify-center">
                             <span className="text-white text-[10px]">✓</span>
                           </div>
@@ -383,7 +383,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
                             exit={{ opacity: 0 }}
                             className="absolute inset-x-0 bottom-3 text-center"
                           >
-                            <span className="text-noir-gold/80 text-xs tracking-wide">
+                            <span className="text-noir-gold/80 text-[11px] sm:text-xs tracking-wide">
                               Click to examine
                             </span>
                           </motion.div>
@@ -396,7 +396,7 @@ export function RoomExploration({ roomId, roomName, onBack, onOpenEvidence }: Ro
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-noir-smoke text-lg italic" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
+              <p className="text-noir-smoke text-base sm:text-lg italic" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.8)' }}>
                 This room appears empty...
               </p>
             </div>

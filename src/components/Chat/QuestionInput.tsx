@@ -28,7 +28,7 @@ export function QuestionInput({
     <div className="border-t border-noir-slate/30 bg-noir-black/40">
       {/* Suggested questions */}
       {showSuggestions && suggestedQuestions.length > 0 && !isLoading && (
-        <div className="px-6 py-4 border-b border-noir-slate/20">
+        <div className="px-4 sm:px-6 py-4 border-b border-noir-slate/20">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-[10px] text-noir-smoke uppercase tracking-widest">
               Ask about...
@@ -52,8 +52,8 @@ export function QuestionInput({
       )}
 
       {/* Input form */}
-      <form onSubmit={onSubmit} className="p-5">
-        <div className="flex gap-4">
+      <form onSubmit={onSubmit} className="p-3 sm:p-4">
+        <div className="flex gap-3">
           <div className="flex-1 relative">
             <input
               ref={inputRef}
@@ -62,7 +62,7 @@ export function QuestionInput({
               onChange={(e) => setInput(e.target.value)}
               placeholder="Type your question..."
               disabled={isLoading}
-              className="w-full bg-noir-black/60 text-noir-cream placeholder-noir-smoke/40 px-5 py-4 text-sm rounded-xl border border-noir-slate/40 focus:outline-none focus:border-noir-gold/50 focus:ring-1 focus:ring-noir-gold/20 transition-all disabled:opacity-50"
+              className="w-full bg-noir-black/60 text-noir-cream placeholder-noir-smoke/40 px-4 sm:px-5 py-3 sm:py-4 text-sm rounded-xl border border-noir-slate/40 focus:outline-none focus:border-noir-gold/50 focus:ring-1 focus:ring-noir-gold/20 transition-all disabled:opacity-50"
               style={{
                 boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.2)',
               }}
@@ -82,9 +82,9 @@ export function QuestionInput({
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-8 py-4 bg-noir-gold text-noir-black rounded-xl font-semibold text-sm uppercase tracking-wider hover:bg-noir-gold/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
+            className="px-5 sm:px-8 py-3 sm:py-4 bg-noir-gold text-noir-black rounded-xl font-semibold text-sm uppercase tracking-wider hover:bg-noir-gold/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200"
             style={{
-              boxShadow: input.trim() && !isLoading
+              boxShadow: isLoading === false && input.trim()
                 ? '0 0 20px rgba(201, 162, 39, 0.3), 0 4px 10px rgba(0, 0, 0, 0.3)'
                 : '0 4px 10px rgba(0, 0, 0, 0.3)',
             }}

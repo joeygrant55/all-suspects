@@ -1,126 +1,115 @@
-import { useGameStore } from '../../game/state'
+import { motion } from 'framer-motion'
+import { useEffect } from 'react'
 
 interface TutorialModalProps {
   isOpen: boolean
   onClose: () => void
 }
 
+const steps = [
+  {
+    title: 'Interrogate suspects',
+    text: 'Talk to each suspect by selecting them and asking questions in your notebook.',
+    icon: '🗣️',
+  },
+  {
+    title: 'Gather evidence',
+    text: 'Inspect every room for clues. Small details can reveal big lies.',
+    icon: '🔎',
+  },
+  {
+    title: 'Use pressure wisely',
+    text: 'Push suspects when they lie, but not so hard they shut down entirely.',
+    icon: '📈',
+  },
+  {
+    title: 'Make your accusation',
+    text: 'Select one suspect and the right motive before the final reveal.',
+    icon: '⚖️',
+  },
+]
+
 export function TutorialModal({ isOpen, onClose }: TutorialModalProps) {
-  const setTutorialSeen = useGameStore((state) => state.setTutorialSeen)
+  useEffect(() => {
+    if (!isOpen) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
-  const handleBegin = () => {
-    setTutorialSeen()
-    onClose()
-  }
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
-      {/* Modal container */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-0 md:p-4">
       <div
-        className="relative w-[600px] bg-noir-charcoal border border-noir-slate rounded-sm overflow-hidden"
-        style={{
-          boxShadow: '0 0 60px rgba(201, 162, 39, 0.2), 0 20px 60px rgba(0,0,0,0.8)',
-        }}
+        className="absolute inset-0 bg-black/80"
+        onClick={onClose}
+      />
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative w-full h-full md:w-[680px] md:max-h-[92vh] md:h-auto bg-noir-charcoal border border-noir-slate/40 shadow-2xl overflow-hidden rounded-none md:rounded-lg"
+        role="dialog"
+        aria-modal="true"
       >
-        {/* Gold corner decorations */}
-        <div className="absolute top-0 left-0 w-20 h-20 border-t-2 border-l-2 border-noir-gold/60" />
-        <div className="absolute top-0 right-0 w-20 h-20 border-t-2 border-r-2 border-noir-gold/60" />
-        <div className="absolute bottom-0 left-0 w-20 h-20 border-b-2 border-l-2 border-noir-gold/60" />
-        <div className="absolute bottom-0 right-0 w-20 h-20 border-b-2 border-r-2 border-noir-gold/60" />
-
-        {/* Content */}
-        <div className="p-8">
-          {/* Header */}
-          <div className="text-center mb-8">
-            <h1
-              className="text-3xl text-noir-gold tracking-widest mb-2"
-              style={{
-                fontFamily: 'Georgia, serif',
-                textShadow: '0 0 30px rgba(201, 162, 39, 0.4)',
-              }}
-            >
-              Welcome, Detective
-            </h1>
-            <div className="flex items-center justify-center gap-2 opacity-50">
-              <div className="h-px w-12 bg-noir-gold" />
-              <div className="w-2 h-2 rotate-45 bg-noir-gold" />
-              <div className="h-px w-12 bg-noir-gold" />
-            </div>
-          </div>
-
-          {/* Story setup */}
-          <div
-            className="text-noir-cream/90 text-center mb-8 leading-relaxed"
-            style={{ fontFamily: 'Georgia, serif' }}
+        <div className="px-4 sm:px-6 py-4 border-b border-noir-slate/40 bg-noir-black/30 flex items-center justify-between">
+          <h2 className="text-2xl sm:text-3xl font-serif text-noir-gold">How to Play</h2>
+          <button
+            onClick={onClose}
+            className="w-9 h-9 rounded-full border border-noir-slate hover:border-noir-gold text-noir-smoke hover:text-noir-gold transition-colors"
+            aria-label="Close tutorial"
           >
-            <p className="mb-4">
-              New Year's Eve, 1929. <span className="text-noir-gold">Edmund Ashford</span>,
-              wealthy industrialist, has been found dead in his study at the stroke of midnight.
-            </p>
-            <p>
-              Six suspects remain in the manor. One of them is a murderer.
-              <span className="text-noir-blood"> It's your job to find them.</span>
-            </p>
+            ✕
+          </button>
+        </div>
+
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-90px)] sm:max-h-[86vh]">
+          <p className="text-sm text-noir-smoke mb-6 leading-relaxed">
+            You are the detective. Use interviews, clues, and pressure tactics to find the truth.
+          </p>
+
+          <div className="space-y-4">
+            {steps.map((step, index) => (
+              <div
+                key={step.title}
+                className="border border-noir-slate/40 p-4 bg-noir-black/30 rounded"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-xl sm:text-2xl mt-0.5">{step.icon}</span>
+                  <div className="flex-1">
+                    <h3 className="text-base sm:text-lg text-noir-gold">{index + 1}. {step.title}</h3>
+                    <p className="text-sm text-noir-cream leading-relaxed mt-1">{step.text}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
-          {/* Objectives */}
-          <div className="bg-noir-black/50 border border-noir-slate/50 rounded-sm p-6 mb-8">
-            <h3
-              className="text-noir-gold text-sm tracking-wider uppercase mb-4"
-              style={{ fontFamily: 'Georgia, serif' }}
-            >
-              Your Objectives
-            </h3>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-noir-cream/90">
-                <span className="text-lg mt-0.5">🔍</span>
-                <span style={{ fontFamily: 'Georgia, serif' }}>
-                  <strong className="text-noir-cream">Explore the manor</strong> and examine objects
-                  for evidence. Press <span className="text-green-400 font-bold">F</span> near glowing items or click on them.
-                </span>
-              </li>
-              <li className="flex items-start gap-3 text-noir-cream/90">
-                <span className="text-lg mt-0.5">💬</span>
-                <span style={{ fontFamily: 'Georgia, serif' }}>
-                  <strong className="text-noir-cream">Question the suspects</strong> — they may
-                  lie, omit details, or contradict each other.
-                </span>
-              </li>
-              <li className="flex items-start gap-3 text-noir-cream/90">
-                <span className="text-lg mt-0.5">📋</span>
-                <span style={{ fontFamily: 'Georgia, serif' }}>
-                  <strong className="text-noir-cream">Collect 5 pieces of evidence</strong> to
-                  unlock the ability to make your accusation.
-                </span>
-              </li>
+          <div className="mt-6">
+            <h3 className="text-sm text-noir-smoke uppercase tracking-[0.16em] mb-2">Controls</h3>
+            <ul className="text-sm text-noir-cream leading-relaxed space-y-2">
+              <li>🎯 Click suspect cards to talk, use evidence panel in each room.</li>
+              <li>👣 Tap evidence list cards for detailed info.</li>
+              <li>📌 Finish investigation, then submit accusation.</li>
             </ul>
           </div>
 
-          {/* Hint */}
-          <p
-            className="text-noir-smoke text-sm text-center italic mb-8"
-            style={{ fontFamily: 'Georgia, serif' }}
-          >
-            Tip: Evidence you collect may reveal new questions to ask the suspects.
-          </p>
-
-          {/* Begin button */}
-          <div className="flex justify-center">
+          <div className="mt-8 flex">
             <button
-              onClick={handleBegin}
-              className="px-8 py-3 bg-noir-gold text-noir-black font-medium tracking-wider hover:bg-noir-gold/90 transition-colors"
-              style={{
-                fontFamily: 'Georgia, serif',
-                boxShadow: '0 4px 20px rgba(201, 162, 39, 0.3)',
-              }}
+              onClick={onClose}
+              className="w-full sm:w-auto px-8 py-4 bg-noir-gold text-noir-black font-semibold"
             >
-              BEGIN INVESTIGATION
+              Got it
             </button>
           </div>
         </div>
-      </div>
+      </motion.div>
     </div>
   )
 }

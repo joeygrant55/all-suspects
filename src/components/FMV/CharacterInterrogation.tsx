@@ -611,7 +611,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       {/* Back button - prominent */}
       <motion.button
         onClick={onClose}
-        className="absolute top-4 left-4 z-10 px-4 py-2 flex items-center gap-2 bg-noir-charcoal/90 border border-noir-slate hover:border-noir-gold text-noir-cream transition-colors font-serif text-sm"
+        className="absolute top-3 left-3 sm:top-4 sm:left-4 z-10 px-4 py-2 flex items-center gap-2 bg-noir-charcoal/90 border border-noir-slate hover:border-noir-gold text-noir-cream transition-colors font-serif text-xs sm:text-sm"
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >
@@ -621,7 +621,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       {/* Close X button */}
       <motion.button
         onClick={onClose}
-        className="absolute top-4 right-4 z-10 w-10 h-10 flex items-center justify-center bg-noir-charcoal/80 border border-noir-slate hover:border-noir-gold text-noir-cream transition-colors"
+        className="absolute top-3 right-3 sm:top-4 sm:right-4 z-10 w-10 h-10 flex items-center justify-center bg-noir-charcoal/80 border border-noir-slate hover:border-noir-gold text-noir-cream transition-colors"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
       >
@@ -632,7 +632,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       <div className="h-full flex flex-col pt-12 pb-12">
         {/* Character portrait section - more compact */}
         <div className="flex-shrink-0 flex items-center justify-center py-4 border-b border-noir-slate/30">
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full px-3 sm:px-0">
             <div className="relative">
               <CharacterPortrait
                 characterId={character.id}
@@ -655,7 +655,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
             </div>
 
             {/* Character info and emotional state */}
-            <div className="text-left">
+            <div className="text-left max-w-full">
               <h2 className="text-noir-cream font-serif text-xl">{character.name}</h2>
               <p className="text-noir-smoke text-sm italic">{character.role}</p>
               
@@ -733,7 +733,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
         {/* Conversation area - scrollable */}
         <div 
           ref={conversationRef}
-          className="flex-1 overflow-y-auto px-8 py-6 space-y-4 scroll-smooth"
+          className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 space-y-4 scroll-smooth"
           style={{ scrollBehavior: 'smooth' }}
         >
           <AnimatePresence>
@@ -746,14 +746,14 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 className={`flex ${msg.role === 'player' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`relative max-w-2xl px-6 py-4 rounded ${
+                  className={`relative max-w-[92%] sm:max-w-2xl px-4 sm:px-6 py-3 sm:py-4 rounded ${
                     msg.role === 'player'
                       ? 'bg-noir-gold/20 border border-noir-gold/30 text-noir-cream'
                       : 'bg-noir-charcoal/50 border border-noir-slate/30 text-noir-cream'
                   }`}
                   style={{ fontFamily: 'var(--font-serif)' }}
                 >
-                  <p className="text-base leading-relaxed">{msg.content}</p>
+                  <p className="text-sm sm:text-base leading-relaxed">{msg.content}</p>
                   
                   {/* Replay button for character messages */}
                   {msg.role === 'character' && voiceEnabled && (
@@ -786,7 +786,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               <div className="max-w-2xl px-6 py-4 bg-noir-charcoal/70 border-2 border-noir-gold/40 rounded shadow-lg">
                 <div className="flex items-center gap-3">
                   <span className="text-xl">💭</span>
-                  <p className="text-noir-gold text-base font-serif">
+                  <p className="text-noir-gold text-sm sm:text-base font-serif">
                     {character.name} is considering your question...
                   </p>
                   <div className="flex gap-1">
@@ -851,7 +851,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 setInputValue('Where were you at the time of the murder? Give me specific details about your movements.')
               }}
               disabled={isTyping}
-              className={`flex-1 px-4 py-3 border-2 transition-all ${
+              className={`w-full px-3 sm:px-4 py-3 border-2 transition-all ${
                 activeTactic === 'alibi'
                   ? 'bg-blue-500/20 border-blue-500 text-blue-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-blue-500/50 text-noir-smoke hover:text-blue-300'
@@ -861,8 +861,8 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               title="Ask for detailed timeline and movements (+5 pressure)"
             >
               <div className="flex flex-col items-center gap-1">
-                <span className="text-xl">🕐</span>
-                <span className="text-xs font-serif">Alibi</span>
+                <span className="text-lg sm:text-xl">🕐</span>
+                <span className="text-[11px] sm:text-xs font-serif">Alibi</span>
               </div>
             </motion.button>
 
@@ -877,7 +877,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 setShowStatementPicker(false)
               }}
               disabled={isTyping || collectedEvidence.length === 0}
-              className={`flex-1 px-4 py-3 border-2 transition-all ${
+              className={`w-full px-3 sm:px-4 py-3 border-2 transition-all ${
                 showEvidencePicker
                   ? 'bg-amber-500/20 border-amber-500 text-amber-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-amber-500/50 text-noir-smoke hover:text-amber-300'
@@ -903,7 +903,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 setShowEvidencePicker(false)
               }}
               disabled={isTyping || messages.filter(m => m.role === 'character' && m.characterId !== characterId).length === 0}
-              className={`flex-1 px-4 py-3 border-2 transition-all ${
+              className={`w-full px-3 sm:px-4 py-3 border-2 transition-all ${
                 showStatementPicker
                   ? 'bg-orange-500/20 border-orange-500 text-orange-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-orange-500/50 text-noir-smoke hover:text-orange-300'
@@ -925,7 +925,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 setInputValue('We have evidence that proves you were involved. Want to explain yourself?')
               }}
               disabled={isTyping}
-              className={`flex-1 px-4 py-3 border-2 transition-all ${
+              className={`w-full px-3 sm:px-4 py-3 border-2 transition-all ${
                 activeTactic === 'bluff'
                   ? 'bg-red-500/20 border-red-500 text-red-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-red-500/50 text-noir-smoke hover:text-red-300'
@@ -952,7 +952,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               >
                 <div className="bg-noir-charcoal/80 border-2 border-amber-500/50 p-4 rounded">
                   <p className="text-amber-300 text-sm mb-3 font-serif">Select evidence to present:</p>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                  <div className="space-y-2 max-h-52 sm:max-h-60 overflow-y-auto">
                     {collectedEvidence.map((evidence) => {
                       const evidenceData = EVIDENCE_DATABASE[evidence.source]
                       return (
@@ -989,7 +989,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
               >
                 <div className="bg-noir-charcoal/80 border-2 border-orange-500/50 p-4 rounded">
                   <p className="text-orange-300 text-sm mb-3 font-serif">Select a statement to confront them with:</p>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                  <div className="space-y-2 max-h-52 sm:max-h-60 overflow-y-auto">
                     {messages
                       .filter(m => m.role === 'character' && m.characterId !== characterId)
                       .slice(-10) // Last 10 statements from other characters
@@ -1021,7 +1021,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
 
           {/* Suggested questions */}
           {conversationMessages.length === 0 && (
-            <div className="flex flex-wrap gap-2 justify-center">
+            <div className="flex flex-wrap gap-2 justify-center px-1">
               {suggestedQuestions.map((question) => (
                 <motion.button
                   key={question}
@@ -1058,7 +1058,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                   {activeTactic === 'cross_reference' && '🔄'}
                   {activeTactic === 'bluff' && '🃏'}
                 </span>
-                <span className="text-sm font-serif text-noir-cream">
+                <span className="text-[11px] sm:text-sm font-serif text-noir-cream">
                   Tactic: {activeTactic === 'alibi' && 'Ask About Alibi'}
                   {activeTactic === 'present_evidence' && 'Present Evidence'}
                   {activeTactic === 'cross_reference' && 'Cross-Reference'}
@@ -1079,20 +1079,20 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
           )}
 
           {/* Input field */}
-          <div className="flex gap-4 max-w-4xl mx-auto">
+          <div className="flex gap-3 sm:gap-4 max-w-4xl mx-auto">
             <input
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Ask a question..."
-              className="flex-1 px-6 py-4 bg-noir-charcoal/50 border-2 border-noir-slate/50 focus:border-noir-gold/50 text-noir-cream placeholder-noir-smoke outline-none transition-colors font-serif"
+              className="flex-1 min-w-0 px-4 sm:px-6 py-3 sm:py-4 bg-noir-charcoal/50 border-2 border-noir-slate/50 focus:border-noir-gold/50 text-noir-cream placeholder-noir-smoke outline-none transition-colors font-serif text-sm"
               style={{ fontFamily: 'var(--font-serif)' }}
             />
             <motion.button
               onClick={() => handleSendMessage()}
               disabled={!inputValue.trim() || isTyping}
-              className="px-8 py-4 bg-noir-gold/20 border-2 border-noir-gold/50 text-noir-gold hover:bg-noir-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-serif"
+              className="px-4 sm:px-6 py-3 sm:py-4 bg-noir-gold/20 border-2 border-noir-gold/50 text-noir-gold hover:bg-noir-gold/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-serif"
               whileHover={inputValue.trim() && !isTyping ? { scale: 1.05 } : {}}
               whileTap={inputValue.trim() && !isTyping ? { scale: 0.95 } : {}}
             >

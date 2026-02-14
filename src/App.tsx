@@ -83,10 +83,12 @@ function App() {
   const [checkoutSessionId, setCheckoutSessionId] = useState<string | null>(null)
 
   // Subscription state
-  const { canPlayMystery, recordMysteryPlay, visitorId } = useSubscriptionStore()
+  const { canPlayMystery, recordMysteryPlay, visitorId, validatePremiumState } = useSubscriptionStore()
 
-  // Check for checkout success redirect
+  // Validate subscription state + handle checkout return
   useEffect(() => {
+    validatePremiumState()
+
     const params = new URLSearchParams(window.location.search)
     const sessionId = params.get('session_id')
     if (sessionId) {
@@ -94,7 +96,7 @@ function App() {
       // Clean up URL
       window.history.replaceState({}, '', window.location.pathname)
     }
-  }, [])
+  }, [validatePremiumState])
 
   // Handle upgrade to premium
   const handleUpgrade = async () => {
@@ -114,13 +116,22 @@ function App() {
   }
 
   // Check if user can start a new mystery (with paywall gate)
-  const checkAndStartMystery = (startFn: () => void) => {
-    if (canPlayMystery()) {
-      recordMysteryPlay()
+  const checkAndStartMystery = (
+    startFn: () => void,
+    mysteryId?: string
+  ) => {
+    if (canPlayMystery(mysteryId)) {
       startFn()
     } else {
       setPaywallOpen(true)
     }
+  }
+
+  const openCreator = () => {
+    checkAndStartMystery(() => {
+      setMysterySelectOpen(false)
+      setCreatorOpen(true)
+    }, 'generated')
   }
   const [victoryOpen, setVictoryOpen] = useState(false)
   const [showCharacterIntro, setShowCharacterIntro] = useState<string | null>(null)
@@ -207,6 +218,26 @@ function App() {
   }
 
   // Room name mapping
+  const triggerMobileKey = (key: string, phase: "down" | "up") => {
+    const eventType = phase === "down" ? "keydown" : "keyup"
+    const evt = new KeyboardEvent(eventType, {
+      key,
+      code: `Key${key.toUpperCase()}`,
+      bubbles: true,
+      cancelable: true,
+    })
+    window.dispatchEvent(evt)
+  }
+
+  const triggerMobileTap = (key: string) => {
+    triggerMobileKey(key, "down")
+    triggerMobileKey(key, "up")
+  }
+
+  const triggerMobileMove = (key: string, isDown: boolean) => {
+    triggerMobileKey(key, isDown ? "down" : "up")
+  }
+
   const getRoomName = (roomId: string) => {
     const roomNames: Record<string, string> = {
       study: 'Study',
@@ -289,9 +320,16 @@ function App() {
       await useMysteryStore.getState().loadMystery(loadingMysteryId)
       const mystery = useMysteryStore.getState().activeMystery
       if (mystery) {
+        if (!canPlayMystery(mystery.id)) {
+          setPaywallOpen(true)
+          setLoadingMysteryId(null)
+          return
+        }
+
         // Route chat API to the universal character agent
         setActiveMysteryId(mystery.id)
         initializeFromMystery(mystery)
+        recordMysteryPlay(mystery.id)
         startGame()
       }
     } catch (err) {
@@ -326,7 +364,11 @@ function App() {
               onBack={() => setCreatorOpen(false)}
             />
           ) : mysterySelectOpen ? (
-            <MysterySelect onCreateNew={() => { setMysterySelectOpen(false); setCreatorOpen(true) }} />
+            <MysterySelect
+              canSelectMystery={canPlayMystery}
+              onPremiumRequired={() => setPaywallOpen(true)}
+              onCreateNew={openCreator}
+            />
           ) : checkoutSessionId ? (
             <UpgradeSuccess 
               sessionId={checkoutSessionId} 
@@ -380,6 +422,77 @@ function App() {
                   audioManager.playSfx('click')
                 }}
               />
+            )}
+
+            {/* Touch controls (mobile) */}
+            {!showIntro && !showCharacterIntro && !evidenceBoardOpen && !accusationOpen && !tutorialOpen && !paywallOpen && (
+              <div className="md:hidden fixed inset-x-0 bottom-3 z-50 px-3 pointer-events-none">
+                <div className="mx-auto max-w-md pointer-events-auto">
+                  <div className="bg-noir-black/70 border border-noir-slate/60 rounded-2xl p-3 space-y-3">
+                    <div className="grid grid-cols-3 gap-2">
+                      <div />
+                      <button
+                        onMouseDown={() => triggerMobileMove('w', true)}
+                        onMouseUp={() => triggerMobileMove('w', false)}
+                        onMouseLeave={() => triggerMobileMove('w', false)}
+                        onTouchStart={() => triggerMobileMove('w', true)}
+                        onTouchEnd={() => triggerMobileMove('w', false)}
+                        className="h-14 bg-noir-charcoal/70 border border-noir-slate text-noir-gold rounded-xl"
+                      >
+                        W
+                      </button>
+                      <div />
+
+                      <button
+                        onMouseDown={() => triggerMobileMove('a', true)}
+                        onMouseUp={() => triggerMobileMove('a', false)}
+                        onMouseLeave={() => triggerMobileMove('a', false)}
+                        onTouchStart={() => triggerMobileMove('a', true)}
+                        onTouchEnd={() => triggerMobileMove('a', false)}
+                        className="h-14 bg-noir-charcoal/70 border border-noir-slate text-noir-gold rounded-xl"
+                      >
+                        A
+                      </button>
+                      <button
+                        onMouseDown={() => triggerMobileMove('s', true)}
+                        onMouseUp={() => triggerMobileMove('s', false)}
+                        onMouseLeave={() => triggerMobileMove('s', false)}
+                        onTouchStart={() => triggerMobileMove('s', true)}
+                        onTouchEnd={() => triggerMobileMove('s', false)}
+                        className="h-14 bg-noir-charcoal/70 border border-noir-slate text-noir-gold rounded-xl"
+                      >
+                        S
+                      </button>
+                      <button
+                        onMouseDown={() => triggerMobileMove('d', true)}
+                        onMouseUp={() => triggerMobileMove('d', false)}
+                        onMouseLeave={() => triggerMobileMove('d', false)}
+                        onTouchStart={() => triggerMobileMove('d', true)}
+                        onTouchEnd={() => triggerMobileMove('d', false)}
+                        className="h-14 bg-noir-charcoal/70 border border-noir-slate text-noir-gold rounded-xl"
+                      >
+                        D
+                      </button>
+
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onPointerDown={() => triggerMobileTap('e')}
+                        className="h-12 bg-noir-gold/15 border border-noir-gold text-noir-gold rounded-xl font-semibold"
+                      >
+                        E — TALK
+                      </button>
+                      <button
+                        onPointerDown={() => triggerMobileTap('f')}
+                        className="h-12 bg-noir-gold/15 border border-noir-gold text-noir-gold rounded-xl font-semibold"
+                      >
+                        F — EXAMINE
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* Character intro video */}

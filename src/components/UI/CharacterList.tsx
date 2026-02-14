@@ -11,7 +11,6 @@ export function CharacterList() {
 
   const charactersInRoom = characters.filter((c) => c.location === currentRoom)
 
-  // Format room name for display
   const formatRoomName = (room: string) => {
     return room
       .split('-')
@@ -19,10 +18,8 @@ export function CharacterList() {
       .join(' ')
   }
 
-  // Auto-collapse when starting a conversation, auto-expand when ending
   const effectiveExpanded = currentConversation ? isExpanded : true
 
-  // Collapsed view - just room name and toggle
   if (!effectiveExpanded && currentConversation) {
     return (
       <div className="px-4 py-2 flex items-center justify-between bg-noir-black/30">
@@ -53,7 +50,6 @@ export function CharacterList() {
 
   return (
     <div className="p-3">
-      {/* Room header with collapse toggle */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className="w-1.5 h-1.5 bg-noir-gold rotate-45" />
@@ -77,7 +73,6 @@ export function CharacterList() {
         )}
       </div>
 
-      {/* Suspects label */}
       <p className="text-xs text-noir-smoke tracking-widest uppercase mb-2">
         {charactersInRoom.length > 0 ? 'Suspects Present' : 'No One Present'}
       </p>
@@ -87,7 +82,7 @@ export function CharacterList() {
           <p className="text-noir-ash text-sm italic">The room is empty...</p>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="flex md:block overflow-x-auto gap-2 pb-1 md:pb-0 no-scrollbar">
           {charactersInRoom.map((character) => {
             const isActive = currentConversation === character.id
             return (
@@ -95,7 +90,7 @@ export function CharacterList() {
                 key={character.id}
                 onClick={() => startConversation(character.id)}
                 disabled={isActive}
-                className={`w-full text-left p-2 rounded-sm transition-all group ${
+                className={`w-60 md:w-full shrink-0 md:shrink text-left p-2 rounded-sm transition-all group ${
                   isActive
                     ? 'bg-noir-gold/20 border border-noir-gold'
                     : 'bg-noir-black/30 border border-noir-slate hover:border-noir-gold/50'

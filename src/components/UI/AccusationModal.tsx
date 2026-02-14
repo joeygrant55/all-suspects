@@ -98,9 +98,9 @@ export function AccusationModal({ isOpen, onClose, onVictory }: AccusationModalP
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-0 md:p-4">
       <div
-        className="relative w-[700px] max-h-[90vh] rounded-sm overflow-hidden"
+        className="relative w-full h-full md:w-[700px] md:max-h-[90vh] md:h-auto rounded-none md:rounded-sm overflow-hidden"
         style={{
           background: 'linear-gradient(180deg, #1a1a1a 0%, #0a0a0a 100%)',
           boxShadow: '0 0 100px rgba(201, 162, 39, 0.2)',
@@ -108,9 +108,9 @@ export function AccusationModal({ isOpen, onClose, onVictory }: AccusationModalP
         }}
       >
         {/* Header */}
-        <div className="px-8 py-6 border-b border-noir-gold/30 text-center">
+        <div className="px-4 sm:px-8 py-4 sm:py-6 border-b border-noir-gold/30 text-center">
           <h2
-            className="text-3xl text-noir-gold tracking-widest"
+            className="text-2xl sm:text-3xl text-noir-gold tracking-widest"
             style={{
               fontFamily: 'Georgia, serif',
               textShadow: '0 0 30px rgba(201, 162, 39, 0.5)',
@@ -130,7 +130,7 @@ export function AccusationModal({ isOpen, onClose, onVictory }: AccusationModalP
         </div>
 
         {/* Content */}
-        <div className="p-8">
+        <div className="px-4 sm:px-6 py-4 sm:py-6">
           {/* Summary stage - Review evidence before accusing */}
           {stage === 'summary' && (
             <>
@@ -230,7 +230,7 @@ export function AccusationModal({ isOpen, onClose, onVictory }: AccusationModalP
               <p className="text-center text-noir-cream mb-6" style={{ fontFamily: 'Georgia, serif' }}>
                 Who murdered Edmund Ashford?
               </p>
-              <div className="grid grid-cols-3 gap-4 mb-8">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-6 sm:mb-8">
                 {characters.map((character) => (
                   <button
                     key={character.id}
