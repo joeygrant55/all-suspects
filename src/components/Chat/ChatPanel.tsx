@@ -11,6 +11,8 @@ export function ChatPanel() {
   const [apiConnected, setApiConnected] = useState<boolean | null>(null)
   const [newContradiction, setNewContradiction] = useState<string | null>(null)
   const [hasShownGreeting, setHasShownGreeting] = useState<Set<string>>(new Set())
+  const [showRetry, setShowRetry] = useState(false)
+  const [lastQuestion, setLastQuestion] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const currentConversation = useGameStore((state) => state.currentConversation)
@@ -104,23 +106,28 @@ export function ChatPanel() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [conversationMessages])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || !currentConversation || isLoading) return
+  const sendQuestion = async (question: string, addPlayerMessage = true) => {
+    if (!currentConversation || isLoading) return
 
-    const playerMessage = input.trim()
-    setInput('')
+    const trimmedQuestion = question.trim()
+    if (!trimmedQuestion) return
 
-    addMessage({
-      role: 'player',
-      characterId: currentConversation,
-      content: playerMessage,
-    })
+    setShowRetry(false)
+    setLastQuestion(trimmedQuestion)
+
+    if (addPlayerMessage) {
+      setInput('')
+      addMessage({
+        role: 'player',
+        characterId: currentConversation,
+        content: trimmedQuestion,
+      })
+    }
 
     setIsLoading(true)
 
     try {
-      const response = await sendMessage(currentConversation, playerMessage)
+      const response = await sendMessage(currentConversation, trimmedQuestion)
       addMessage({
         role: 'character',
         characterId: currentConversation,
@@ -146,11 +153,24 @@ export function ChatPanel() {
       addMessage({
         role: 'character',
         characterId: currentConversation,
-        content: '*The connection seems to have been lost. Please ensure the server is running.*',
+        content: "The suspect doesn't seem to want to answer. Try again?",
       })
+      setShowRetry(true)
       setApiConnected(false)
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!input.trim() || !currentConversation || isLoading) return
+    await sendQuestion(input, true)
+  }
+
+  const handleRetry = () => {
+    if (lastQuestion) {
+      sendQuestion(lastQuestion, false)
     }
   }
 
@@ -304,6 +324,22 @@ export function ChatPanel() {
             </div>
           </div>
         )}
+
+        {showRetry && (
+          <div className="px-4 py-2">
+            <p className="text-center text-noir-blood text-sm">The suspect doesn't seem to want to answer. Try again?</p>
+            <div className="text-center mt-2">
+              <button
+                type="button"
+                onClick={handleRetry}
+                className="px-4 py-1.5 text-sm border border-noir-gold/50 text-noir-gold rounded hover:bg-noir-gold/20 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
         <div ref={messagesEndRef} />
       </div>
 

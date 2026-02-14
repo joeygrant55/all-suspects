@@ -118,7 +118,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   
   const [inputValue, setInputValue] = useState('')
   const [isTyping, setIsTyping] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [_error, setError] = useState<string | null>(null)
   const [evidenceToast, setEvidenceToast] = useState<{ title: string; description: string } | null>(null)
   const [watsonWhisper, setWatsonWhisper] = useState<string | null>(null)
   const [lastQuestion, setLastQuestion] = useState<string | null>(null)
@@ -174,11 +174,12 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   const handleSendMessage = async (retryQuestion?: string, tacticOverride?: InterrogationTactic) => {
     const question = retryQuestion || inputValue
     const tactic = tacticOverride || activeTactic
-    
+
     if (!question.trim() || isTyping || !character) return
 
     // Clear retry state
     setShowRetry(false)
+    setError(null)
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current)
       retryTimeoutRef.current = null
@@ -187,9 +188,8 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     if (!retryQuestion) {
       setInputValue('')
     }
-    setError(null)
     setLastQuestion(question)
-    
+
     // Add player message (only if not already added from a retry)
     if (!retryQuestion) {
       addMessage({
@@ -214,27 +214,14 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       
       // Check if this is a fallback response (API failure)
       if (response.isFallback) {
-        console.log('[FALLBACK DETECTED] Setting up auto-retry...')
-        
-        // Add fallback message temporarily
+        // Backend explicitly reports a failed response - offer retry
         addMessage({
           role: 'character',
           characterId,
           content: response.message,
         })
-        
-        // Show retry button
+        setError("The suspect doesn't seem to want to answer. Try again?")
         setShowRetry(true)
-        
-        // Auto-retry after 2 seconds
-        retryTimeoutRef.current = setTimeout(() => {
-          console.log('[AUTO-RETRY] Retrying after 2 seconds...')
-          // Remove fallback message before retry
-          // Note: You'd need a removeMessage function in your store
-          // For now, we'll just retry and the new response will appear
-          handleSendMessage(question)
-        }, 2000)
-        
         setIsTyping(false)
         return
       }
@@ -371,9 +358,16 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
 
     } catch (err) {
       console.error('Chat error:', err)
-      setError('Connection failed. Please try again.')
-      // Show retry button for connection errors too
+      const timedOut = err instanceof Error && (err.name === 'AbortError' || err.message.includes('aborted'))
+      setError("The suspect doesn't seem to want to answer. Try again?")
       setShowRetry(true)
+      if (!timedOut) {
+        addMessage({
+          role: 'character',
+          characterId,
+          content: "The suspect doesn't seem to want to answer. Try again?",
+        })
+      }
     } finally {
       setIsTyping(false)
     }
@@ -814,29 +808,22 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Error message */}
-        {error && (
-          <div className="px-8 py-2">
-            <p className="text-noir-blood text-sm text-center">{error}</p>
-          </div>
-        )}
-
-        {/* Retry button */}
+        {/* Error/retry message */}
         {showRetry && lastQuestion && (
           <div className="px-8 py-2">
+            <p className="text-noir-blood text-sm text-center">
+              The suspect doesn't seem to want to answer. Try again?
+            </p>
             <motion.button
               onClick={handleRetry}
-              className="mx-auto block px-6 py-2 bg-noir-gold/20 border border-noir-gold/50 text-noir-gold hover:bg-noir-gold/30 transition-colors text-sm"
+              className="mx-auto block mt-2 px-6 py-2 bg-noir-gold/20 border border-noir-gold/50 text-noir-gold hover:bg-noir-gold/30 transition-colors text-sm"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              ⟳ Tap to Retry
+              Retry
             </motion.button>
-            <p className="text-center text-noir-smoke text-xs mt-2">
-              Auto-retrying in 2 seconds...
-            </p>
           </div>
         )}
 

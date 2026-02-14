@@ -3,11 +3,31 @@ import type { Contradiction } from '../game/state'
 // Use VITE_API_URL for production (Vercel → Railway), otherwise auto-detect for local dev
 const getApiBase = () => {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
-  const hostname = window.location.hostname
-  return `http://${hostname}:3001/api`
+  // In production (Vercel), use relative /api path (Vercel rewrites to Railway)
+  // In local dev, use localhost:3001
+  if (import.meta.env.DEV) {
+    return 'http://localhost:3001/api'
+  }
+  return '/api'
 }
 
 const API_BASE = getApiBase()
+
+const REQUEST_TIMEOUT_MS = 20_000
+
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = REQUEST_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: options.signal ?? controller.signal,
+    })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
 
 export interface PressureData {
   level: number
@@ -87,7 +107,7 @@ export async function sendMessage(
     ? `${API_BASE}/mystery/${_activeMysteryId}/chat`
     : `${API_BASE}/chat`
 
-  const response = await fetch(url, {
+  const response = await fetchWithTimeout(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

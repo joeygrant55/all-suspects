@@ -142,6 +142,8 @@ export function InterrogationExperience({
   const [isThinking, setIsThinking] = useState(false)
   const [customQuestion, setCustomQuestion] = useState('')
   const [showCustomInput, setShowCustomInput] = useState(false)
+  const [showRetry, setShowRetry] = useState(false)
+  const [lastQuestion, setLastQuestion] = useState<string | null>(null)
   const customInputRef = useRef<HTMLInputElement | null>(null)
 
   // Get character data from game state
@@ -177,6 +179,8 @@ export function InterrogationExperience({
     setCurrentMessage(null)
     setShowCustomInput(false)
     setCustomQuestion('')
+    setShowRetry(false)
+    setLastQuestion(question)
     
     try {
       const response: ChatResponse = await sendMessage(characterId, question)
@@ -254,11 +258,18 @@ export function InterrogationExperience({
       }
     } catch (error) {
       console.error('Failed to get response:', error)
-      setCurrentMessage("*clears throat* I'm sorry, I... I need a moment.")
+      setCurrentMessage('The suspect doesn\'t seem to want to answer. Try again?')
+      setShowRetry(true)
     } finally {
       setIsThinking(false)
     }
   }, [characterId, characterName, isThinking, setEmotion, preloadPortrait, addContradictions, showWhisper])
+
+  const handleRetry = useCallback(() => {
+    if (lastQuestion) {
+      handleAskQuestion(lastQuestion)
+    }
+  }, [lastQuestion, handleAskQuestion])
 
   // Handle custom question submission
   const handleCustomSubmit = useCallback((e: React.FormEvent) => {
@@ -530,6 +541,17 @@ export function InterrogationExperience({
               background: 'linear-gradient(to top, rgba(201, 162, 39, 0.03), transparent)',
             }}
           >
+            {showRetry && (
+              <div className="mb-3 text-center">
+                <p className="text-noir-blood text-sm">The suspect doesn't seem to want to answer. Try again?</p>
+                <button
+                  onClick={handleRetry}
+                  className="mt-2 px-4 py-1.5 text-sm border border-noir-gold/50 text-noir-gold bg-noir-gold/20 hover:bg-noir-gold/30 transition-colors"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
             <QuestionCarousel
               characterId={characterId}
               onQuestionSelect={handleAskQuestion}

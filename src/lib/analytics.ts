@@ -5,7 +5,7 @@
  * Automatically handles session management and batched sends.
  */
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 const STORAGE_KEY = 'all-suspects-session'
 const BATCH_INTERVAL = 5000 // 5 seconds
 
@@ -145,9 +145,9 @@ class Analytics {
       // Use sendBeacon for reliability on page unload
       if (navigator.sendBeacon && document.visibilityState === 'hidden') {
         const blob = new Blob([JSON.stringify({ events })], { type: 'application/json' })
-        navigator.sendBeacon(`${API_BASE}/api/analytics/batch`, blob)
+        navigator.sendBeacon(`${API_BASE}/analytics/batch`, blob)
       } else {
-        await fetch(`${API_BASE}/api/analytics/batch`, {
+        await fetch(`${API_BASE}/analytics/batch`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ events })

@@ -38,7 +38,6 @@ export function IntroVideo({
 }: IntroVideoProps) {
   const [state, setState] = useState<IntroState>('loading')
   const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [_error, setError] = useState<string | null>(null)
   const [_introText, setIntroText] = useState<string>('')
   const [displayedText, setDisplayedText] = useState<string>('')
   const [voiceReady, setVoiceReady] = useState(false)
@@ -47,59 +46,87 @@ export function IntroVideo({
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const typeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  
-  const API_URL = 'http://localhost:3001'
+  const generationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const generationTimedOutRef = useRef(false)
+
+  const API_URL = import.meta.env.VITE_API_URL || '/api'
 
   useEffect(() => {
     // Fetch video and voice in parallel
     loadIntroVideo()
     prefetchVoice()
+
+    return () => {
+      if (generationTimeoutRef.current) {
+        clearTimeout(generationTimeoutRef.current)
+        generationTimeoutRef.current = null
+      }
+      if (typeIntervalRef.current) {
+        clearInterval(typeIntervalRef.current)
+        typeIntervalRef.current = null
+      }
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
+    }
   }, [characterId])
 
   async function loadIntroVideo() {
     setState('loading')
-    setError(null)
+    setVideoUrl(null)
+    setVoiceEnded(false)
+    setVideoEnded(false)
+    generationTimedOutRef.current = false
 
-    let retries = 0
-    const maxRetries = 12 // ~60 seconds of waiting for pre-gen
-
-    const tryLoad = async () => {
-      try {
-        const result = await generateIntroductionVideo(characterId)
-
-        if (result.success && result.videoUrl) {
-          setVideoUrl(result.videoUrl)
-          setState('playing')
-          return
-        }
-
-        // If pending (still generating), retry after a delay
-        if ((result as any).pending && retries < maxRetries) {
-          retries++
-          setTimeout(tryLoad, 5000)
-          return
-        }
-
-        throw new Error(result.error || 'Failed to generate introduction')
-      } catch (err) {
-        console.error('Intro video error:', err)
-        // On error, skip to voice-only intro
-        setState('error')
-        setError(err instanceof Error ? err.message : 'Unknown error')
-        // Mark video as "ended" so we go to speaking mode
-        setVideoEnded(true)
-        setTimeout(() => {
-          setState('speaking')
-          startVoicePlayback()
-          // If voice also fails/not ready, auto-complete
-          setTimeout(() => {
-            setVoiceEnded(true)
-          }, 5000)
-        }, 1500)
-      }
+    if (generationTimeoutRef.current) {
+      clearTimeout(generationTimeoutRef.current)
     }
 
-    tryLoad()
+    generationTimeoutRef.current = setTimeout(() => {
+      generationTimedOutRef.current = true
+      setState('speaking')
+      setVideoEnded(true)
+      startVoicePlayback()
+      // Ensure we always move on even if voice fails
+      setTimeout(() => setVoiceEnded(true), 5000)
+    }, 5000)
+
+    try {
+      const result = await generateIntroductionVideo(characterId)
+
+      if (generationTimedOutRef.current) {
+        return
+      }
+
+      if (result.success && result.videoUrl) {
+        if (generationTimeoutRef.current) {
+          clearTimeout(generationTimeoutRef.current)
+          generationTimeoutRef.current = null
+        }
+
+        setVideoUrl(result.videoUrl)
+        setState('playing')
+        return
+      }
+
+      throw new Error(result.error || 'Failed to generate introduction')
+    } catch (err) {
+      if (generationTimedOutRef.current) {
+        return
+      }
+
+      if (generationTimeoutRef.current) {
+        clearTimeout(generationTimeoutRef.current)
+        generationTimeoutRef.current = null
+      }
+
+      console.error('Intro video error:', err)
+      setState('speaking')
+      setVideoEnded(true)
+      startVoicePlayback()
+      setTimeout(() => setVoiceEnded(true), 5000)
+    }
   }
 
   // Pre-fetch voice audio so it's ready when video starts
@@ -114,7 +141,7 @@ export function IntroVideo({
     setIntroText(text)
     
     try {
-      const response = await fetch(`${API_URL}/api/voice`, {
+      const response = await fetch(`${API_URL}/voice`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ characterId, text }),
@@ -225,14 +252,15 @@ export function IntroVideo({
           <div className="absolute inset-y-0 right-0 w-1/2 bg-noir-charcoal animate-slide-right" />
         </div>
 
-        <div className="relative z-10 text-center">
-          <div className="w-16 h-16 border-4 border-noir-gold/30 border-t-noir-gold rounded-full animate-spin mx-auto mb-6" />
+        <div className="relative z-10 text-center animate-fade-in-up">
+          <div className="w-16 h-16 mx-auto mb-6 bg-noir-gold/10 border border-noir-gold/40 rounded-full opacity-80" />
           <p className="text-noir-gold font-serif text-xl tracking-widest">
             {characterName.toUpperCase()}
           </p>
           <p className="text-noir-cream/60 text-sm mt-2">
             {characterRole}
           </p>
+          <p className="text-noir-ash text-xs mt-4 tracking-wide">Preparing intro...</p>
         </div>
 
         {/* Skip button */}
@@ -323,7 +351,6 @@ export function IntroVideo({
           onEnded={handleVideoEnd}
           onError={() => {
             setState('error')
-            setError('Video playback failed')
             setVideoEnded(true)
             setState('speaking')
             startVoicePlayback()
