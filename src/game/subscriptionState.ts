@@ -49,6 +49,11 @@ export const useSubscriptionStore = create<SubscriptionState>()(
       totalMysteriesPlayed: 0,
       
       canPlayMystery: () => {
+        // PAYWALL DISABLED — optimizing for retention & engagement first
+        // Re-enable when ready to monetize (restore original logic below)
+        return true
+
+        /* ORIGINAL PAYWALL LOGIC — preserved for future use
         const state = get()
         
         // Premium users always can play
@@ -72,6 +77,7 @@ export const useSubscriptionStore = create<SubscriptionState>()(
         }
         
         return state.mysteriesPlayedToday < FREE_DAILY_LIMIT
+      END ORIGINAL PAYWALL LOGIC */
       },
       
       recordMysteryPlay: () => {
