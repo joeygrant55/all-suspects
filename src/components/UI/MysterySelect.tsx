@@ -7,9 +7,10 @@ import analytics from '../../lib/analytics'
 
 interface MysterySelectProps {
   onCreateNew?: () => void
+  onBack?: () => void
 }
 
-export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
+export function MysterySelect({ onCreateNew, onBack }: MysterySelectProps = {}) {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [showSavedMysteries, setShowSavedMysteries] = useState(false)
   
@@ -90,6 +91,7 @@ export function MysterySelect({ onCreateNew }: MysterySelectProps = {}) {
           onClick={() => {
             useMysteryStore.getState().clearMystery()
             useGameStore.getState().resetGame()
+            if (onBack) onBack()
           }}
           className="text-noir-smoke text-sm tracking-wider hover:text-noir-gold transition-colors min-h-[48px] flex items-center"
         >

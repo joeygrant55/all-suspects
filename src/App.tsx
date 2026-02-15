@@ -326,7 +326,7 @@ function App() {
               onBack={() => setCreatorOpen(false)}
             />
           ) : mysterySelectOpen ? (
-            <MysterySelect onCreateNew={() => { setMysterySelectOpen(false); setCreatorOpen(true) }} />
+            <MysterySelect onCreateNew={() => { setMysterySelectOpen(false); setCreatorOpen(true) }} onBack={() => setMysterySelectOpen(false)} />
           ) : checkoutSessionId ? (
             <UpgradeSuccess 
               sessionId={checkoutSessionId} 
