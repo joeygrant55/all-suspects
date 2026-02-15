@@ -109,8 +109,27 @@ function App() {
     }
   }
 
-  const handleStartInvestigation = () => {
+  const handleStartInvestigation = async () => {
     setShowLanding(false)
+    // Go straight into the featured mystery (skip title screen + mystery select)
+    const FEATURED_MYSTERY_ID = 'the-blackwood-betrayal'
+    try {
+      const API_BASE = getApiBase()
+      const res = await fetch(`${API_BASE}/mystery/${FEATURED_MYSTERY_ID}/blueprint`)
+      if (res.ok) {
+        const blueprint = await res.json()
+        const { adaptBlueprint } = await import('./mysteries/blueprintAdapter')
+        const mystery = adaptBlueprint(blueprint)
+        setActiveMysteryId(FEATURED_MYSTERY_ID)
+        useMysteryStore.setState({ activeMystery: mystery, selectedMysteryId: FEATURED_MYSTERY_ID })
+        useGameStore.getState().initializeFromMystery(mystery)
+        useGameStore.getState().startGame()
+        return
+      }
+    } catch (e) {
+      console.error('Failed to load featured mystery, falling back to select:', e)
+    }
+    // Fallback: show title screen if featured mystery fails to load
   }
 
   // Check if user can start a new mystery (with paywall gate)
