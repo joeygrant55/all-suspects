@@ -264,7 +264,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   const [watsonWhisper, setWatsonWhisper] = useState<string | null>(null)
   const [lastQuestion, setLastQuestion] = useState<string | null>(null)
   const [showRetry, setShowRetry] = useState(false)
-  const [pressureIncreased, setPressureIncreased] = useState(false)
+  const [_pressureIncreased, setPressureIncreased] = useState(false)
   const [rawPressure, setRawPressure] = useState(0) // 0-100 scale for portrait mood
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const conversationRef = useRef<HTMLDivElement>(null)
@@ -415,10 +415,10 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     const presentEvidence = presentedEvidenceSource
       ? collectedEvidence.find((item) => item.source === presentedEvidenceSource)
       : null
-    const presentedEvidenceData = presentEvidence
+    const presentedEvidenceData = presentEvidence && presentedEvidenceSource
       ? {
-          source: presentedEvidenceSource,
-          name: EVIDENCE_DATABASE[presentedEvidenceSource]?.name || 'Evidence',
+          source: presentedEvidenceSource as string,
+          name: EVIDENCE_DATABASE[presentedEvidenceSource as string]?.name || 'Evidence',
           description: presentEvidence.description,
         }
       : null
@@ -475,7 +475,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
           playerQuestion: 'Presented evidence check',
         },
         explanation: foundContradiction.explanation,
-        severity: 'major',
+        severity: 'major' as const,
         discoveredAt: Date.now(),
       }
 
@@ -1029,6 +1029,8 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                 </p>
               )}
             </div>
+          </div>
+        </div>
 
         {/* Conversation area - scrollable */}
         <div 
