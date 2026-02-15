@@ -91,6 +91,7 @@ export interface GameState {
   collectedEvidence: Evidence[]
   discoveredEvidenceIds: string[] // Evidence IDs that have been examined
   contradictions: Contradiction[]
+  statements: StatementRecord[]
   newEvidenceCount: number // Count of unviewed evidence
   hasSeenEvidenceBoard: boolean // Whether player has opened the board
 
@@ -120,6 +121,7 @@ export interface GameState {
   markEvidenceDiscovered: (evidenceId: string) => void
   addContradiction: (contradiction: Contradiction) => void
   addContradictions: (contradictions: Contradiction[]) => void
+  addStatement: (statement: Omit<StatementRecord, 'id' | 'timestamp'>) => void
   updateCharacterPressure: (characterId: string, pressure: PressureLevel) => void
   updatePsychology: (updates: Partial<Psychology>) => void
   resetPsychology: () => void
@@ -164,6 +166,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   collectedEvidence: [],
   discoveredEvidenceIds: [],
   contradictions: [],
+  statements: [],
   newEvidenceCount: 0,
   hasSeenEvidenceBoard: false,
   detectiveVisionActive: false,
@@ -262,6 +265,29 @@ export const useGameStore = create<GameState>((set, get) => ({
       }
     }),
 
+  addStatement: (statement) =>
+    set((state) => {
+      const duplicates = state.statements.some(
+        (s) =>
+          s.characterId === statement.characterId &&
+          s.content === statement.content
+      )
+      if (duplicates) {
+        return state
+      }
+
+      return {
+        statements: [
+          ...state.statements,
+          {
+            ...statement,
+            id: crypto.randomUUID(),
+            timestamp: Date.now(),
+          },
+        ],
+      }
+    }),
+
   updateCharacterPressure: (characterId, pressure) =>
     set((state) => ({
       characters: state.characters.map((c) =>
@@ -296,6 +322,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       collectedEvidence: [],
       discoveredEvidenceIds: [],
       contradictions: [],
+      statements: [],
       newEvidenceCount: 0,
       hasSeenEvidenceBoard: false,
       detectiveVisionActive: false,
@@ -342,6 +369,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       collectedEvidence: [],
       discoveredEvidenceIds: [],
       contradictions: [],
+      statements: [],
       newEvidenceCount: 0,
       hasSeenEvidenceBoard: false,
       detectiveVisionActive: false,

@@ -32,6 +32,143 @@ function cleanTextForSpeech(text: string): string {
     .trim()
 }
 
+function getTimeLabel(timestamp: number): string {
+  return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+}
+
+function getPressureBarColor(level: number): string {
+  if (level >= 80) return 'bg-noir-blood'
+  if (level >= 60) return 'bg-orange-500'
+  if (level >= 30) return 'bg-yellow-400'
+  return 'bg-green-500'
+}
+
+function getPressureTextColor(level: number): string {
+  if (level >= 80) return 'text-noir-blood'
+  if (level >= 60) return 'text-orange-400'
+  if (level >= 30) return 'text-yellow-400'
+  return 'text-green-400'
+}
+
+function extractClaimCandidates(text: string): string[] {
+  const clean = text
+    .replace(/\n+/g, ' ')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+
+  if (!clean) return []
+
+  const sentences = clean
+    .split(/[.!?]+/)
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const claimSignals = [
+    /\bI\b/i,
+    /\bwe\b/i,
+    /\bmy\b/i,
+    /\bme\b/i,
+  ]
+
+  const actionSignals = [
+    /\bwas\b|\bam\b|\bwere\b/i,
+    /\bwent\b|\bwent to\b|\bwent in\b/i,
+    /\bsaw\b|\bseen\b|\bnoticed\b|\bheard\b/i,
+    /\bdid\b|\bdidn't\b|\bdid not\b|\bdon't\b|\bcan't\b/i,
+    /\bcalled\b|\bmet\b|\bfound\b|\bkept\b|\bbeen\b/i,
+  ]
+
+  return sentences.filter((sentence) => {
+    const hasClaimSignal = claimSignals.some((signal) => signal.test(sentence))
+    const hasActionSignal = actionSignals.some((signal) => signal.test(sentence))
+    return hasClaimSignal && hasActionSignal && sentence.length > 12
+  })
+}
+
+function getStatementTopic(statement: string): string {
+  const lower = statement.toLowerCase()
+  if (/(where|at|in the|at the|on the|hallway|garden|kitchen|study|parlor|dining)/i.test(lower)) {
+    return 'Location & movements'
+  }
+  if (/(who|see|saw|watch|heard|noticed)/i.test(lower)) {
+    return 'Observation'
+  }
+  if (/(did\s|didn't|have|got|did not|remember|did you)/i.test(lower)) {
+    return 'Alibi'
+  }
+  if (/(saw|found|noticed|heard|heard|overheard|found)/i.test(lower)) {
+    return 'Evidence'
+  }
+  return 'Statement'
+}
+
+function inferContradictionFromResponse(
+  responseText: string,
+  playerQuestion: string,
+  characterName: string,
+  evidenceCollection: Array<{ id: string; source: string; description: string }>,
+  lastPresentedEvidence?: { source: string; name: string; description: string } | null
+): { explanation: string; evidenceSource: string } | null {
+  const text = responseText.toLowerCase()
+
+  const nervousSignals = [
+    'i can explain',
+    'i can\'t explain',
+    'i can not explain',
+    'nervous',
+    'hesitate',
+    'stammer',
+    'i think',
+    'maybe',
+    'actually',
+    'i guess',
+  ]
+
+  if (lastPresentedEvidence && nervousSignals.some((signal) => text.includes(signal.toLowerCase()))) {
+    return {
+      explanation: `${characterName} became visibly pressured and offered a weak explanation after seeing ${lastPresentedEvidence.name}.`,
+      evidenceSource: lastPresentedEvidence.source,
+    }
+  }
+
+  const locationKeywords = ['hallway', 'garden', 'kitchen', 'study', 'parlor', 'dining-room', 'dining room', 'library', 'upstairs', 'basement']
+
+  const statementLocations = locationKeywords.filter((location) => text.includes(location))
+
+  const contradictionCandidates = evidenceCollection.filter((e) => {
+    const combined = `${e.source} ${e.description}`.toLowerCase()
+    const evidenceLocations = locationKeywords.filter((location) =>
+      combined.includes(location)
+    )
+
+    if (evidenceLocations.length === 0 || statementLocations.length === 0) {
+      return false
+    }
+
+    return evidenceLocations.some((el) => !statementLocations.includes(el) && /\b(i|we|my|me|mine)\b/i.test(responseText))
+  })
+
+  if (contradictionCandidates.length > 0) {
+    const first = contradictionCandidates[0]
+    return {
+      explanation: `${characterName} claimed to be in a different location than suggested by the evidence (${first.source}).`,
+      evidenceSource: first.source,
+    }
+  }
+
+  // Generic contradiction flag if question explicitly calls out evidence and response is defensive
+  if ((/\bcontradiction\b|\binconsistent\b|\bevidence\b/i.test(playerQuestion) || /presented\s+it/i.test(playerQuestion)) && /\bi can\b|\bi don't\b|\bi do not\b|\bcan't\b|\bcannot\b/i.test(text)) {
+    if (lastPresentedEvidence) {
+      return {
+        explanation: `${characterName}'s response suggests stress under evidence pressure.`,
+        evidenceSource: lastPresentedEvidence.source,
+      }
+    }
+  }
+
+  return null
+}
+
 // Evidence notification toast component
 function EvidenceToast({ 
   title, 
@@ -109,10 +246,11 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     updatePsychology,
     addEvidence,
     addContradictions,
+    addStatement,
+    statements,
     updateCharacterPressure,
     collectedEvidence
   } = useGameStore()
-  
   // Voice manager for ElevenLabs TTS
   const { speak, isPlaying, voiceEnabled } = useVoiceContext()
   
@@ -126,7 +264,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   const [watsonWhisper, setWatsonWhisper] = useState<string | null>(null)
   const [lastQuestion, setLastQuestion] = useState<string | null>(null)
   const [showRetry, setShowRetry] = useState(false)
-  const [pressureIncreased, setPressureIncreased] = useState(false)
+  const [_pressureIncreased, setPressureIncreased] = useState(false)
   const [rawPressure, setRawPressure] = useState(0) // 0-100 scale for portrait mood
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const conversationRef = useRef<HTMLDivElement>(null)
@@ -144,18 +282,34 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
   const [activeTactic, setActiveTactic] = useState<InterrogationTactic>(null)
   const [showEvidencePicker, setShowEvidencePicker] = useState(false)
   const [showStatementPicker, setShowStatementPicker] = useState(false)
+  const [showEvidencePanel, setShowEvidencePanel] = useState(false)
+  const [showStatementLog, setShowStatementLog] = useState(false)
   const [selectedEvidence, setSelectedEvidence] = useState<string | null>(null)
   const [selectedStatement, setSelectedStatement] = useState<{ characterId: string; content: string } | null>(null)
+  const [showContradictionOverlay, setShowContradictionOverlay] = useState(false)
+  const [contradictionText, setContradictionText] = useState<string>('')
 
   const character = characters.find((c) => c.id === characterId)
+
+  const characterStatements = statements.filter((entry) => entry.characterId === characterId)
+
+  const pressureDisplayLevel = character?.pressure?.level ?? rawPressure
   const conversationMessages = messages.filter(
     (m) => m.characterId === characterId || (m.role === 'player' && !m.characterId)
   ).slice(-20) // Keep last 20 messages for this character
+
+  const latestCharacterMessage = [...conversationMessages].reverse().find((m) => m.role === 'character')
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [conversationMessages])
+
+  useEffect(() => {
+    if (character?.pressure?.level !== undefined) {
+      setRawPressure(character.pressure.level)
+    }
+  }, [character?.pressure?.level])
 
   // Detect pressure changes and trigger pulse animation
   useEffect(() => {
@@ -174,7 +328,11 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     }
   }, [psychology.pressureLevel])
 
-  const applyChatResponse = async (response: ChatResponse, question: string) => {
+  const applyChatResponse = async (
+    response: ChatResponse,
+    question: string,
+    presentedEvidenceSource?: string | null
+  ) => {
     if (!character) return
     if (response.isFallback) {
       addMessage({
@@ -187,16 +345,32 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       return
     }
 
+    const statementText = response.message
+    const trimmedQuestion = question
+
     // Success! Add real character response
     addMessage({
       role: 'character',
       characterId,
-      content: response.message,
+      content: statementText,
+    })
+
+    // Store parsed statements for statement log
+    const claimStatements = extractClaimCandidates(statementText)
+    const parsedStatements = claimStatements.length > 0 ? claimStatements : [statementText]
+    parsedStatements.forEach((statement) => {
+      addStatement({
+        characterId,
+        characterName: character.name,
+        topic: getStatementTopic(statement),
+        content: statement,
+        playerQuestion: trimmedQuestion,
+      })
     })
 
     // Speak the response with ElevenLabs if voice is enabled
     if (voiceEnabled) {
-      const cleanedText = cleanTextForSpeech(response.message)
+      const cleanedText = cleanTextForSpeech(statementText)
       speak(characterId, cleanedText).catch((err) => {
         console.log('Voice playback failed:', err)
       })
@@ -224,14 +398,39 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       })
     }
 
-    // Add evidence from conversation
+    const evidenceSnapshot = collectedEvidence
+      .map((item) => ({
+        id: item.id,
+        source: item.source,
+        description: `${item.description} ${item.source}`,
+      }))
+      .concat(
+        Object.entries(EVIDENCE_DATABASE).map(([source, data]) => ({
+          id: source,
+          source,
+          description: `${data.name} ${data.description}`,
+        }))
+      )
+
+    const presentEvidence = presentedEvidenceSource
+      ? collectedEvidence.find((item) => item.source === presentedEvidenceSource)
+      : null
+    const presentedEvidenceData = presentEvidence && presentedEvidenceSource
+      ? {
+          source: presentedEvidenceSource as string,
+          name: EVIDENCE_DATABASE[presentedEvidenceSource as string]?.name || 'Evidence',
+          description: presentEvidence.description,
+        }
+      : null
+
+    // Add evidence from conversation when AI generates statements
     if (response.statementId) {
       const evidenceSource = `${characterId}-${response.statementId}`
       const evidenceData = EVIDENCE_DATABASE[evidenceSource]
 
       addEvidence({
         type: 'testimony',
-        description: `${character.name}: "${response.message.substring(0, 100)}..."`,
+        description: `${character.name}: "${statementText.substring(0, 100)}..."`,
         source: evidenceSource,
       })
 
@@ -250,27 +449,63 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       setTimeout(() => setWatsonWhisper(randomWhisper), 500)
     }
 
-    // Handle contradictions
-    if (response.contradictions && response.contradictions.length > 0) {
-      addContradictions(response.contradictions)
+    const foundContradiction = inferContradictionFromResponse(
+      statementText,
+      trimmedQuestion,
+      character.name,
+      evidenceSnapshot,
+      presentedEvidenceData
+    )
+
+    if (foundContradiction) {
+      const contradiction = {
+        id: `ui-contradiction-${character.id}-${Date.now()}`,
+        statement1: {
+          characterId,
+          characterName: character.name,
+          content: statementText,
+          playerQuestion: trimmedQuestion,
+        },
+        statement2: {
+          characterId,
+          characterName: 'Evidence',
+          content: presentedEvidenceData
+            ? `${presentedEvidenceData.name}: ${presentedEvidenceData.description}`
+            : foundContradiction.evidenceSource,
+          playerQuestion: 'Presented evidence check',
+        },
+        explanation: foundContradiction.explanation,
+        severity: 'major' as const,
+        discoveredAt: Date.now(),
+      }
+
+      addContradictions([contradiction])
+      setContradictionText(foundContradiction.explanation)
+      setShowContradictionOverlay(true)
       updatePsychology({ isLying: true })
     } else {
       updatePsychology({ isLying: false })
+    }
+
+    // Handle contradictions from backend response
+    if (response.contradictions && response.contradictions.length > 0) {
+      addContradictions(response.contradictions)
+      updatePsychology({ isLying: true })
     }
 
     if (response.cinematicMoment && response.videoGenerationId) {
       console.log('[CINEMATIC] Moment detected! Starting video poll:', response.videoGenerationId)
       setIsGeneratingVideo(true)
       setVideoGenerationId(response.videoGenerationId)
-      setCinematicText(response.message)
-      startVideoPolling(response.videoGenerationId, response.message)
+      setCinematicText(statementText)
+      startVideoPolling(response.videoGenerationId, statementText)
     }
 
     try {
       const watsonAnalysis = await analyzeWithWatson(
         characterId,
         character.name,
-        response.message,
+        statementText,
         question,
         response.pressure?.level || 0
       )
@@ -303,6 +538,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       }
     } catch (watsonError) {
       console.error('Watson analysis failed:', watsonError)
+    } finally {
     }
   }
 
@@ -312,9 +548,14 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     return 'Unknown error'
   }
 
-  const handleSendMessage = async (retryQuestion?: string, tacticOverride?: InterrogationTactic) => {
+  const handleSendMessage = async (
+    retryQuestion?: string,
+    tacticOverride?: InterrogationTactic,
+    evidenceIdOverride?: string | null
+  ) => {
     const question = retryQuestion || inputValue
     const tactic = tacticOverride || activeTactic
+    const evidenceId = evidenceIdOverride || selectedEvidence
 
     if (!question.trim() || isTyping || !character) return
 
@@ -340,6 +581,9 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
       })
     }
 
+    if (tactic === 'present_evidence' && evidenceId) {
+    }
+
     setIsTyping(true)
     setIsStreamingResponse(true)
     setStreamingText('')
@@ -347,6 +591,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     // Reset tactic state after message is sent
     setActiveTactic(null)
     setShowEvidencePicker(false)
+    setShowEvidencePanel(false)
     setShowStatementPicker(false)
     setSelectedEvidence(null)
     setSelectedStatement(null)
@@ -364,7 +609,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
             characterId,
             message: question,
             tactic,
-            evidenceId: selectedEvidence,
+            evidenceId,
             crossReferenceStatement: selectedStatement,
           },
           (text) => {
@@ -374,7 +619,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
             setStreamingText('')
             setIsStreamingResponse(false)
             try {
-              await applyChatResponse(response, question)
+              await applyChatResponse(response, question, evidenceId)
             } finally {
               resolve()
             }
@@ -559,6 +804,39 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
     return [...baseQuestions, ...(characterQuestions[characterId] || [])]
   }
   
+  const pressurePercent = Math.max(0, Math.min(100, Math.round(pressureDisplayLevel)))
+  const pressureLabel =
+    pressurePercent <= 30
+      ? 'Calm'
+      : pressurePercent <= 60
+        ? 'Uneasy'
+        : pressurePercent <= 80
+          ? 'Stressed'
+          : 'Rattled'
+
+  const handlePressEvidence = () => {
+    handleSendMessage('Tell me more about that. I need details.')
+  }
+
+  const handleOpenEvidencePanel = () => {
+    if (collectedEvidence.length === 0) {
+      setWatsonWhisper('You need evidence first before confronting him.')
+      return
+    }
+    setShowEvidencePanel(true)
+    setShowStatementPicker(false)
+    setShowEvidencePicker(true)
+  }
+
+  const handleMoveOn = () => {
+    setActiveTactic(null)
+    setShowEvidencePanel(false)
+    setShowEvidencePicker(false)
+    setShowStatementPicker(false)
+    setSelectedEvidence(null)
+    setSelectedStatement(null)
+  }
+
   const suggestedQuestions = getSuggestedQuestions()
   const mobileSuggestedQuestions = suggestedQuestions.slice(0, 2)
 
@@ -648,6 +926,16 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
         ← Back to Investigation
       </motion.button>
 
+      {/* Statement Log button */}
+      <motion.button
+        onClick={() => setShowStatementLog(true)}
+        className="absolute top-3 right-16 sm:top-4 sm:right-16 z-10 w-12 h-10 flex items-center justify-center bg-noir-charcoal/80 border border-noir-slate hover:border-noir-gold text-noir-cream transition-colors"
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        📝
+      </motion.button>
+
       {/* Close X button */}
       <motion.button
         onClick={onClose}
@@ -663,7 +951,7 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
         {/* Character portrait section - mobile compact, desktop expanded */}
         <div className="flex-shrink-0 flex items-center justify-center pt-3 pb-4 border-b border-noir-slate/30">
           <div className="flex w-full px-3 items-center gap-3 md:gap-4">
-            <div className="relative shrink-0">
+            <div className={`relative shrink-0 ${pressureDisplayLevel > 80 ? "animate-portray-shake" : ""}`}>
               <div className="sm:hidden">
                 <CharacterPortrait
                   characterId={character.id}
@@ -684,6 +972,12 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                   mood={getMoodFromPressure(rawPressure)}
                 />
               </div>
+              {pressureDisplayLevel > 80 && (
+                <div className="pointer-events-none absolute inset-0 flex items-end justify-center gap-2 opacity-70">
+                  <span className="text-xl drop-shadow">💧</span>
+                  <span className="text-xl drop-shadow">💧</span>
+                </div>
+              )}
               {/* Voice playing indicator */}
               {isPlaying && (
                 <motion.div
@@ -703,136 +997,37 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                   <h2 className="text-noir-cream font-serif text-base truncate">{character.name}</h2>
                   <span className="text-noir-smoke text-xs">|</span>
                   <span className="text-noir-smoke text-xs italic truncate">{character.role}</span>
-                  <span className={`text-xs font-semibold shrink-0 ${
-                  psychology.pressureLevel === 1 ? 'text-green-400' :
-                  psychology.pressureLevel === 2 ? 'text-yellow-300' :
-                  psychology.pressureLevel === 3 ? 'text-orange-400' :
-                  'text-red-500'
-                }`}>
-                    {psychology.pressureLevel === 1 && 'Calm'}
-                    {psychology.pressureLevel === 2 && 'Uneasy'}
-                    {psychology.pressureLevel === 3 && 'Stressed'}
-                    {psychology.pressureLevel === 4 && 'Rattled'}
-                    {psychology.pressureLevel === 5 && 'Breaking'}
+                  <span className={`text-xs font-semibold shrink-0 ${getPressureTextColor(pressurePercent)}`}>
+                    {pressureLabel}
                   </span>
                 </div>
-                <div className="mt-2 flex items-center gap-1.5">
-                  <motion.div 
-                    className="flex gap-0.5"
-                    animate={pressureIncreased ? { scale: [1, 1.15, 1] } : {}}
-                    transition={{ duration: 0.4 }}
-                  >
-                    {[1, 2, 3, 4, 5].map((level) => {
-                      const isActive = level <= psychology.pressureLevel
-                      let barColor = 'bg-noir-slate'
-                      if (isActive) {
-                        if (psychology.pressureLevel === 1) {
-                          barColor = 'bg-green-500'
-                        } else if (psychology.pressureLevel === 2) {
-                          barColor = level <= 2 ? 'bg-yellow-400' : 'bg-noir-slate'
-                        } else if (psychology.pressureLevel === 3) {
-                          barColor = level <= 3 ? 'bg-orange-500' : 'bg-noir-slate'
-                        } else if (psychology.pressureLevel >= 4) {
-                          barColor = level <= psychology.pressureLevel ? 'bg-red-600' : 'bg-noir-slate'
-                        }
-                      }
+              </div>
 
-                      return (
-                        <motion.div
-                          key={level}
-                          className={`w-2 h-3 ${barColor} ${
-                            isActive ? 'shadow-sm' : ''
-                          }`}
-                          animate={
-                            pressureIncreased && isActive
-                              ? {
-                                  opacity: [0.7, 1, 0.7, 1],
-                                  boxShadow: [
-                                    '0 0 0px rgba(255,255,255,0)',
-                                    '0 0 8px rgba(255,255,255,0.6)',
-                                    '0 0 0px rgba(255,255,255,0)',
-                                  ],
-                                }
-                              : {}
-                          }
-                          transition={{ duration: 0.6 }}
-                        />
-                      )
-                    })}
-                  </motion.div>
+              <div className="w-full mt-2">
+                <p className="text-[11px] text-noir-smoke uppercase tracking-wider">Pressure {pressurePercent}%</p>
+                <div className="mt-1 h-2 bg-noir-slate/40 rounded-full overflow-hidden">
+                  <motion.div
+                    className={`h-full ${getPressureBarColor(pressurePercent)}`}
+                    initial={{ width: 0 }}
+                    animate={{
+                      width: `${pressurePercent}%`,
+                    }}
+                    transition={{ duration: 0.5 }}
+                  />
                 </div>
+                <p className="text-xs text-noir-cream mt-1">{pressureLabel}</p>
               </div>
 
               <div className="hidden sm:block">
                 <h2 className="text-noir-cream font-serif text-xl">{character.name}</h2>
                 <p className="text-noir-smoke text-sm italic">{character.role}</p>
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="text-noir-smoke text-xs">Pressure:</span>
-                  <motion.div 
-                    className="flex gap-0.5"
-                    animate={pressureIncreased ? { scale: [1, 1.15, 1] } : {}}
-                    transition={{ duration: 0.4 }}
-                  >
-                    {[1, 2, 3, 4, 5].map((level) => {
-                      const isActive = level <= psychology.pressureLevel
-
-                      // Color gradient based on pressure level
-                      let barColor = 'bg-noir-slate'
-                      if (isActive) {
-                        if (psychology.pressureLevel === 1) {
-                          barColor = 'bg-green-500' // Low pressure - green
-                        } else if (psychology.pressureLevel === 2) {
-                          barColor = level <= 2 ? 'bg-yellow-400' : 'bg-noir-slate' // Medium - yellow
-                        } else if (psychology.pressureLevel === 3) {
-                          barColor = level <= 3 ? 'bg-orange-500' : 'bg-noir-slate' // High - orange
-                        } else if (psychology.pressureLevel >= 4) {
-                          barColor = level <= psychology.pressureLevel ? 'bg-red-600' : 'bg-noir-slate' // Critical - red
-                        }
-                      }
-
-                      return (
-                        <motion.div
-                          key={level}
-                          className={`w-3 h-4 ${barColor} ${
-                            isActive ? 'shadow-sm' : ''
-                          }`}
-                          animate={
-                            pressureIncreased && isActive
-                              ? {
-                                  opacity: [0.7, 1, 0.7, 1],
-                                  boxShadow: [
-                                    '0 0 0px rgba(255,255,255,0)',
-                                    '0 0 8px rgba(255,255,255,0.6)',
-                                    '0 0 0px rgba(255,255,255,0)',
-                                  ],
-                                }
-                              : {}
-                          }
-                          transition={{ duration: 0.6 }}
-                        />
-                      )
-                    })}
-                  </motion.div>
-                  {/* Pressure level indicator */}
-                  <span className={`text-xs font-semibold ${
-                    psychology.pressureLevel === 1 ? 'text-green-400' :
-                    psychology.pressureLevel === 2 ? 'text-yellow-300' :
-                    psychology.pressureLevel === 3 ? 'text-orange-400' :
-                    'text-red-500'
-                  }`}>
-                    {psychology.pressureLevel === 1 && 'Calm'}
-                    {psychology.pressureLevel === 2 && 'Uneasy'}
-                    {psychology.pressureLevel === 3 && 'Stressed'}
-                    {psychology.pressureLevel === 4 && 'Rattled'}
-                    {psychology.pressureLevel === 5 && 'Breaking'}
-                  </span>
-                </div>
-                {psychology.isLying && (
-                  <p className="text-xs text-noir-blood mt-1 italic">
-                    Something feels off...
-                  </p>
-                )}
               </div>
+
+              {psychology.isLying && (
+                <p className="text-xs text-noir-blood mt-1 italic">
+                  Something feels off...
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -878,6 +1073,38 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
                     >
                       <span className="text-xs">🔊</span>
                     </motion.button>
+                  )}
+
+                  {msg.role === 'character' && latestCharacterMessage?.id === msg.id && !isTyping && (
+                    <div className="mt-2 flex flex-wrap gap-2 sm:gap-3">
+                      <motion.button
+                        onClick={handlePressEvidence}
+                        disabled={isTyping}
+                        className="px-3 py-2 text-xs sm:text-sm rounded border border-noir-gold text-noir-gold bg-noir-gold/10 hover:bg-noir-gold/20 shadow-sm shadow-noir-gold/40"
+                        whileHover={{ scale: 1.03 }}
+                        whileTap={{ scale: 0.98 }}
+                      >
+                        <span className="mr-1">🔍</span> PRESS
+                      </motion.button>
+                      <motion.button
+                        onClick={handleOpenEvidencePanel}
+                        disabled={isTyping || collectedEvidence.length === 0}
+                        className="px-3 py-2 text-xs sm:text-sm rounded bg-gradient-to-r from-amber-600/80 to-noir-gold text-noir-black font-medium hover:from-amber-500/90 hover:to-noir-gold/80 disabled:opacity-50"
+                        whileHover={!isTyping ? { scale: 1.03 } : {}}
+                        whileTap={!isTyping ? { scale: 0.98 } : {}}
+                      >
+                        <span className="mr-1">📋</span> PRESENT EVIDENCE
+                      </motion.button>
+                      <motion.button
+                        onClick={handleMoveOn}
+                        disabled={isTyping}
+                        className="px-3 py-2 text-xs sm:text-sm rounded border border-noir-slate/50 text-noir-smoke hover:text-noir-cream hover:border-noir-slate disabled:opacity-50"
+                        whileHover={!isTyping ? { scale: 1.03 } : {}}
+                        whileTap={!isTyping ? { scale: 0.98 } : {}}
+                      >
+                        <span className="mr-1">➡️</span> MOVE ON
+                      </motion.button>
+                    </div>
                   )}
                 </div>
               </motion.div>
@@ -958,17 +1185,10 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
 
             {/* Present Evidence */}
             <motion.button
-              onClick={() => {
-                if (collectedEvidence.length === 0) {
-                  setWatsonWhisper("You haven't collected any evidence yet, Detective.")
-                  return
-                }
-                setShowEvidencePicker(!showEvidencePicker)
-                setShowStatementPicker(false)
-              }}
+              onClick={handleOpenEvidencePanel}
               disabled={isTyping || collectedEvidence.length === 0}
               className={`w-[23%] min-w-[60px] px-2 py-2 rounded border transition-all ${
-                showEvidencePicker
+                showEvidencePicker || showEvidencePanel
                   ? 'bg-amber-500/20 border-amber-500 text-amber-300'
                   : 'bg-noir-charcoal/50 border-noir-slate/50 hover:border-amber-500/50 text-noir-smoke hover:text-amber-300'
               } disabled:opacity-30 disabled:cursor-not-allowed`}
@@ -1031,41 +1251,55 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
             </motion.button>
           </div>
 
-          {/* Evidence Picker */}
+          {/* Evidence Picker / Present Panel */}
           <AnimatePresence>
-            {showEvidencePicker && (
+            {showEvidencePicker || showEvidencePanel ? (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="max-w-4xl mx-auto"
+                initial={{ opacity: 0, y: '100%' }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: '100%' }}
+                className="fixed inset-x-0 bottom-12 z-30 max-h-[55vh] md:static md:z-auto px-3 md:px-0"
               >
-                <div className="bg-noir-charcoal/80 border-2 border-amber-500/50 p-4 rounded">
+                <div className="max-w-4xl mx-auto bg-noir-charcoal/95 border-2 border-amber-500/50 p-4 rounded shadow-2xl">
                   <p className="text-amber-300 text-sm mb-3 font-serif">Select evidence to present:</p>
-                  <div className="space-y-2 max-h-52 sm:max-h-60 overflow-y-auto">
+                  <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto">
                     {collectedEvidence.map((evidence) => {
                       const evidenceData = EVIDENCE_DATABASE[evidence.source]
+                      const name = evidenceData?.name || 'Evidence'
+                      const description = evidenceData?.description || evidence.description
                       return (
                         <motion.button
                           key={evidence.id}
                           onClick={() => {
-                            setSelectedEvidence(evidence.source)
-                            setActiveTactic('present_evidence')
-                            setInputValue(`[Showing ${evidenceData?.name || 'evidence'}] Explain this.`)
+                            const evidencePrompt = `How do you explain this? ${name}: ${description}`
+                            setShowEvidencePanel(false)
                             setShowEvidencePicker(false)
+                            setShowStatementPicker(false)
+                            handleSendMessage(evidencePrompt, 'present_evidence', evidence.source)
                           }}
                           className="w-full text-left px-4 py-3 bg-noir-slate/30 border border-noir-slate/50 hover:border-amber-500/50 text-noir-cream hover:text-amber-300 transition-colors"
                           whileHover={{ scale: 1.01, x: 4 }}
                         >
-                          <p className="font-semibold text-sm">{evidenceData?.name || 'Evidence'}</p>
-                          <p className="text-xs text-noir-smoke mt-1">{evidenceData?.description || evidence.description}</p>
+                          <p className="font-semibold text-sm">{name}</p>
+                          <p className="text-xs text-noir-smoke mt-1">{description}</p>
                         </motion.button>
                       )
                     })}
                   </div>
+                  <motion.button
+                    onClick={() => {
+                      setShowEvidencePanel(false)
+                      setShowEvidencePicker(false)
+                    }}
+                    className="mt-3 px-3 py-2 text-sm border border-noir-slate/50 hover:border-noir-gold/50 rounded"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Close
+                  </motion.button>
                 </div>
               </motion.div>
-            )}
+            ) : null}
           </AnimatePresence>
 
           {/* Statement Picker (Cross-Reference) */}
@@ -1207,6 +1441,99 @@ export function CharacterInterrogation({ characterId, onClose }: CharacterInterr
             </motion.button>
           </div>
         </div>
+
+        {/* Statement Log Drawer */}
+        <AnimatePresence>
+          {showStatementLog && (
+            <motion.div
+              initial={{ opacity: 0, x: '100%' }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: '100%' }}
+              className="fixed inset-y-0 right-0 w-[90%] sm:w-[360px] bg-noir-charcoal border-l-2 border-noir-smoke/50 z-40 p-4 overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-noir-gold font-serif text-lg">📝 Statement Log</h3>
+                <button
+                  onClick={() => setShowStatementLog(false)}
+                  className="text-noir-smoke hover:text-noir-cream"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-3">
+                {characterStatements.length === 0 ? (
+                  <p className="text-noir-smoke text-sm">No statements logged yet.</p>
+                ) : (
+                  characterStatements.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="bg-noir-slate/50 border border-noir-smoke/30 rounded p-3"
+                    >
+                      <p className="text-noir-gold text-xs uppercase tracking-wider mb-1">{entry.topic}</p>
+                      <p className="text-noir-cream text-sm leading-relaxed">{entry.content}</p>
+                      <p className="text-noir-smoke text-[11px] mt-2">{getTimeLabel(entry.timestamp)}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Contradiction Overlay */}
+        <AnimatePresence>
+          {showContradictionOverlay && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[120] bg-noir-black/80 flex items-center justify-center"
+            >
+              <motion.div
+                initial={{ scale: 0.85, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 180 }}
+                className="relative text-center px-8 py-12 rounded border-2 border-noir-blood bg-noir-charcoal/95"
+              >
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: [0, 1, 0.7] }}
+                  transition={{ duration: 0.8 }}
+                  className="absolute inset-0 bg-noir-blood/30 pointer-events-none"
+                />
+                <p className="relative text-noir-blood text-4xl sm:text-5xl font-serif font-bold tracking-[0.2em]">
+                  CONTRADICTION FOUND!
+                </p>
+                <p className="relative mt-4 text-noir-cream font-serif text-xl sm:text-2xl">{character?.name}</p>
+                <p className="relative mt-4 text-noir-cream/90 max-w-lg mx-auto">{contradictionText}</p>
+                <motion.button
+                  onClick={() => setShowContradictionOverlay(false)}
+                  className="relative mt-8 px-6 py-3 bg-noir-gold text-noir-black rounded font-serif"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Continue
+                </motion.button>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <style>{`
+          @keyframes portrait-shake {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            20% { transform: translate(-1px, 1px) rotate(-1deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            60% { transform: translate(-1px, 1px) rotate(-0.5deg); }
+            80% { transform: translate(1px, -1px) rotate(0.5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+          }
+
+          .animate-portray-shake {
+            animation: portrait-shake 0.2s infinite;
+          }
+        `}</style>
       </div>
     </div>
   )
