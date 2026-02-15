@@ -25,6 +25,13 @@ export interface Evidence {
   timestamp: number
 }
 
+export interface CaseTheory {
+  suspectId: string | null
+  method: string | null
+  motive: string | null
+  supportingEvidence: string[]
+}
+
 export interface StatementRecord {
   id: string
   characterId: string
@@ -94,6 +101,7 @@ export interface GameState {
   statements: StatementRecord[]
   newEvidenceCount: number // Count of unviewed evidence
   hasSeenEvidenceBoard: boolean // Whether player has opened the board
+  caseTheory: CaseTheory
 
   // Vision
   detectiveVisionActive: boolean
@@ -132,6 +140,8 @@ export interface GameState {
   isEvidenceDiscovered: (evidenceId: string) => boolean
   isEvidenceCollected: (evidenceId: string) => boolean
   markEvidenceBoardViewed: () => void
+  setCaseTheory: (theory: Partial<CaseTheory>) => void
+  getCaseStrength: () => number
   initializeFromMystery: (mystery: LoadedMystery) => void
   toggleDetectiveVision: () => void
 }
@@ -170,6 +180,12 @@ export const useGameStore = create<GameState>((set, get) => ({
   newEvidenceCount: 0,
   hasSeenEvidenceBoard: false,
   detectiveVisionActive: false,
+  caseTheory: {
+    suspectId: null,
+    method: null,
+    motive: null,
+    supportingEvidence: [],
+  },
   accusationUnlocked: false,
   gameComplete: false,
   gameStarted: false,
@@ -326,6 +342,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       newEvidenceCount: 0,
       hasSeenEvidenceBoard: false,
       detectiveVisionActive: false,
+      caseTheory: {
+        suspectId: null,
+        method: null,
+        motive: null,
+        supportingEvidence: [],
+      },
       accusationUnlocked: false,
       gameComplete: false,
       gameStarted: false,
@@ -352,6 +374,29 @@ export const useGameStore = create<GameState>((set, get) => ({
   markEvidenceBoardViewed: () =>
     set({ newEvidenceCount: 0, hasSeenEvidenceBoard: true }),
 
+  setCaseTheory: (theory) =>
+    set((state) => ({
+      caseTheory: {
+        ...state.caseTheory,
+        ...theory,
+        supportingEvidence: theory.supportingEvidence ?? state.caseTheory.supportingEvidence,
+      },
+    })),
+
+  getCaseStrength: () => {
+    const state = get()
+    const evidenceScore = Math.min(45, state.collectedEvidence.length * 10)
+    const contradictionScore = Math.min(25, state.contradictions.length * 8)
+    const questionedChars = new Set(
+      state.messages
+        .filter((message) => message.role === 'player' && message.characterId)
+        .map((message) => message.characterId)
+    ).size
+    const interrogationScore = Math.min(30, questionedChars * 8)
+
+    return Math.round(evidenceScore + contradictionScore + interrogationScore)
+  },
+
   initializeFromMystery: (mystery) =>
     set({
       // Convert mystery characters to game characters
@@ -373,6 +418,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       newEvidenceCount: 0,
       hasSeenEvidenceBoard: false,
       detectiveVisionActive: false,
+      caseTheory: {
+        suspectId: null,
+        method: null,
+        motive: null,
+        supportingEvidence: [],
+      },
       accusationUnlocked: false,
       gameComplete: false,
       accusationAttempts: 0,
