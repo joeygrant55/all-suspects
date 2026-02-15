@@ -94,6 +94,9 @@ export interface GameState {
   newEvidenceCount: number // Count of unviewed evidence
   hasSeenEvidenceBoard: boolean // Whether player has opened the board
 
+  // Vision
+  detectiveVisionActive: boolean
+
   // Progress
   accusationUnlocked: boolean
   gameComplete: boolean
@@ -128,6 +131,7 @@ export interface GameState {
   isEvidenceCollected: (evidenceId: string) => boolean
   markEvidenceBoardViewed: () => void
   initializeFromMystery: (mystery: LoadedMystery) => void
+  toggleDetectiveVision: () => void
 }
 
 const ROOMS = ['parlor', 'study', 'dining-room', 'garden', 'kitchen', 'hallway']
@@ -162,6 +166,7 @@ export const useGameStore = create<GameState>((set, get) => ({
   contradictions: [],
   newEvidenceCount: 0,
   hasSeenEvidenceBoard: false,
+  detectiveVisionActive: false,
   accusationUnlocked: false,
   gameComplete: false,
   gameStarted: false,
@@ -210,8 +215,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       // Unlock accusation at 5 pieces of evidence (counting both room + interrogation evidence)
       const totalEvidence = updatedEvidence.length + state.discoveredEvidenceIds.length
       const accusationUnlocked = totalEvidence >= 5
-      return { 
-        collectedEvidence: updatedEvidence, 
+      return {
+        collectedEvidence: updatedEvidence,
         accusationUnlocked,
         newEvidenceCount: state.newEvidenceCount + 1
       }
@@ -226,7 +231,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       // Unlock accusation at 5 pieces of evidence (counting both room + interrogation evidence)
       const totalEvidence = updatedDiscovered.length + state.collectedEvidence.length
       const accusationUnlocked = totalEvidence >= 5
-      return { 
+      return {
         discoveredEvidenceIds: updatedDiscovered,
         accusationUnlocked
       }
@@ -293,6 +298,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       contradictions: [],
       newEvidenceCount: 0,
       hasSeenEvidenceBoard: false,
+      detectiveVisionActive: false,
       accusationUnlocked: false,
       gameComplete: false,
       gameStarted: false,
@@ -338,10 +344,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       contradictions: [],
       newEvidenceCount: 0,
       hasSeenEvidenceBoard: false,
+      detectiveVisionActive: false,
       accusationUnlocked: false,
       gameComplete: false,
       accusationAttempts: 0,
       lastWrongAccusation: null,
       psychology: INITIAL_PSYCHOLOGY,
     }),
+
+  toggleDetectiveVision: () =>
+    set((state) => ({
+      detectiveVisionActive: !state.detectiveVisionActive,
+    })),
 }))
