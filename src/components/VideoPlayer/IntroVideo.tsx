@@ -1,23 +1,14 @@
 /**
  * IntroVideo Component
  *
- * Displays a cinematic character introduction video
- * when the player first approaches a suspect,
- * followed by a voiced character intro line.
+ * Shows a cinematic character portrait card when first approaching a suspect.
+ * For generated mysteries, uses portrait from /generated/{mysteryId}/assets/portraits/
+ * For hardwired mysteries, uses /portraits/{characterId}.png
  */
 
-import { useState, useEffect, useRef } from 'react'
-import { generateIntroductionVideo } from '../../api/client'
-
-// Character intro lines — spoken via ElevenLabs after video plays
-const CHARACTER_INTROS: Record<string, string> = {
-  victoria: "Detective. I trust this won't take long. I've just lost my husband, and I have a household to manage. What is it you need?",
-  thomas: "Look, I know what people say about me. But I loved my father — despite everything. Just... ask your questions and let me be.",
-  eleanor: "I've organized Mr. Ashford's affairs for seven years. I know more about this family than they know about themselves. Where shall we begin?",
-  marcus: "I was Edmund's physician and, I dare say, his closest confidant. A terrible loss. I'll help however I can, detective.",
-  lillian: "Edmund and I go way back, darling. Before Victoria, before the money, before... all of this. I suppose you want to know about tonight?",
-  james: "I have served the Ashford family for thirty-two years, sir. I know every corner of this manor. I am at your disposal.",
-}
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import { useMysteryStore } from '../../game/mysteryState'
 
 interface IntroVideoProps {
   characterId: string
@@ -27,8 +18,6 @@ interface IntroVideoProps {
   onSkip?: () => void
 }
 
-type IntroState = 'loading' | 'playing' | 'speaking' | 'complete' | 'error' | 'skipped'
-
 export function IntroVideo({
   characterId,
   characterName,
@@ -36,415 +25,113 @@ export function IntroVideo({
   onComplete,
   onSkip,
 }: IntroVideoProps) {
-  const [state, setState] = useState<IntroState>('loading')
-  const [videoUrl, setVideoUrl] = useState<string | null>(null)
-  const [_introText, setIntroText] = useState<string>('')
-  const [displayedText, setDisplayedText] = useState<string>('')
-  const [voiceReady, setVoiceReady] = useState(false)
-  const [videoEnded, setVideoEnded] = useState(false)
-  const [voiceEnded, setVoiceEnded] = useState(false)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const typeIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const generationTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const generationTimedOutRef = useRef(false)
+  const [portraitLoaded, setPortraitLoaded] = useState(false)
+  const activeMystery = useMysteryStore((s) => s.activeMystery)
+  const mysteryId = activeMystery?.id
 
-  const API_URL = import.meta.env.VITE_API_URL || '/api'
-
+  // Auto-advance after 3 seconds
   useEffect(() => {
-    // Fetch video and voice in parallel
-    loadIntroVideo()
-    prefetchVoice()
+    const timer = setTimeout(() => {
+      onComplete?.()
+    }, 3500)
+    return () => clearTimeout(timer)
+  }, [onComplete])
 
-    return () => {
-      if (generationTimeoutRef.current) {
-        clearTimeout(generationTimeoutRef.current)
-        generationTimeoutRef.current = null
-      }
-      if (typeIntervalRef.current) {
-        clearInterval(typeIntervalRef.current)
-        typeIntervalRef.current = null
-      }
-      if (audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current = null
-      }
-    }
-  }, [characterId])
+  // Build portrait path — try generated mystery path first, fallback to hardwired
+  const portraitPath = mysteryId && mysteryId !== 'ashford-affair'
+    ? `/generated/${mysteryId}/assets/portraits/${characterId}.png`
+    : `/portraits/${characterId}.png`
 
-  async function loadIntroVideo() {
-    setState('loading')
-    setVideoUrl(null)
-    setVoiceEnded(false)
-    setVideoEnded(false)
-    generationTimedOutRef.current = false
-
-    if (generationTimeoutRef.current) {
-      clearTimeout(generationTimeoutRef.current)
-    }
-
-    generationTimeoutRef.current = setTimeout(() => {
-      generationTimedOutRef.current = true
-      setState('speaking')
-      setVideoEnded(true)
-      startVoicePlayback()
-      // Ensure we always move on even if voice fails
-      setTimeout(() => setVoiceEnded(true), 5000)
-    }, 5000)
-
-    try {
-      const result = await generateIntroductionVideo(characterId)
-
-      if (generationTimedOutRef.current) {
-        return
-      }
-
-      if (result.success && result.videoUrl) {
-        if (generationTimeoutRef.current) {
-          clearTimeout(generationTimeoutRef.current)
-          generationTimeoutRef.current = null
-        }
-
-        setVideoUrl(result.videoUrl)
-        setState('playing')
-        return
-      }
-
-      throw new Error(result.error || 'Failed to generate introduction')
-    } catch (err) {
-      if (generationTimedOutRef.current) {
-        return
-      }
-
-      if (generationTimeoutRef.current) {
-        clearTimeout(generationTimeoutRef.current)
-        generationTimeoutRef.current = null
-      }
-
-      console.error('Intro video error:', err)
-      setState('speaking')
-      setVideoEnded(true)
-      startVoicePlayback()
-      setTimeout(() => setVoiceEnded(true), 5000)
-    }
-  }
-
-  // Pre-fetch voice audio so it's ready when video starts
-  async function prefetchVoice() {
-    const text = CHARACTER_INTROS[characterId]
-    if (!text) {
-      setVoiceReady(true)
-      setVoiceEnded(true)
-      return
-    }
-    
-    setIntroText(text)
-    
-    try {
-      const response = await fetch(`${API_URL}/voice`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId, text }),
-      })
-      
-      if (response.ok) {
-        const data = await response.json()
-        const audioBlob = new Blob(
-          [Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))],
-          { type: 'audio/mpeg' }
-        )
-        const audioUrl = URL.createObjectURL(audioBlob)
-        
-        const audio = new Audio(audioUrl)
-        audioRef.current = audio
-        audio.volume = 0.85
-        
-        audio.onended = () => {
-          URL.revokeObjectURL(audioUrl)
-          setVoiceEnded(true)
-          if (typeIntervalRef.current) clearInterval(typeIntervalRef.current)
-          setDisplayedText(text)
-        }
-        
-        audio.onerror = () => {
-          setVoiceEnded(true)
-          if (typeIntervalRef.current) clearInterval(typeIntervalRef.current)
-          setDisplayedText(text)
-        }
-        
-        setVoiceReady(true)
-      } else {
-        setVoiceReady(true)
-        setVoiceEnded(true)
-      }
-    } catch {
-      setVoiceReady(true)
-      setVoiceEnded(true)
-    }
-  }
-
-  // Start voice playback + typewriter (called when video starts or as standalone)
-  function startVoicePlayback() {
-    const text = CHARACTER_INTROS[characterId]
-    if (!text) return
-    
-    // Start typewriter
-    let i = 0
-    typeIntervalRef.current = setInterval(() => {
-      i++
-      setDisplayedText(text.slice(0, i))
-      if (i >= text.length) {
-        if (typeIntervalRef.current) clearInterval(typeIntervalRef.current)
-      }
-    }, 30)
-    
-    // Play audio if ready
-    if (audioRef.current) {
-      audioRef.current.play().catch(() => {
-        setVoiceEnded(true)
-      })
-    }
-  }
-
-  // When both video and voice finish, complete the intro
-  useEffect(() => {
-    if (videoEnded && voiceEnded) {
-      setTimeout(() => onComplete?.(), 800)
-    }
-  }, [videoEnded, voiceEnded])
-
-  function handleVideoEnd() {
-    setVideoEnded(true)
-  }
-  
-  // Handle video play start — trigger voice simultaneously
-  function handleVideoPlay() {
-    if (voiceReady) {
-      startVoicePlayback()
-    }
-  }
-  
-  // If voice becomes ready while video is already playing
-  useEffect(() => {
-    if (voiceReady && state === 'playing' && videoRef.current && !videoRef.current.paused) {
-      startVoicePlayback()
-    }
-  }, [voiceReady, state])
-
-  function handleSkip() {
-    setState('skipped')
-    // Stop any playing audio
-    if (audioRef.current) {
-      audioRef.current.pause()
-      audioRef.current = null
-    }
+  const handleSkip = () => {
     onSkip?.()
     onComplete?.()
   }
 
-  // Loading state
-  if (state === 'loading') {
-    return (
-      <div className="fixed inset-0 z-50 bg-noir-black flex flex-col items-center justify-center">
-        {/* Dramatic opening curtain effect */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute inset-y-0 left-0 w-1/2 bg-noir-charcoal animate-slide-left" />
-          <div className="absolute inset-y-0 right-0 w-1/2 bg-noir-charcoal animate-slide-right" />
+  return (
+    <motion.div
+      className="fixed inset-0 z-50 bg-noir-black flex flex-col items-center justify-center cursor-pointer"
+      onClick={handleSkip}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      {/* Subtle vignette */}
+      <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-noir-black/80 pointer-events-none" />
+
+      {/* Portrait */}
+      <motion.div
+        className="relative z-10 flex flex-col items-center"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.3 }}
+      >
+        <div className="w-40 h-40 sm:w-52 sm:h-52 rounded-full border-2 border-noir-gold/50 overflow-hidden mb-6 shadow-[0_0_60px_rgba(201,162,39,0.15)]">
+          <img
+            src={portraitPath}
+            alt={characterName}
+            className={`w-full h-full object-cover transition-opacity duration-500 ${portraitLoaded ? 'opacity-100' : 'opacity-0'}`}
+            onLoad={() => setPortraitLoaded(true)}
+            onError={(e) => {
+              // Try alternate path
+              const img = e.target as HTMLImageElement
+              if (!img.src.includes('/portraits/' + characterId + '.png')) {
+                img.src = `/portraits/${characterId}.png`
+              }
+            }}
+          />
+          {!portraitLoaded && (
+            <div className="w-full h-full bg-noir-charcoal flex items-center justify-center">
+              <span className="text-noir-gold/40 text-4xl font-serif">
+                {characterName.charAt(0)}
+              </span>
+            </div>
+          )}
         </div>
 
-        <div className="relative z-10 text-center animate-fade-in-up">
-          <div className="w-16 h-16 mx-auto mb-6 bg-noir-gold/10 border border-noir-gold/40 rounded-full opacity-80" />
-          <p className="text-noir-gold font-serif text-xl tracking-widest">
-            {characterName.toUpperCase()}
-          </p>
-          <p className="text-noir-cream/60 text-sm mt-2">
-            {characterRole}
-          </p>
-          <p className="text-noir-ash text-xs mt-4 tracking-wide">Preparing intro...</p>
-        </div>
-
-        {/* Skip button */}
-        <button
-          onClick={handleSkip}
-          className="absolute bottom-8 right-8 text-noir-cream/40 hover:text-noir-cream transition-colors text-sm"
+        {/* Name */}
+        <motion.h2
+          className="text-noir-gold font-serif text-2xl sm:text-3xl tracking-[0.2em] text-center mb-2"
+          style={{ textShadow: '0 0 40px rgba(201, 162, 39, 0.3)' }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.8 }}
         >
-          Skip intro
-        </button>
-      </div>
-    )
-  }
+          {characterName.toUpperCase()}
+        </motion.h2>
 
-  // Error state (brief display before auto-continuing)
-  if (state === 'error') {
-    return (
-      <div className="fixed inset-0 z-50 bg-noir-black flex flex-col items-center justify-center">
-        <p className="text-noir-gold font-serif text-2xl mb-2">
-          {characterName}
-        </p>
-        <p className="text-noir-cream/60 text-sm">
+        {/* Role */}
+        <motion.p
+          className="text-noir-smoke/70 text-sm sm:text-base tracking-widest text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.6, delay: 1.1 }}
+        >
           {characterRole}
-        </p>
-      </div>
-    )
-  }
+        </motion.p>
 
-  // Speaking state — character intro voiceover
-  if (state === 'speaking') {
-    return (
-      <div className="fixed inset-0 z-50 bg-noir-black flex flex-col items-center justify-center">
-        {/* Character portrait area */}
-        <div className="mb-8">
-          <div className="w-24 h-24 rounded-full border-2 border-noir-gold/60 overflow-hidden mx-auto mb-4">
-            <img 
-              src={`/portraits/${characterId}.png`} 
-              alt={characterName}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                // Fallback to initials
-                (e.target as HTMLImageElement).style.display = 'none'
-              }}
-            />
-          </div>
-          <p className="text-noir-gold font-serif text-2xl tracking-widest text-center">
-            {characterName.toUpperCase()}
-          </p>
-          <p className="text-noir-cream/50 text-sm text-center mt-1">
-            {characterRole}
-          </p>
-        </div>
-
-        {/* Speech bubble / dialogue area */}
-        <div className="max-w-2xl mx-auto px-8">
-          <div className="relative bg-noir-charcoal/60 border border-noir-gold/20 rounded-lg p-6">
-            {/* Decorative quote marks */}
-            <span className="absolute -top-4 left-4 text-noir-gold/40 text-5xl font-serif">&ldquo;</span>
-            <p className="text-noir-cream/90 font-serif text-lg leading-relaxed italic pl-6">
-              {displayedText}
-              <span className="inline-block w-0.5 h-5 bg-noir-gold/60 ml-1 animate-pulse" />
-            </p>
-          </div>
-        </div>
-
-        {/* Skip button */}
-        <button
-          onClick={handleSkip}
-          className="absolute bottom-8 right-8 text-noir-cream/40 hover:text-noir-cream transition-colors text-sm"
+        {/* Decorative line */}
+        <motion.div
+          className="mt-6 flex items-center gap-3"
+          initial={{ opacity: 0, scaleX: 0 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ duration: 0.8, delay: 1.4 }}
         >
-          Skip
-        </button>
-      </div>
-    )
-  }
+          <div className="w-12 h-px bg-noir-gold/30" />
+          <div className="w-1.5 h-1.5 bg-noir-gold/50 rotate-45" />
+          <div className="w-12 h-px bg-noir-gold/30" />
+        </motion.div>
+      </motion.div>
 
-  // Playing/complete state
-  if ((state === 'playing' || state === 'complete') && videoUrl) {
-    return (
-      <div className="fixed inset-0 z-50 bg-noir-black">
-        {/* Full-screen video */}
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          autoPlay
-          playsInline
-          className="w-full h-full object-cover"
-          onPlay={handleVideoPlay}
-          onEnded={handleVideoEnd}
-          onError={() => {
-            setState('error')
-            setVideoEnded(true)
-            setState('speaking')
-            startVoicePlayback()
-          }}
-        />
-
-        {/* Noir overlay effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          {/* Vignette */}
-          <div className="absolute inset-0 bg-gradient-radial from-transparent via-transparent to-noir-black/60" />
-
-          {/* Letterbox bars for cinematic feel */}
-          <div className="absolute top-0 left-0 right-0 h-16 bg-noir-black" />
-          <div className="absolute bottom-0 left-0 right-0 h-16 bg-noir-black" />
-        </div>
-
-        {/* Character name + subtitle dialogue */}
-        <div className="absolute inset-0 flex flex-col items-center justify-end pb-24 pointer-events-none">
-          {!displayedText && (
-            <div className="text-center animate-fade-in-up mb-4">
-              <p className="text-noir-gold font-serif text-4xl tracking-widest mb-2">
-                {characterName.toUpperCase()}
-              </p>
-              <p className="text-noir-cream/70 text-lg tracking-wide">
-                {characterRole}
-              </p>
-            </div>
-          )}
-          {displayedText && (
-            <div className="max-w-3xl mx-auto px-8 mb-4">
-              <p className="text-center text-noir-gold/80 font-serif text-sm tracking-wider mb-2">
-                {characterName}
-              </p>
-              <div className="bg-noir-black/70 backdrop-blur-sm rounded px-6 py-3 border border-noir-gold/10">
-                <p className="text-noir-cream/95 font-serif text-lg leading-relaxed italic text-center">
-                  &ldquo;{displayedText}&rdquo;
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Skip button */}
-        <button
-          onClick={handleSkip}
-          className="absolute bottom-20 right-8 text-noir-cream/40 hover:text-noir-cream transition-colors text-sm z-10"
-        >
-          Skip
-        </button>
-
-        {/* Film grain overlay */}
-        <div className="absolute inset-0 opacity-5 pointer-events-none mix-blend-overlay" style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
-        }} />
-      </div>
-    )
-  }
-
-  return null
+      {/* Tap to skip hint */}
+      <motion.p
+        className="absolute bottom-8 text-noir-smoke/30 text-xs tracking-widest"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 2 }}
+      >
+        TAP TO CONTINUE
+      </motion.p>
+    </motion.div>
+  )
 }
-
-// Add these animations to your CSS/Tailwind config
-export const animationStyles = `
-@keyframes slide-left {
-  from { transform: translateX(0); }
-  to { transform: translateX(-100%); }
-}
-
-@keyframes slide-right {
-  from { transform: translateX(0); }
-  to { transform: translateX(100%); }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-slide-left {
-  animation: slide-left 1.5s ease-out forwards;
-}
-
-.animate-slide-right {
-  animation: slide-right 1.5s ease-out forwards;
-}
-
-.animate-fade-in-up {
-  animation: fade-in-up 1s ease-out 0.5s forwards;
-  opacity: 0;
-}
-`

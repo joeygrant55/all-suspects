@@ -222,6 +222,66 @@ router.post('/:id/chat', async (req, res) => {
 })
 
 /**
+ * POST /api/mystery/:id/chat/stream
+ * SSE streaming version of chat — streams response text as tokens
+ */
+router.post('/:id/chat/stream', async (req, res) => {
+  try {
+    const { id } = req.params
+    const { characterId, message, evidenceId } = req.body
+
+    if (!characterId || !message) {
+      res.setHeader('Content-Type', 'text/event-stream')
+      res.setHeader('Cache-Control', 'no-cache')
+      res.setHeader('Connection', 'keep-alive')
+      res.write(`event: error\ndata: ${JSON.stringify({ error: 'characterId and message are required' })}\n\n`)
+      return res.end()
+    }
+
+    const blueprint = loadBlueprint(id)
+    if (!blueprint) {
+      res.setHeader('Content-Type', 'text/event-stream')
+      res.setHeader('Cache-Control', 'no-cache')
+      res.setHeader('Connection', 'keep-alive')
+      res.write(`event: error\ndata: ${JSON.stringify({ error: 'Mystery not found' })}\n\n`)
+      return res.end()
+    }
+
+    // Set up SSE
+    res.setHeader('Content-Type', 'text/event-stream')
+    res.setHeader('Cache-Control', 'no-cache')
+    res.setHeader('Connection', 'keep-alive')
+    res.setHeader('Access-Control-Allow-Origin', '*')
+    res.write(`event: start\ndata: {}\n\n`)
+
+    console.log(`[MysteryAPI] Stream chat: ${characterId} in mystery ${id}`)
+
+    // Get the full response
+    const response = await talkToCharacter(id, blueprint, characterId, message, evidenceId)
+
+    // Stream the message text as tokens (simulated streaming for typewriter effect)
+    const text = response.message || ''
+    const CHUNK_SIZE = 3 // characters per token
+    for (let i = 0; i < text.length; i += CHUNK_SIZE) {
+      const chunk = text.slice(i, i + CHUNK_SIZE)
+      res.write(`event: token\ndata: ${JSON.stringify({ text: chunk })}\n\n`)
+    }
+
+    // Send the complete response
+    res.write(`event: done\ndata: ${JSON.stringify(response)}\n\n`)
+    res.end()
+  } catch (err: any) {
+    console.error('[MysteryAPI] Stream chat error:', err)
+    try {
+      res.write(`event: error\ndata: ${JSON.stringify({ error: err.message })}\n\n`)
+      res.end()
+    } catch {
+      // Connection already closed
+    }
+  }
+})
+
+/**
  * GET /api/mystery/:id/character/:characterId/greeting
  * Get a character's initial greeting
  */

@@ -158,30 +158,17 @@ export function chatStream(
 ): AbortController {
   const controller = new AbortController()
 
-  // Generated mystery endpoints don't yet support streaming; fall back to normal chat
-  if (_activeMysteryId) {
-    sendMessage(
-      params.characterId,
-      params.message,
-      params.tactic,
-      params.evidenceId,
-      params.crossReferenceStatement
-    )
-      .then((response) => onDone(response))
-      .catch((err) => {
-        if (onError) {
-          onError(err)
-        }
-      })
-    return controller
-  }
-
   // Stream directly to Railway to avoid Vercel's 10s proxy timeout
   const streamBase = import.meta.env.DEV 
     ? 'http://localhost:3001/api' 
     : 'https://all-suspects-production.up.railway.app/api'
+
+  // Route to correct endpoint based on mystery type
+  const streamUrl = _activeMysteryId
+    ? `${streamBase}/mystery/${_activeMysteryId}/chat/stream`
+    : `${streamBase}/chat/stream`
   
-  const responsePromise = fetch(`${streamBase}/chat/stream`, {
+  const responsePromise = fetch(streamUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

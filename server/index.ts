@@ -114,6 +114,13 @@ const CHARACTER_VOICES: Record<string, { voiceId: string; name: string }> = {
   marcus: { voiceId: 'onwK4e9ZLuTAKqWW03F9', name: 'Antoni' },        // British, older male
   lillian: { voiceId: 'XB0fDUnXU5powFXDhCwa', name: 'Domi' },         // American, mature female
   james: { voiceId: 'N2lVS1w4EtoT3dr4eOWO', name: 'Daniel' },         // British, butler-like male
+  // Blackwood Betrayal characters
+  'lady-beatrice-blackwood': { voiceId: 'EXAVITQu4vr4xnSDxMaL', name: 'Rachel' },  // Mature aristocratic female
+  'julian-blackwood': { voiceId: 'VR6AewLTigWG4xSOukaG', name: 'Josh' },           // Estranged young son
+  'gigi-dubois': { voiceId: 'XB0fDUnXU5powFXDhCwa', name: 'Domi' },               // Jazz singer, expressive
+  'silas-croft': { voiceId: 'onwK4e9ZLuTAKqWW03F9', name: 'Antoni' },             // Business rival, older male
+  'arthur-vance': { voiceId: 'N2lVS1w4EtoT3dr4eOWO', name: 'Daniel' },            // Butler
+  'dr-evelyn-reed': { voiceId: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli' },            // Professional female physician
 }
 
 // Voice settings for 1920s noir atmosphere
@@ -987,7 +994,7 @@ app.post('/api/chat-video', async (req, res) => {
               },
               body: JSON.stringify({
                 text: cleanText,
-                model_id: 'eleven_monolingual_v1',
+                model_id: 'eleven_v3_conversational',
                 voice_settings: VOICE_SETTINGS,
               }),
             }
@@ -1201,7 +1208,7 @@ app.post('/api/voice', async (req, res) => {
         },
         body: JSON.stringify({
           text: cleanText,
-          model_id: 'eleven_monolingual_v1',
+          model_id: 'eleven_v3_conversational',
           voice_settings: VOICE_SETTINGS,
         }),
       }
