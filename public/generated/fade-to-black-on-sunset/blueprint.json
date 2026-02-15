@@ -1,0 +1,371 @@
+{
+  "id": "fade-to-black-on-sunset",
+  "title": "Fade to Black on Sunset",
+  "subtitle": "1964 — Mammoth Pictures Studio Lot",
+  "era": "1960s",
+  "difficulty": "medium",
+  "setting": {
+    "location": "Mammoth Pictures Studio, Soundstage 14",
+    "atmosphere": "The air is thick with the scent of sawdust, hairspray, and stale cigarette smoke. Giant klieg lights cast long, dramatic shadows across half-finished sets depicting ancient Rome. The manufactured glamour feels hollow, a thin veneer over raw ambition and simmering resentments.",
+    "weather": "A classic, hazy Los Angeles evening, the smoggy sky painted in shades of orange and purple as the sun sets over the Hollywood Hills."
+  },
+  "victim": {
+    "name": "Rex Starlight",
+    "role": "Director of 'Caesar's Shadow'",
+    "causeOfDeath": "Blunt force trauma to the back of the head",
+    "timeOfDeath": "Approximately 9:30 PM",
+    "description": "Rex was a cinematic genius with a monstrous ego. He made careers and destroyed them with equal glee, known for his explosive temper, affairs with his leading ladies, and secret gambling debts that threatened to sink the studio."
+  },
+  "characters": [
+    {
+      "id": "scarlett-monroe",
+      "name": "Scarlett Monroe",
+      "role": "Leading Lady",
+      "personality": "Ambitious, outwardly confident, but inwardly terrified of losing her status. A survivor who uses her beauty as both a shield and a weapon.",
+      "background": "A small-town girl who clawed her way to the top. Rex discovered her but held a dark secret from her past over her head to control her.",
+      "motive": "Rex was blackmailing her with scandalous photos and was threatening to replace her in the film, which would end her career.",
+      "alibi": "Claims she was in her dressing room alone, practicing her lines from 9:00 PM onwards.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-starlight": "A tempestuous affair born of ambition and control. She despised him but needed him.",
+        "stanley-gold": "Views him as a spineless money-man who won't stand up to Rex."
+      },
+      "secretKnowledge": [
+        "She knew Rex was deeply in debt to a bookie.",
+        "She saw Leo Maxwell looking furious after leaving Rex's office earlier in the evening."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Uses mid-Atlantic accent, speaks in dramatic, rehearsed sentences. Calls everyone 'darling'.",
+      "greeting": "Oh, hello, darling. It's just... dreadful, isn't it? Simply dreadful. I feel as if I'm in one of Arthur's ghastly tragedies."
+    },
+    {
+      "id": "stanley-gold",
+      "name": "Stanley Gold",
+      "role": "Studio Head & Producer",
+      "personality": "Nervous, perpetually sweating, a pragmatist drowning in a sea of artistic egos. Focused entirely on the bottom line.",
+      "background": "Inherited the studio from his father. He lacks the creative vision of the old guard and is terrified of the studio going bankrupt on his watch. Rex's epic was his last-ditch effort to save it.",
+      "motive": "Rex's out-of-control spending was bankrupting the studio. The film's insurance policy on Rex's life would pay out millions, saving Mammoth Pictures.",
+      "alibi": "Was in the administration building with the studio accountants, going over disastrous budget reports until 10:00 PM. The accountants can confirm.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-starlight": "A necessary evil. He hated Rex's arrogance but believed he was the only one who could deliver a hit.",
+        "arthur-pinter": "Sees him as a talented but difficult writer who doesn't understand the business."
+      },
+      "secretKnowledge": [
+        "He took out a second, secret life insurance policy on Rex without telling anyone.",
+        "He knows Rex was a plagiarist who stole the core idea for 'Caesar's Shadow' from Vincent Blackwood."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks quickly, often stuttering, constantly looking at his watch or wiping his brow with a handkerchief.",
+      "greeting": "A terrible business! Terrible! Do you have any idea how much this delay is costing us? We're losing five thousand dollars an hour!"
+    },
+    {
+      "id": "arthur-pinter",
+      "name": "Arthur Pinter",
+      "role": "Screenwriter",
+      "personality": "Cynical, intellectual, and filled with artistic rage. Considers most people in Hollywood to be philistines.",
+      "background": "A celebrated playwright from New York who came to Hollywood for the money, only to find his artistic integrity compromised at every turn. 'Caesar's Shadow' was his masterpiece before Rex rewrote it into a pulp spectacle.",
+      "motive": "Rex butchered his script, stole his credit, and was cutting him out of the backend profits. It was a profound artistic and financial betrayal.",
+      "alibi": "Claims he was in his writer's bungalow all evening, drinking bourbon and trying to 'exorcise Rex's ham-fisted dialogue' from his soul.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-starlight": "Loathed him with an intense, intellectual passion. Saw him as a symbol of everything wrong with Hollywood.",
+        "penelope-lane": "Feels a sort of pity for her, seeing her as another victim of Rex's tyranny."
+      },
+      "secretKnowledge": [
+        "He knows Rex was having an affair with Scarlett Monroe.",
+        "He has a draft of a scathing exposé he plans to send to Variety about Rex's abuses."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks in world-weary, articulate monologues, frequently quoting classic literature and puffing on a cigarette.",
+      "greeting": "An inspector. How wonderfully droll. I assume you're here to investigate the untimely exit of our resident Nero? Don't look at me. My weapon is the pen, which, alas, is rarely as effective as a blunt object."
+    },
+    {
+      "id": "vincent-blackwood",
+      "name": "Vincent Blackwood",
+      "role": "Rival Director",
+      "personality": "Proud, bitter, and melancholic. He clings to the memory of his past glories and resents the new generation of directors.",
+      "background": "A celebrated director from the 1940s, his 'film noir' style fell out of fashion. 'Caesar's Shadow' was his comeback project before the studio gave it to the 'flavor of the month', Rex Starlight.",
+      "motive": "Rex stole his film, his reputation, and publicly humiliated him. Rex was the living embodiment of his failure.",
+      "alibi": "Says he was at the Formosa Cafe across town all night, but the bartender says he didn't show up until after 10:00 PM.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-starlight": "Hated him with the fire of a spurned artist. Believed Rex was a talentless hack.",
+        "stanley-gold": "Despises him for betraying him and giving his film to Rex."
+      },
+      "secretKnowledge": [
+        "He saw Penny Lane snooping around Rex's office earlier in the day."
+      ],
+      "artPrompt": "",
+      "speechPattern": "A low, gravelly voice. His speech is slow and deliberate, laced with bitterness and artistic pretension.",
+      "greeting": "So, the boy wonder is dead. The light that burns twice as bright burns half as long. Some of us just... smolder. What do you want?"
+    },
+    {
+      "id": "penelope-lane",
+      "name": "Penelope 'Penny' Lane",
+      "role": "Director's Assistant",
+      "personality": "Efficient, quiet, and observant. She seems meek, but there's a core of steel beneath her timid exterior. She sees and hears everything.",
+      "background": "She's been Rex's assistant for five years, enduring his abuse in the hope that he'd fulfill his promise to make her a producer. That hope had recently curdled into resentment.",
+      "motive": "Rex not only refused to give her the promised producer credit, but he laughed in her face when she asked. She knew all his secrets and he treated her like dirt.",
+      "alibi": "Was running errands for Rex. Says she dropped off film reels at the lab around 9:00 PM and was driving back to the studio, arriving around 9:45 PM to find the body.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-starlight": "A complex mix of devotion, unrequited love, and finally, pure hatred.",
+        "leo-maxwell": "Feels a quiet kinship with him; they are both 'little people' abused by Rex."
+      },
+      "secretKnowledge": [
+        "She knows the name of Rex's bookie and has been secretly feeding the bookie information.",
+        "She overheard Rex and Leo Maxwell having a loud argument around 8:30 PM."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks softly and politely, always using formal titles like 'Mr. Starlight', but her words are precise and she never misspeaks.",
+      "greeting": "Yes, Inspector? I found him. I brought him his evening coffee, just like always, and... he was just lying there. By the throne."
+    },
+    {
+      "id": "leo-maxwell",
+      "name": "Leo Maxwell",
+      "role": "Prop Master",
+      "personality": "A quiet craftsman, proud of his work. Patient and kind, but with a deeply buried temper and a strong sense of justice.",
+      "background": "A studio veteran who has worked at Mammoth Pictures for 30 years, just like his father before him. He sees the props not as objects, but as characters in the story. He is respected by the crew but largely ignored by the stars and directors.",
+      "motive": "In a fit of rage, Rex broke Leo's most prized possession: an antique pocket watch that belonged to his late father. When Rex mocked its sentimental value, it was the final insult after years of disrespect.",
+      "alibi": "He claims he was in the prop warehouse on the far side of the studio lot, taking inventory and cleaning up after the argument with Rex.",
+      "isGuilty": true,
+      "relationships": {
+        "rex-starlight": "Viewed him as a destructive force who had no respect for the craft or the people who made his vision possible.",
+        "penelope-lane": "A respectful, friendly acquaintance. He appreciates her quiet competence."
+      },
+      "secretKnowledge": [
+        "He knows where the 'breakaway' props are stored versus the 'hero' props, which are much heavier and more solid."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks in a simple, straightforward manner. A man of few words, he lets his work speak for him.",
+      "greeting": "Inspector. A bad business. I've been on this lot for thirty years. Seen a lot. Never this. What can I do for you?"
+    }
+  ],
+  "locations": [
+    {
+      "id": "soundstage-14",
+      "name": "Soundstage 14 - The Forum Set",
+      "description": "A cavernous space dominated by a massive, partially-built set of the Roman Forum. Plaster columns, a gilded throne, and painted backdrops create a convincing illusion from a distance. The floor is a mess of cables, sand, and sawdust. A single spotlight illuminates the spot where the body was found.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "directors-office",
+      "name": "Rex Starlight's Office",
+      "description": "A surprisingly lavish bungalow office. A large mahogany desk is littered with scripts, storyboards, and an overflowing ashtray. The walls are covered with framed posters of his past films. It smells of leather, bourbon, and ego.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "starlet-dressing-room",
+      "name": "Scarlett Monroe's Dressing Room",
+      "description": "A shrine to its occupant. The vanity is covered in makeup, perfume bottles, and dozens of telegrams. Lavish bouquets of roses are everywhere, their sweet scent cloying. A half-empty bottle of champagne sits on a small table.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "prop-warehouse",
+      "name": "Prop Warehouse",
+      "description": "A vast, dusty warehouse filled with the detritus of forgotten films. Roman armor hangs next to cowboy saddles, and Egyptian sarcophagi lean against 1920s lampposts. The air smells of old wood, paint, and dust. A small, tidy workbench sits in one corner.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "writers-bungalow",
+      "name": "The Writer's Bungalow",
+      "description": "A small, smoke-filled room with a typewriter, a stained coffee pot, and stacks of books and scripts. The wastebasket is overflowing with crumpled pages. A corkboard on the wall is covered in note cards, some of which have been violently crossed out.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "production-office",
+      "name": "Stanley Gold's Office",
+      "description": "A sterile, functional office in the main administration building. The desk is neat, dominated by a large ledger book and an adding machine. The only personal touch is a photo of the original studio gates from the 1920s.",
+      "evidence": [],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "victims-body",
+      "name": "Victim's Body",
+      "description": "Rex Starlight, lying face down at the foot of the prop throne.",
+      "location": "soundstage-14",
+      "artPrompt": "",
+      "detailedDescription": "The victim is lying on the sandy floor of the set. There is a large, obvious wound to the back of his head. His expensive suit is disheveled, and one hand is clutching a prop scepter.",
+      "type": "physical",
+      "relatedCharacter": "rex-starlight",
+      "pointsTo": null
+    },
+    {
+      "id": "plaster-bust",
+      "name": "Plaster Bust of Caesar",
+      "description": "A heavy plaster bust, the likely murder weapon, lying near the body.",
+      "location": "soundstage-14",
+      "artPrompt": "",
+      "detailedDescription": "A solid plaster bust of Julius Caesar, weighing approximately 20 pounds. The base is stained with blood and hair matching the victim. This is a 'hero' prop, not a lightweight 'breakaway' version.",
+      "type": "physical",
+      "relatedCharacter": null,
+      "pointsTo": null
+    },
+    {
+      "id": "grease-smudge-on-bust",
+      "name": "Grease Smudge on Bust",
+      "description": "A dark, greasy smudge on the base of the murder weapon.",
+      "location": "soundstage-14",
+      "artPrompt": "",
+      "detailedDescription": "Lab analysis confirms the substance is a specialized lithium grease used for maintaining heavy camera dollies and large, articulated props. It is not a common household or automotive grease.",
+      "type": "physical",
+      "relatedCharacter": "leo-maxwell",
+      "pointsTo": "leo-maxwell"
+    },
+    {
+      "id": "broken-watch-face",
+      "name": "Broken Watch Face",
+      "description": "The shattered face and hands of an antique gold pocket watch.",
+      "location": "directors-office",
+      "artPrompt": "",
+      "detailedDescription": "Found in the wastebasket in Rex's office. The glass is shattered, and the hands are bent. It appears to be from a valuable, pre-1940s timepiece. A tiny fleck of lithium grease is found on the hinge.",
+      "type": "physical",
+      "relatedCharacter": "leo-maxwell",
+      "pointsTo": "leo-maxwell"
+    },
+    {
+      "id": "crumpled-note-draft",
+      "name": "Crumpled Note Draft",
+      "description": "A crumpled, tear-stained note found in a bin in the prop warehouse.",
+      "location": "prop-warehouse",
+      "artPrompt": "",
+      "detailedDescription": "A handwritten note on a scrap of paper. It reads: 'I'm sorry, Papa. He didn't understand. He just... laughed. I couldn't let him...' The handwriting is a perfect match for Leo Maxwell's equipment logs.",
+      "type": "document",
+      "relatedCharacter": "leo-maxwell",
+      "pointsTo": "leo-maxwell"
+    },
+    {
+      "id": "threatening-letter",
+      "name": "Threatening Letter (Red Herring)",
+      "description": "A typed letter on Rex's desk threatening to expose a secret.",
+      "location": "directors-office",
+      "artPrompt": "",
+      "detailedDescription": "A typed letter left on Rex's desk: 'I won't be your puppet anymore, Rex. You'll give me what I want, or everyone will know what happened in Vegas.' It is unsigned.",
+      "type": "document",
+      "relatedCharacter": "scarlett-monroe",
+      "pointsTo": "scarlett-monroe"
+    },
+    {
+      "id": "blackmail-photos",
+      "name": "Blackmail Photos",
+      "description": "An envelope containing scandalous photos of Scarlett Monroe.",
+      "location": "directors-office",
+      "artPrompt": "",
+      "detailedDescription": "Found in a locked drawer in Rex's desk. The photos show Scarlett Monroe in a compromising situation at a Las Vegas casino, confirming the threat in the letter was real.",
+      "type": "physical",
+      "relatedCharacter": "scarlett-monroe",
+      "pointsTo": "scarlett-monroe"
+    },
+    {
+      "id": "insurance-policy",
+      "name": "Secondary Insurance Policy (Red Herring)",
+      "description": "A life insurance policy on Rex Starlight.",
+      "location": "production-office",
+      "artPrompt": "",
+      "detailedDescription": "A policy from a secondary underwriter, naming Mammoth Pictures as the sole beneficiary in the event of Rex's 'accidental death.' The value is $2 million. It was taken out by Stanley Gold last week.",
+      "type": "document",
+      "relatedCharacter": "stanley-gold",
+      "pointsTo": "stanley-gold"
+    },
+    {
+      "id": "annotated-script",
+      "name": "Annotated Script (Red Herring)",
+      "description": "A script with angry, violent notes in the margins.",
+      "location": "writers-bungalow",
+      "artPrompt": "",
+      "detailedDescription": "Arthur Pinter's original screenplay for 'Caesar's Shadow.' The margins are filled with furious notes: 'He's destroying it!', 'I could kill him for this line!', 'Butcher!'",
+      "type": "document",
+      "relatedCharacter": "arthur-pinter",
+      "pointsTo": "arthur-pinter"
+    },
+    {
+      "id": "bar-receipt",
+      "name": "Bar Receipt",
+      "description": "A receipt from the Formosa Cafe.",
+      "location": "soundstage-14",
+      "artPrompt": "",
+      "detailedDescription": "A receipt for two whiskeys from the Formosa Cafe. The time stamp is 10:15 PM, contradicting Vincent Blackwood's alibi of being there 'all night'.",
+      "type": "document",
+      "relatedCharacter": "vincent-blackwood",
+      "pointsTo": "vincent-blackwood"
+    },
+    {
+      "id": "gambling-ledger",
+      "name": "Gambling Ledger",
+      "description": "Rex's personal ledger showing large debts.",
+      "location": "directors-office",
+      "artPrompt": "",
+      "detailedDescription": "A small black book from Rex's desk detailing payments and debts to a bookie known only as 'Manny'. The debts total over $100,000.",
+      "type": "document",
+      "relatedCharacter": "rex-starlight",
+      "pointsTo": "stanley-gold"
+    },
+    {
+      "id": "overheard-argument",
+      "name": "Overheard Argument",
+      "description": "Testimony about an argument between Rex and Leo.",
+      "location": "soundstage-14",
+      "artPrompt": "",
+      "detailedDescription": "Penny Lane testifies that she heard Rex and Leo Maxwell arguing heatedly in Rex's office around 8:30 PM. She heard Rex yell 'It's just a stupid watch!' followed by a door slamming.",
+      "type": "testimony",
+      "relatedCharacter": "penelope-lane",
+      "pointsTo": "leo-maxwell"
+    }
+  ],
+  "solution": {
+    "killerId": "leo-maxwell",
+    "method": "Leo confronted Rex Starlight on the darkened set of Soundstage 14. After years of being belittled, the destruction of his father's watch was the final humiliation. When Rex laughed at him again, Leo snapped. In a moment of pure rage, he grabbed a heavy plaster bust of Julius Caesar—a prop he himself had lovingly crafted—and struck Rex on the back of the head.",
+    "motive": "This was not a crime of ambition or greed, but of passion and dignity. Rex's cruel and casual destruction of a priceless family heirloom, the last link to Leo's deceased father, pushed the quiet, long-suffering prop master past his breaking point.",
+    "explanation": "While many had reasons to hate Rex Starlight, only Leo Maxwell's motive was one of sudden, passionate fury. The key evidence is the physical link between his job, the personal insult, and the murder weapon. The specialized prop grease found on the plaster bust directly ties it to the prop department. The same grease was found on the broken watch face in Rex's trash, corroborating Penny Lane's testimony about their argument. Finally, the crumpled, heartfelt note of apology to his deceased father, found in the prop warehouse, is a confession. The other suspects' motives—Scarlett's blackmail, Stanley's financial ruin, Arthur's stolen script—were all strong, but they were long-simmering issues. Leo's was a sudden, violent reaction to a deeply personal and unforgivable insult."
+  },
+  "timeline": [
+    {
+      "time": "7:00 PM",
+      "event": "Rex Starlight wraps shooting for the day, dismissing most of the crew."
+    },
+    {
+      "time": "7:30 PM",
+      "event": "Stanley Gold argues with Rex in his office about the film's skyrocketing budget."
+    },
+    {
+      "time": "8:00 PM",
+      "event": "Scarlett Monroe confronts Rex in his office about the blackmail photos. He dismisses her threats."
+    },
+    {
+      "time": "8:30 PM",
+      "event": "Rex, in a rage about a misplaced prop, accidentally breaks Leo Maxwell's antique pocket watch. Rex mocks Leo's distress. Leo storms out."
+    },
+    {
+      "time": "8:45 PM",
+      "event": "Arthur Pinter attempts to show Rex revised script pages. Rex tears them up without reading them."
+    },
+    {
+      "time": "9:00 PM",
+      "event": "Penny Lane is sent on an errand to drop film reels at the lab. Before she leaves, she hears Rex on the phone with his bookie."
+    },
+    {
+      "time": "9:15 PM",
+      "event": "Vincent Blackwood is seen lurking near Soundstage 14 before driving off."
+    },
+    {
+      "time": "9:30 PM",
+      "event": "Approximate time of death. Leo Maxwell confronts Rex on the empty Forum set. The argument escalates, and Leo strikes Rex with the bust."
+    },
+    {
+      "time": "9:45 PM",
+      "event": "Penny Lane returns from her errand and discovers the body when she brings Rex his evening coffee."
+    },
+    {
+      "time": "10:15 PM",
+      "event": "Vincent Blackwood arrives at the Formosa Cafe and orders his first drink of the night."
+    }
+  ]
+}

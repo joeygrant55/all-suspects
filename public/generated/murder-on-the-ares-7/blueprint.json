@@ -1,0 +1,346 @@
+{
+  "id": "murder-on-the-ares-7",
+  "title": "Murder on the Ares-7",
+  "subtitle": "October 14, 2058 — Ares-7 Orbital Research Station, Mars Orbit",
+  "era": "2050s",
+  "difficulty": "hard",
+  "setting": {
+    "location": "Ares-7, a state-of-the-art orbital research station in a high stationary orbit over the Valles Marineris on Mars.",
+    "atmosphere": "The sterile, recycled air hums with the constant thrum of life support and machinery. Gleaming white corridors are intersected by holographic advertisements for Earth-based luxuries. Portholes offer breathtaking, terrifying views of the silent, red planet below and the infinite blackness of space, creating a palpable sense of isolation and claustrophobia.",
+    "weather": "The silent, star-dusted void of space, occasionally interrupted by the blinding glare of the unfiltered sun or the shadow of Mars eclipsing the station."
+  },
+  "victim": {
+    "name": "Dr. Aris Thorne",
+    "role": "Head of Terraforming Research",
+    "causeOfDeath": "Explosive decompression due to a micro-fractured helmet seal.",
+    "timeOfDeath": "Between 21:00 and 21:30 Station Time",
+    "description": "A brilliant but arrogant scientist, Dr. Thorne was the driving force behind the ambitious 'Project Genesis'. He was a man who believed the ends always justified the means, leaving a trail of professional rivals, broken hearts, and compromised ethics in his wake."
+  },
+  "characters": [
+    {
+      "id": "commander-eva-rostova",
+      "name": "Commander Eva Rostova",
+      "role": "Station Commander",
+      "personality": "Pragmatic, ambitious, and severe. Believes in order and protocol above all else. She carries the weight of the station on her shoulders and it shows.",
+      "background": "A decorated veteran of the Europa Mission, she sees the Ares-7 command as her stepping stone to a top corporate position back on Earth. Dr. Thorne's reckless methods were a constant threat to her perfect record.",
+      "motive": "Thorne was a loose cannon. His cavalier attitude towards safety protocols jeopardized the station and her career. With him gone, she can install a more compliant department head.",
+      "alibi": "Was in her office reviewing quarterly reports sent from Earth. The comms log confirms a data-link was active from 20:45 to 22:00.",
+      "isGuilty": false,
+      "relationships": {
+        "dr-aris-thorne": "Professional rival and a constant source of frustration.",
+        "marcus-cole": "Subordinate. Respects his skills but finds his cynicism tiresome.",
+        "anya-sharma": "Views her as a corporate spy, treats her with professional disdain."
+      },
+      "secretKnowledge": [
+        "Knows that Thorne was being investigated by their corporate sponsor, Weyland-Asimov, for financial irregularities.",
+        "Was aware Thorne was overriding security protocols, but didn't officially report him to avoid a station-wide scandal."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Clipped, formal, uses technical jargon and military time. No room for pleasantries. 'Report,' 'Status,' 'Proceed.'",
+      "greeting": "State your purpose. My time is limited."
+    },
+    {
+      "id": "dr-lena-petrova",
+      "name": "Dr. Lena Petrova",
+      "role": "Lead Robotics Engineer",
+      "personality": "Passionate, brilliant, and emotionally volatile. Prone to intense focus and equally intense emotional outbursts. She feels everything deeply.",
+      "background": "A prodigy in her field, she designed the station's robotic arms and drones. She and Aris Thorne were involved in a secret, intense affair that he ended abruptly a week ago.",
+      "motive": "A classic crime of passion. Thorne used her, broke her heart, and was rumored to be starting a new relationship. She might have confronted him in a rage.",
+      "alibi": "Claims she was running diagnostics in the Engineering Bay all evening, alone. There are no logs to confirm or deny this as she was in 'manual override' mode.",
+      "isGuilty": false,
+      "relationships": {
+        "dr-aris-thorne": "Former lover. A mix of deep love and profound hatred.",
+        "jian-li": "Feels a protective, almost sisterly, pity for the quiet technician."
+      },
+      "secretKnowledge": [
+        "Thorne was secretly communicating with a rival corporation, likely to sell his 'Project Genesis' data.",
+        "The multi-tool found near the airlock is a standard issue model, but she knows Marcus Cole customizes his with a yellow grip."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks quickly, often in complex technical terms, but her voice cracks with emotion when discussing personal matters.",
+      "greeting": "What? Can't you see I'm in the middle of a cascade failure simulation? This better be important."
+    },
+    {
+      "id": "jian-li",
+      "name": "Jian Li",
+      "role": "Junior Bio-Technician",
+      "personality": "Quiet, meticulous, and observant. Often overlooked, but misses nothing. Carries a deep, hidden well of sorrow and anger.",
+      "background": "A promising biologist who took a junior position on Ares-7 to work with the legendary Dr. Thorne. Unbeknownst to the crew, Jian's family were colonists killed in the 'Arcadia Basin Collapse' on Mars—a disaster caused by an early, unstable terraforming technology pioneered by Thorne.",
+      "motive": "Revenge. Jian discovered Thorne was not only unrepentant for his past failures but was actively falsifying data on 'Project Genesis' to hide similar flaws, potentially causing another disaster. This was the ultimate betrayal.",
+      "alibi": "Was cataloging xenobotanical samples in the lab until 21:00, then retired to their hab-pod to read. No one can verify this.",
+      "isGuilty": true,
+      "relationships": {
+        "dr-aris-thorne": "Publicly admired him, privately loathed him as the man who destroyed their family.",
+        "dr-lena-petrova": "Views her as another one of Thorne's victims."
+      },
+      "secretKnowledge": [
+        "Has proof that Thorne's data logs for atmospheric processor efficiency were digitally altered.",
+        "Knows about a service duct that connects the lab's ventilation system to the corridor near Airlock 3, a perfect blind spot."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks softly and precisely. Uses very deliberate language, as if weighing every word.",
+      "greeting": "Yes? Can I... help you with something?"
+    },
+    {
+      "id": "marcus-cole",
+      "name": "Marcus Cole",
+      "role": "Chief of Security",
+      "personality": "Cynical, gruff, by-the-book. A former Mars Ranger who is tired of dealing with arrogant scientists who think rules don't apply to them.",
+      "background": "He's seen it all and is counting the days until his rotation ends. He filed multiple official complaints against Thorne for disabling safety sensors and forcing airlock overrides for his 'important' experiments, all of which were ignored by command.",
+      "motive": "An escalating series of conflicts. Cole may have decided to take matters into his own hands to 'neutralize a threat' to the station's safety after his official complaints were ignored.",
+      "alibi": "Was on his patrol route, but admits to taking an 'unscheduled break' in the Rec Room to watch a zero-G hockey game from 20:50 to 21:20. The broadcast log confirms the game was on.",
+      "isGuilty": false,
+      "relationships": {
+        "dr-aris-thorne": "Despised him as a reckless danger to the entire crew.",
+        "commander-eva-rostova": "Frustrated by her unwillingness to discipline Thorne."
+      },
+      "secretKnowledge": [
+        "His master security keycard went missing earlier in the day. He hadn't reported it yet, fearing a reprimand.",
+        "The airlock's internal maintenance panel can be accessed with a standard engineering multi-tool, bypassing the main lock."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Short, declarative sentences. A lot of grumbling and sighing. Uses station slang.",
+      "greeting": "Another mess. Figures. What do you want?"
+    },
+    {
+      "id": "anya-sharma",
+      "name": "Anya Sharma",
+      "role": "Weyland-Asimov Corporate Liaison",
+      "personality": "Polished, charming, and utterly ruthless. Her smile never reaches her eyes. She is the embodiment of corporate interests.",
+      "background": "Sent by the project's primary investors to audit 'Project Genesis'. She discovered the project was not only catastrophically over budget, but Thorne's results were likely fabricated. His work threatened to bankrupt her division.",
+      "motive": "Purely financial. Killing Thorne and blaming the death on an accident or a rival would allow the corporation to claim insurance, scrap the failing project, and cut their losses without the scandal of a fraud investigation.",
+      "alibi": "States she was on a private, encrypted call with the board of directors on Earth from 20:30 to 21:45. This is convenient and impossible to verify due to corporate encryption protocols.",
+      "isGuilty": false,
+      "relationships": {
+        "dr-aris-thorne": "An asset that had become a liability to be liquidated.",
+        "commander-eva-rostova": "A pawn to be managed."
+      },
+      "secretKnowledge": [
+        "She was authorized by the board to terminate Project Genesis and Dr. Thorne's contract, effective tomorrow morning.",
+        "Has a copy of a damning preliminary report on Thorne's data fabrication."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Smooth, articulate corporate-speak. Never uses one word when five will do. Passive-aggressive and evasive.",
+      "greeting": "A terrible business. How can I facilitate this inquiry and help us all move toward a productive resolution?"
+    }
+  ],
+  "locations": [
+    {
+      "id": "airlock-3",
+      "name": "Airlock 3",
+      "description": "A sterile, utilitarian chamber connecting the station to the void. The inner door is open, revealing the victim's body slumped against the outer hatch. Control panels blink with error messages. A faint smell of ozone hangs in the air.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "dr-thornes-hab-pod",
+      "name": "Dr. Thorne's Hab-Pod",
+      "description": "Spartan and messy. A rumpled bed, a data terminal left open, and research notes pinned haphazardly to a bulkhead. The only personal touch is a framed photo of a barren Martian landscape, cracked.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "xenobotany-lab",
+      "name": "Xenobotany Lab",
+      "description": "Humid and warm, a stark contrast to the rest of the station. Bio-domes contain strange, genetically engineered flora designed for a Martian atmosphere. The air is thick with the scent of damp soil and chlorophyll. A large central computer bank hums quietly.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "observation-deck",
+      "name": "Observation Deck",
+      "description": "A large, dark room dominated by a massive, curved window showing the curve of Mars below. A few chairs are scattered around. It's the one place on the station designed for quiet contemplation.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "engineering-bay",
+      "name": "Engineering Bay",
+      "description": "A chaotic symphony of exposed wiring, diagnostic screens, and spare robotic parts. The air smells of solder and hot metal. A high-powered laser cutter is mounted on a workbench, its safety casing disengaged.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "commanders-office",
+      "name": "Commander Rostova's Office",
+      "description": "Immaculate and orderly. A large desk with a holographic display shows station schematics. Awards and commendations line one wall. A single porthole looks out not at Mars, but into the endless black of deep space.",
+      "evidence": [],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "sabotaged-helmet",
+      "name": "Victim's EVA Helmet",
+      "description": "The helmet from Dr. Thorne's spacesuit.",
+      "location": "airlock-3",
+      "artPrompt": "",
+      "detailedDescription": "The helmet's main visor is intact, but the locking seal mechanism shows a clean, hairline fracture on an interior hinge. The fracture is not from impact; it appears to be a stress failure. Forensic analysis indicates the fracture was initiated by a high-frequency vibration tool, designed to be undetectable on a standard pre-pressurization check.",
+      "type": "physical",
+      "relatedCharacter": "dr-aris-thorne",
+      "pointsTo": "jian-li"
+    },
+    {
+      "id": "missing-security-keycard",
+      "name": "Missing Security Keycard",
+      "description": "A high-level security keycard, found near the airlock door.",
+      "location": "airlock-3",
+      "artPrompt": "",
+      "detailedDescription": "This is Marcus Cole's master security keycard, which he reported missing. It would allow access to restricted areas and, more importantly, the ability to temporarily delete security log files.",
+      "type": "physical",
+      "relatedCharacter": "marcus-cole",
+      "pointsTo": "marcus-cole"
+    },
+    {
+      "id": "falsified-research-data",
+      "name": "Falsified Research Data",
+      "description": "Data files on Dr. Thorne's main terminal in the lab.",
+      "location": "xenobotany-lab",
+      "artPrompt": "",
+      "detailedDescription": "An analysis of the 'Project Genesis' atmospheric processor data shows clear signs of tampering. Efficiency ratings are inflated by up to 40%. The file's access log shows the last person to edit it was Dr. Thorne, but a ghost file in the cache shows another user accessed the raw data just before the murder: user J.LI.",
+      "type": "document",
+      "relatedCharacter": "dr-aris-thorne",
+      "pointsTo": "jian-li"
+    },
+    {
+      "id": "torn-fabric-scrap",
+      "name": "Torn Fabric Scrap",
+      "description": "A small scrap of dark grey fabric.",
+      "location": "airlock-3",
+      "artPrompt": "",
+      "detailedDescription": "A tiny piece of dark grey fabric, caught in the inner hinge of the airlock door. The synthetic weave matches the standard-issue engineering coveralls worn by Dr. Lena Petrova.",
+      "type": "physical",
+      "relatedCharacter": "dr-lena-petrova",
+      "pointsTo": "dr-lena-petrova"
+    },
+    {
+      "id": "encrypted-datapad",
+      "name": "Encrypted Datapad",
+      "description": "A personal datapad found in Dr. Thorne's quarters.",
+      "location": "dr-thornes-hab-pod",
+      "artPrompt": "",
+      "detailedDescription": "Dr. Thorne's personal datapad. After decryption, it reveals a series of angry, heartbroken messages from Lena Petrova, followed by a final, threatening one: 'You will regret this, Aris. You don't get to destroy people and just walk away.'",
+      "type": "document",
+      "relatedCharacter": "dr-lena-petrova",
+      "pointsTo": "dr-lena-petrova"
+    },
+    {
+      "id": "security-log-anomaly",
+      "name": "Security Log Anomaly",
+      "description": "A 90-second gap in the security camera footage.",
+      "location": "commanders-office",
+      "artPrompt": "",
+      "detailedDescription": "The security log for the corridor outside Airlock 3 has a 90-second gap, from 21:14:30 to 21:16:00. The system log shows the deletion was initiated locally using a high-level security keycard.",
+      "type": "document",
+      "relatedCharacter": "marcus-cole",
+      "pointsTo": "marcus-cole"
+    },
+    {
+      "id": "termination-order",
+      "name": "Termination Order",
+      "description": "An official, encrypted message from Weyland-Asimov.",
+      "location": "commanders-office",
+      "artPrompt": "",
+      "detailedDescription": "Found on Anya Sharma's terminal. It's a directive from the board authorizing her to terminate Project Genesis and Dr. Thorne's employment, citing 'fiscal malfeasance and unsatisfactory results'. The order was to be executed at 09:00 tomorrow.",
+      "type": "document",
+      "relatedCharacter": "anya-sharma",
+      "pointsTo": "anya-sharma"
+    },
+    {
+      "id": "customized-multi-tool",
+      "name": "Customized Multi-tool",
+      "description": "A multi-tool with a custom yellow grip.",
+      "location": "airlock-3",
+      "artPrompt": "",
+      "detailedDescription": "A standard engineering multi-tool, but the handle has been wrapped in bright yellow polymer tape. Lena Petrova confirms Marcus Cole customizes all his tools this way so they're 'easy to spot when you drop 'em.' It was found on a shelf near the airlock.",
+      "type": "physical",
+      "relatedCharacter": "marcus-cole",
+      "pointsTo": "marcus-cole"
+    },
+    {
+      "id": "jian-lis-personnel-file",
+      "name": "Jian Li's Personnel File",
+      "description": "The official station file for Jian Li.",
+      "location": "commanders-office",
+      "artPrompt": "",
+      "detailedDescription": "The file contains standard employment data, but a cross-reference with the Mars Colonial Authority database reveals a significant addendum: Jian is the sole survivor of a family who perished in the Arcadia Basin terraforming colony collapse of 2045. The official report lists the cause as 'catastrophic equipment failure related to premature atmospheric processing.' The lead scientist on that failed technology was Dr. Aris Thorne.",
+      "type": "document",
+      "relatedCharacter": "jian-li",
+      "pointsTo": "jian-li"
+    },
+    {
+      "id": "sonic-emitter",
+      "name": "Sonic Emitter",
+      "description": "A small, high-frequency sonic tool from the lab.",
+      "location": "xenobotany-lab",
+      "artPrompt": "",
+      "detailedDescription": "A device used for agitating soil samples at a cellular level. It emits high-frequency vibrations. Its last logged use was by Jian Li at 20:45. The energy signature of the device is a perfect match for the micro-vibrations used to fracture the victim's helmet seal.",
+      "type": "physical",
+      "relatedCharacter": "jian-li",
+      "pointsTo": "jian-li"
+    },
+    {
+      "id": "overheard-argument-testimony",
+      "name": "Overheard Argument Testimony",
+      "description": "Testimony about a loud argument.",
+      "location": "observation-deck",
+      "artPrompt": "",
+      "detailedDescription": "A maintenance technician reports hearing Commander Rostova and Dr. Thorne in a loud, furious argument yesterday. The Commander was yelling, 'Your arrogance will be the death of us all!'",
+      "type": "testimony",
+      "relatedCharacter": "commander-eva-rostova",
+      "pointsTo": "commander-eva-rostova"
+    }
+  ],
+  "solution": {
+    "killerId": "jian-li",
+    "method": "Jian stole Marcus Cole's security keycard earlier in the day. After confirming Thorne was falsifying data, Jian put a plan for revenge into motion. Jian used a lab sonic emitter to create a nearly invisible stress fracture in the locking mechanism of a spare EVA helmet. Jian then lured Dr. Thorne to Airlock 3 under the pretense of a sensor malfunction on the outer hull, insisting he see it for himself. While Thorne suited up, Jian swapped his helmet for the sabotaged one. Once Thorne was inside the airlock, Jian initiated the cycle from a nearby panel. The pressure change caused the fractured seal to fail catastrophically. During the 90-second cycle, Jian used the stolen keycard to wipe the local security log before returning to the lab via a service duct.",
+    "motive": "This was not a spontaneous crime but a deeply personal act of vengeance. Dr. Thorne's flawed research was directly responsible for the death of Jian's entire family in a colony disaster on Mars years ago. When Jian discovered that Thorne was not only unrepentant but was now falsifying data to push forward a similarly flawed project, risking countless more lives, Jian felt a moral obligation to stop him permanently. It was justice for the past and protection for the future.",
+    "explanation": "While many had reasons to hate Dr. Thorne, only Jian Li had the motive, means, and opportunity. The affair with Lena Petrova and the financial troubles with Anya Sharma were powerful red herrings. Marcus Cole's missing keycard and public disdain for the victim made him an obvious suspect. However, the true story is rooted in the past. Jian's personnel file reveals the original tragedy. The falsified data proves Thorne hadn't changed, providing the catalyst. The sonic emitter from the lab is the murder weapon, linking directly to Jian's work. Jian's quiet, unassuming nature provided the perfect cover for a meticulously planned execution. The stolen keycard was used to frame Marcus, a man Jian knew also despised Thorne."
+  },
+  "timeline": [
+    {
+      "time": "19:00",
+      "event": "Dr. Thorne has a heated, final argument with Dr. Lena Petrova, ending their affair for good."
+    },
+    {
+      "time": "20:15",
+      "event": "Dr. Thorne is seen leaving the Xenobotany lab, arguing with Commander Rostova about safety protocols."
+    },
+    {
+      "time": "20:45",
+      "event": "Jian Li logs the final use of the sonic emitter in the lab."
+    },
+    {
+      "time": "20:50",
+      "event": "Marcus Cole begins his 'unscheduled break' in the Rec Room."
+    },
+    {
+      "time": "21:10",
+      "event": "Jian Li approaches Dr. Thorne on the Observation Deck, feigning concern about an external sensor reading near Airlock 3."
+    },
+    {
+      "time": "21:14",
+      "event": "Dr. Thorne and Jian Li arrive at Airlock 3. Thorne begins to suit up. Jian swaps the helmets."
+    },
+    {
+      "time": "21:15",
+      "event": "Airlock 3 begins its depressurization cycle. The helmet seal fails. The corridor camera log is wiped for the next 90 seconds."
+    },
+    {
+      "time": "21:20",
+      "event": "Marcus Cole's break ends. He resumes his patrol."
+    },
+    {
+      "time": "21:45",
+      "event": "Anya Sharma ends her encrypted call with Earth."
+    },
+    {
+      "time": "22:30",
+      "event": "A maintenance drone performing a routine check sends an alert about the abnormal status of Airlock 3. Commander Rostova dispatches Marcus Cole to investigate."
+    },
+    {
+      "time": "22:35",
+      "event": "Marcus Cole discovers the body of Dr. Thorne and sounds the station-wide alert."
+    }
+  ]
+}

@@ -1,0 +1,386 @@
+{
+  "id": "the-serpents-song-at-the-velvet-viper",
+  "title": "The Serpent's Song at The Velvet Viper",
+  "subtitle": "December 12th, 1928 — The Velvet Viper Speakeasy",
+  "era": "1920s",
+  "difficulty": "medium",
+  "setting": {
+    "location": "The Velvet Viper, a lavish speakeasy hidden behind a tailor's shop in Chicago.",
+    "atmosphere": "Cigar smoke hangs thick in the air, catching the low light of fringed lamps. The mournful wail of a saxophone cuts through the clinking of glasses and the low murmur of dangerous deals being made in hushed tones. The scent of spilled gin and expensive perfume mingles, creating a heady, intoxicating aroma of glamour and peril.",
+    "weather": "A bitter Chicago wind howls outside, rattling the windows of the tailor's shop front, making the warmth and dim light of the speakeasy feel like a secret world, insulated from the law and the cold."
+  },
+  "victim": {
+    "name": "Silas 'The Shadow' Vane",
+    "role": "Notorious Blackmailer and Information Broker",
+    "causeOfDeath": "Single gunshot wound to the chest, close range.",
+    "timeOfDeath": "Approximately 10:15 PM",
+    "description": "Silas wasn't liked, but he was useful. He knew everyone's secrets and sold them to the highest bidder. He was a slick, impeccably dressed man who moved through the criminal underworld with a smug confidence that was bound to get him killed."
+  },
+  "characters": [
+    {
+      "id": "lola-lulu-dubois",
+      "name": "Lola 'Lulu' Dubois",
+      "role": "Headlining Jazz Singer",
+      "personality": "On stage, she's a captivating siren. Off stage, she's guarded, melancholic, and fiercely protective of her secrets.",
+      "background": "Escaped a life of poverty and a dark past in New Orleans. She reinvented herself in Chicago and will do anything to protect her new life and her relationship with Vinnie Carbone.",
+      "motive": "Silas discovered her true identity and a past crime she committed. He was blackmailing her, threatening to expose her to her lover, Vinnie, which would have meant ruin or death.",
+      "alibi": "Claims she was in her dressing room alone from 10:10 PM to 10:30 PM, 'calming her nerves' before her final set.",
+      "isGuilty": true,
+      "relationships": {
+        "vinnie-the-fist-carbone": "Secret lover and protector.",
+        "silas-the-shadow-vane": "Blackmail victim."
+      },
+      "secretKnowledge": [
+        "Knows that Silas kept a small, coded ledger.",
+        "Saw Silas arguing with Beatrice Sinclair earlier in the evening."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks in a low, smoky voice. Uses some flapper slang but can turn articulate and cold when pressed.",
+      "greeting": "Can't a girl get a moment's peace? This whole business is just terrible for the nerves. What do you want?"
+    },
+    {
+      "id": "vinnie-the-fist-carbone",
+      "name": "Vinnie 'The Fist' Carbone",
+      "role": "Speakeasy Owner and Mob Boss",
+      "personality": "Calm, cold, and calculating. Radiates power and danger. Rarely raises his voice because he doesn't have to.",
+      "background": "Worked his way up from the gutter. Built his empire on bootlegging and gambling. The Velvet Viper is his crown jewel.",
+      "motive": "Silas was selling information about Vinnie's smuggling routes to a rival gang, a direct threat to his business.",
+      "alibi": "Was in a meeting in his office with his accountant from 10:00 PM to 10:30 PM. The accountant confirms this.",
+      "isGuilty": false,
+      "relationships": {
+        "lola-lulu-dubois": "Secret lover; he is extremely possessive of her.",
+        "silas-the-shadow-vane": "A business nuisance he was planning to eliminate.",
+        "mitch-oconnell": "Employee he distrusts."
+      },
+      "secretKnowledge": [
+        "Knew Silas was meeting someone in the VIP lounge.",
+        "Suspected his bartender, Mitch, was skimming from the till."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Precise and direct. No wasted words. Speaks with a quiet authority that implies violence.",
+      "greeting": "My club. My problem. I want this handled, and I want it handled clean. Start talking."
+    },
+    {
+      "id": "beatrice-bea-sinclair",
+      "name": "Beatrice 'Bea' Sinclair",
+      "role": "Wealthy Socialite and Rival Speakeasy Owner",
+      "personality": "Sharp, witty, and condescending. Dressed to the nines and dripping with jewels. Sees everything as a competition.",
+      "background": "Inherited a fortune and uses it to fund her glamorous, and slightly illegal, lifestyle. Wants to put Vinnie out of business.",
+      "motive": "Silas sold her fake information about Vinnie's operation, costing her a fortune in a failed raid she orchestrated. She was furious and publicly threatened him.",
+      "alibi": "Claims she was 'powdering her nose' in the ladies' washroom around 10:15 PM. No one can corroborate this.",
+      "isGuilty": false,
+      "relationships": {
+        "vinnie-the-fist-carbone": "Fierce business rival.",
+        "silas-the-shadow-vane": "Double-crossed business associate whom she despised."
+      },
+      "secretKnowledge": [
+        "Saw Silas slip a key to Mitch, the bartender, earlier in the night.",
+        "Knows that Vinnie is secretly in love with Lola."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Upper-crust, fast-paced, with a cutting edge. Uses phrases like 'My dear' and 'How droll' sarcastically.",
+      "greeting": "Well, well. A murder. It's almost as dramatic as the gin they serve here. What can I possibly tell you that you haven't already assumed?"
+    },
+    {
+      "id": "mitch-oconnell",
+      "name": "Mitch O'Connell",
+      "role": "Bartender",
+      "personality": "Nervous, jumpy, and eager to please, but with a resentful streak. Always wiping the bar, even when it's clean.",
+      "background": "Has a sick wife and a mountain of gambling debt. He's been skimming from the register and Silas found out.",
+      "motive": "Silas was blackmailing him over his skimming. The demands were getting larger and he was desperate.",
+      "alibi": "Was behind the bar from 9:00 PM until the body was discovered. This is confirmed by dozens of patrons.",
+      "isGuilty": false,
+      "relationships": {
+        "vinnie-the-fist-carbone": "Terrified employer.",
+        "silas-the-shadow-vane": "Blackmailer."
+      },
+      "secretKnowledge": [
+        "Silas had a private locker in the cellar, and gave him the key earlier.",
+        "Saw Lola Dubois go towards the VIP lounge around 10:10 PM."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Fast and mumbled, often looking over his shoulder. Uses common slang of the era, like 'mac' and 'see?'.",
+      "greeting": "Jeez, mac. A stiff in the lounge is bad for business. I didn't see nothin'. I just pour the drinks, see?"
+    },
+    {
+      "id": "franklin-fingers-jones",
+      "name": "Franklin 'Fingers' Jones",
+      "role": "Jazz Pianist",
+      "personality": "Artistic, sensitive, and cynical. Lost in his music. Can be moody and uncooperative.",
+      "background": "A musical prodigy with a serious gambling problem. He owes a lot of money to Vinnie Carbone.",
+      "motive": "Silas held the marker for his substantial gambling debt. Silas was threatening to tell Vinnie, which would likely result in Franklin's hands being broken.",
+      "alibi": "Was on stage playing a complex solo piece from 10:00 PM to 10:20 PM. The entire club is his witness.",
+      "isGuilty": false,
+      "relationships": {
+        "lola-lulu-dubois": "Professional colleague with an unrequited crush.",
+        "vinnie-the-fist-carbone": "Employer and creditor.",
+        "silas-the-shadow-vane": "Man who held his debt."
+      },
+      "secretKnowledge": [
+        "Overheard Silas on the house phone saying his 'little songbird was about to pay the piper'.",
+        "Saw Beatrice Sinclair drop her cigarette case near the VIP lounge entrance."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Slow, deliberate, and peppered with jazz slang ('cat', 'dig it', 'solid').",
+      "greeting": "The music stopped, man. Real shame. Silas was a louse, but he didn't deserve a final curtain call like that. What's the score?"
+    },
+    {
+      "id": "ruby-dots-omalley",
+      "name": "Ruby 'Dots' O'Malley",
+      "role": "Cigarette Girl",
+      "personality": "Seems naive and bubbly, but she's sharp, observant, and misses nothing. A consummate gossip.",
+      "background": "Younger sister of a cop, she feeds him information on the side. She uses her 'dumb doll' persona to fly under the radar.",
+      "motive": "Silas discovered she was an informant for the police and was going to expose her to Vinnie, which would be a death sentence.",
+      "alibi": "Was circulating on the main floor, selling cigarettes. Dozens of people saw her, but her exact location at 10:15 PM is uncertain as she moves constantly.",
+      "isGuilty": false,
+      "relationships": {
+        "vinnie-the-fist-carbone": "Employer she is secretly informing on.",
+        "silas-the-shadow-vane": "A threat who discovered her secret."
+      },
+      "secretKnowledge": [
+        "Saw Vinnie give Lola a small, pearl-handled pistol as a 'gift' last week.",
+        "Knows Mitch the bartender has been watering down the expensive hooch."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Fast, high-pitched, and full of the latest slang ('the cat's pajamas', 'bee's knees'). Chews gum constantly.",
+      "greeting": "Cigars, cigarettes? Oh, a murder! Ain't that the bee's knees! I saw a whole lotta nothin', mister, but I hear everything. Spill the beans, what's the dirt?"
+    }
+  ],
+  "locations": [
+    {
+      "id": "main-floor",
+      "name": "Main Floor",
+      "description": "The heart of the speakeasy. Small round tables with fringed lamps surround a polished dance floor and a small stage. A long, mahogany bar runs along one wall, gleaming with glassware and manned by a nervous bartender.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "vip-lounge",
+      "name": "VIP Lounge",
+      "description": "The crime scene. A small, opulent room behind a heavy velvet curtain. Plush armchairs, a private liquor cabinet, and an unlit fireplace. A thick Persian rug covers the floor, slightly askew. The air is thick with the smell of gunpowder and spilled brandy.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "vinnies-office",
+      "name": "Vinnie's Office",
+      "description": "A stark, functional room upstairs. A large oak desk, a formidable safe in the corner, and a single window overlooking the back alley. The air smells of leather, whiskey, and authority.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "lolas-dressing-room",
+      "name": "Lola's Dressing Room",
+      "description": "A small, cluttered room backstage. A vanity mirror is ringed with lights and covered in makeup, sheet music, and a wilting bouquet of roses. A shimmering, sequined dress is draped over a chair.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "cellar-and-storeroom",
+      "name": "Cellar and Storeroom",
+      "description": "A damp, cool cellar beneath the club. Crates of illicit gin and whiskey are stacked high. A row of padlocked private lockers for important clients is fixed to one stone wall.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "back-alley",
+      "name": "Back Alley",
+      "description": "A narrow, grimy alley behind the speakeasy. Overflowing trash cans and a single flickering gas lamp that casts long shadows. A fire escape ladder leads up to Vinnie's office window.",
+      "evidence": [],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "overturned-brandy-snifter",
+      "name": "Overturned Brandy Snifter",
+      "description": "A broken brandy snifter lies on the floor near the victim.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "The snifter is shattered on the Persian rug. The puddle of brandy is still damp, indicating it was spilled recently. There are no clear fingerprints on the remaining glass fragments.",
+      "type": "physical",
+      "relatedCharacter": "silas-the-shadow-vane",
+      "pointsTo": null
+    },
+    {
+      "id": "single-spent-shell-casing",
+      "name": "Single Spent Shell Casing",
+      "description": "A small brass shell casing on the floor.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "A single .25 ACP shell casing, found partially concealed by the leg of a plush armchair. It appears to have been recently fired.",
+      "type": "physical",
+      "relatedCharacter": null,
+      "pointsTo": null
+    },
+    {
+      "id": "victims-pocket-watch",
+      "name": "Victim's Pocket Watch",
+      "description": "A gold watch, broken.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "A gold pocket watch found in the victim's vest pocket. The crystal is cracked and the hands are stopped at 10:17 PM.",
+      "type": "physical",
+      "relatedCharacter": "silas-the-shadow-vane",
+      "pointsTo": null
+    },
+    {
+      "id": "blackmail-ledger",
+      "name": "Blackmail Ledger",
+      "description": "A small, coded notebook.",
+      "location": "cellar-and-storeroom",
+      "artPrompt": "",
+      "detailedDescription": "Found inside Silas's private locker in the cellar. It contains coded entries with initials and payment amounts. The initials 'L.D.', 'M.O.', and 'F.J.' appear frequently next to significant sums.",
+      "type": "document",
+      "relatedCharacter": "silas-the-shadow-vane",
+      "pointsTo": "lola-lulu-dubois"
+    },
+    {
+      "id": "pearl-handled-pistol",
+      "name": "Pearl-Handled Pistol",
+      "description": "A small, elegant pistol.",
+      "location": "lolas-dressing-room",
+      "artPrompt": "",
+      "detailedDescription": "A .25 caliber pistol with a mother-of-pearl handle. It has been recently fired and poorly wiped down, leaving some traces of residue. It's hidden in a hatbox under dresses in Lola's dressing room.",
+      "type": "physical",
+      "relatedCharacter": "lola-lulu-dubois",
+      "pointsTo": "lola-lulu-dubois"
+    },
+    {
+      "id": "threatening-note",
+      "name": "Threatening Note",
+      "description": "A note found in the victim's coat pocket.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "A folded piece of expensive stationery that reads: 'You'll regret double-crossing me. One way or another, you will pay.' It is signed with the initials 'B.S.' The handwriting is a sharp, angry scrawl.",
+      "type": "document",
+      "relatedCharacter": "silas-the-shadow-vane",
+      "pointsTo": "beatrice-bea-sinclair"
+    },
+    {
+      "id": "bejeweled-cigarette-case",
+      "name": "Bejeweled Cigarette Case",
+      "description": "A fancy cigarette case lying on the floor.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "A silver cigarette case, inlaid with small sapphires, is on the floor just outside the velvet curtain of the lounge. It is engraved with the monogram 'B.S.'",
+      "type": "physical",
+      "relatedCharacter": "beatrice-bea-sinclair",
+      "pointsTo": "beatrice-bea-sinclair"
+    },
+    {
+      "id": "shipping-manifest",
+      "name": "Shipping Manifest",
+      "description": "A document detailing liquor shipments.",
+      "location": "vinnies-office",
+      "artPrompt": "",
+      "detailedDescription": "Found on Vinnie's desk, this manifest details incoming shipments of Canadian whiskey. A small corner of the document has been torn off.",
+      "type": "document",
+      "relatedCharacter": "vinnie-the-fist-carbone",
+      "pointsTo": "vinnie-the-fist-carbone"
+    },
+    {
+      "id": "torn-manifest-corner",
+      "name": "Torn Manifest Corner",
+      "description": "A scrap of paper found on the victim.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "A small, torn piece of paper found clutched in Silas's hand. It perfectly matches the missing corner from the shipping manifest in Vinnie's office, proving Silas had incriminating evidence against him.",
+      "type": "document",
+      "relatedCharacter": "silas-the-shadow-vane",
+      "pointsTo": "vinnie-the-fist-carbone"
+    },
+    {
+      "id": "gambling-iou",
+      "name": "Gambling IOU",
+      "description": "A signed IOU from the pianist.",
+      "location": "main-floor",
+      "artPrompt": "",
+      "detailedDescription": "An IOU for a large sum of money, signed by Franklin 'Fingers' Jones, payable to Vinnie Carbone. On the back, a note is scribbled: 'Time's up, Fingers. Pay me or Vinnie finds out. -S'",
+      "type": "document",
+      "relatedCharacter": "franklin-fingers-jones",
+      "pointsTo": "franklin-fingers-jones"
+    },
+    {
+      "id": "a-single-sequin",
+      "name": "A Single Sequin",
+      "description": "A dark blue sequin on the rug.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "A single, dark blue sequin found caught in the fibers of the Persian rug near the body. It does not match the silver dress Lola is currently wearing, but it is an identical match to a spare performance dress hanging in her dressing room.",
+      "type": "physical",
+      "relatedCharacter": null,
+      "pointsTo": "lola-lulu-dubois"
+    },
+    {
+      "id": "franklins-testimony",
+      "name": "Franklin's Testimony",
+      "description": "Franklin overheard a damning phrase.",
+      "location": "main-floor",
+      "artPrompt": "",
+      "detailedDescription": "Franklin Jones testifies that while near the stage, he overheard Silas Vane on the house phone earlier in the evening, saying 'Don't worry, my little songbird is about to pay the piper.' 'Songbird' is Vinnie's pet name for Lola.",
+      "type": "testimony",
+      "relatedCharacter": "franklin-fingers-jones",
+      "pointsTo": "lola-lulu-dubois"
+    },
+    {
+      "id": "rubys-testimony",
+      "name": "Ruby's Testimony",
+      "description": "Ruby saw Vinnie give Lola a gift.",
+      "location": "main-floor",
+      "artPrompt": "",
+      "detailedDescription": "Ruby O'Malley testifies that she saw Vinnie Carbone give Lola Dubois a 'gift' last week in the alley. She describes it as a small, shiny pistol with a white handle, just like the one found in Lola's dressing room.",
+      "type": "testimony",
+      "relatedCharacter": "ruby-dots-omalley",
+      "pointsTo": "lola-lulu-dubois"
+    }
+  ],
+  "solution": {
+    "killerId": "lola-lulu-dubois",
+    "method": "Lola arranged to meet Silas in the VIP lounge, ostensibly to make a blackmail payment. Once they were alone, she confronted him, begging him to leave her past alone. He laughed at her, enjoying his power. In a moment of panic and desperation, she pulled the small .25 caliber pistol Vinnie had given her for protection and shot him once in the chest. She dropped the gun in shock, but quickly recovered it, wiped it down, and fled back to her dressing room to hide it before her next set.",
+    "motive": "Silas had discovered Lola's true identity from a dark past in New Orleans, where she was connected to the death of a previous lover. He was blackmailing her, threatening to expose her to Vinnie. Knowing Vinnie's violent jealousy and hatred of secrets, she knew the revelation would lead him to cast her out, or worse. She killed Silas to permanently silence him, protecting her new life and her relationship with Vinnie at any cost.",
+    "explanation": "While many had motives, only Lola's story fits all the facts. Vinnie and Franklin have iron-clad alibis. The evidence against Beatrice (the note and cigarette case) and Vinnie (the torn manifest) are classic red herrings—strong motives, but no opportunity. Mitch O'Connell was desperate but was seen by dozens of people behind the bar. Lola's alibi, however, is a lie. Mitch saw her heading towards the lounge just before the murder. Franklin's testimony about the 'songbird' comment points directly to her. The most damning physical evidence is the single blue sequin found at the scene, which matches a spare dress in her room, proving her presence. This, combined with Ruby's testimony connecting her to the pearl-handled pistol and the discovery of the recently-fired murder weapon hidden in her hatbox, seals her guilt."
+  },
+  "timeline": [
+    {
+      "time": "8:00 PM",
+      "event": "The Velvet Viper opens for the evening."
+    },
+    {
+      "time": "9:30 PM",
+      "event": "Silas Vane arrives and speaks with Mitch O'Connell at the bar, giving him a key to his cellar locker."
+    },
+    {
+      "time": "9:45 PM",
+      "event": "Beatrice Sinclair has a heated, whispered argument with Silas near the main floor."
+    },
+    {
+      "time": "10:00 PM",
+      "event": "Franklin Jones begins his piano solo. Vinnie Carbone goes to his office for a meeting with his accountant."
+    },
+    {
+      "time": "10:10 PM",
+      "event": "Lola Dubois leaves the stage and is seen by Mitch walking towards the VIP lounge to meet Silas."
+    },
+    {
+      "time": "10:15 PM",
+      "event": "A single, muffled 'pop' is heard backstage, dismissed as a champagne cork. This is the gunshot."
+    },
+    {
+      "time": "10:17 PM",
+      "event": "Lola rushes back to her dressing room, unseen. The victim's watch breaks in a brief struggle."
+    },
+    {
+      "time": "10:20 PM",
+      "event": "Franklin Jones finishes his solo to applause."
+    },
+    {
+      "time": "10:30 PM",
+      "event": "A waiter enters the VIP lounge to deliver a bottle of brandy and discovers Silas Vane's body."
+    },
+    {
+      "time": "10:35 PM",
+      "event": "Vinnie is alerted, and the club is quietly locked down."
+    }
+  ]
+}

@@ -8,7 +8,7 @@
  */
 
 import type { MysteryInfo, LoadedMystery } from '../game/mysteryState'
-// Evidence types removed — Hollywood Premiere stripped out
+import { getApiBase } from '../api/client'
 
 // Import Ashford Affair
 import {
@@ -56,7 +56,8 @@ export async function loadMysteryById(id: string): Promise<LoadedMystery | null>
     default:
       // Try loading generated mystery from API
       try {
-        const response = await fetch(`http://localhost:3001/api/mystery/${id}/blueprint`)
+        const API_BASE = getApiBase()
+        const response = await fetch(`${API_BASE}/mystery/${id}/blueprint`)
         if (response.ok) {
           const blueprint = await response.json()
           const { adaptBlueprint } = await import('./blueprintAdapter')
@@ -83,8 +84,8 @@ export async function fetchAllMysteries(): Promise<MysteryInfo[]> {
   const hardcoded = [...HARDCODED_MYSTERIES]
   
   try {
-    const hostname = window.location.hostname
-    const res = await fetch(`http://${hostname}:3001/api/mystery/list`)
+    const API_BASE = getApiBase()
+    const res = await fetch(`${API_BASE}/mystery/list`)
     if (res.ok) {
       const generated: Array<{ id: string; title: string; subtitle?: string; era?: string; difficulty?: string }> = await res.json()
       const generatedInfos: MysteryInfo[] = generated

@@ -1,0 +1,356 @@
+{
+  "id": "the-spectral-deception",
+  "title": "The Spectral Deception",
+  "subtitle": "October 31st, 1888 — Bloomsbury, London",
+  "era": "1880s",
+  "difficulty": "hard",
+  "setting": {
+    "location": "The Bloomsbury townhouse of Madame Evangeline, a renowned spiritualist.",
+    "atmosphere": "Gas lamps cast long, dancing shadows through the thick London fog that presses against the windows. Inside, the air is heavy with the scent of incense, old velvet, and deceit. A palpable tension hangs between the opulent decor and the hushed whispers of the city's elite.",
+    "weather": "A cold, dense fog blankets the city, muffling the sounds of horse-drawn carriages and lending a ghostly quality to the gaslit streets."
+  },
+  "victim": {
+    "name": "Madame Evangeline",
+    "role": "Spiritualist and Medium",
+    "causeOfDeath": "Poisoning (Aconite), inducing cardiac arrest",
+    "timeOfDeath": "Approximately 8:30 PM",
+    "description": "A charismatic and beautiful woman in her late 40s, Madame Evangeline was the most sought-after medium in London. She was known for her dramatic séances and uncanny ability to 'discover' the secrets of her wealthy clientele, which she used for blackmail."
+  },
+  "characters": [
+    {
+      "id": "lord-alistair-blackwood",
+      "name": "Lord Alistair Blackwood",
+      "role": "Indebted Aristocrat",
+      "personality": "Haughty, dismissive, and desperately trying to maintain an air of superiority despite his frayed nerves.",
+      "background": "The last in a long line of earls, Lord Alistair has squandered his family fortune on gambling and bad investments. He came to Evangeline hoping to contact his father for financial advice, but she instead discovered his ruin and began blackmailing him.",
+      "motive": "To prevent Evangeline from exposing his bankruptcy to London society, which would mean total social and financial ruin.",
+      "alibi": "Was in the séance room, seated directly across from the victim, the entire time. 'I was observing the entire sordid affair with my own eyes.'",
+      "isGuilty": false,
+      "relationships": {
+        "madame-evangeline": "Blackmail victim.",
+        "eleanor-vance": "Fellow attendee; finds her grief distasteful.",
+        "dr-arthur-crowe": "Considers him an insufferable, middle-class boor."
+      },
+      "secretKnowledge": [
+        "He knew Evangeline was a fraud, but the threat of exposure kept him playing along.",
+        "He carries a bottle of laudanum for his 'nerves'."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Clipped, formal, upper-class accent. Tends to speak in condescending tones. 'One simply does not entertain such vulgar notions.'",
+      "greeting": "A lord of my station has no business being questioned. State your purpose, and be quick about it."
+    },
+    {
+      "id": "eleanor-vance",
+      "name": "Eleanor Vance",
+      "role": "Grieving Widow",
+      "personality": "Appears fragile, anxious, and lost in her grief. However, beneath the surface lies a deep well of anger and resentment.",
+      "background": "Her husband, a wealthy shipping magnate, died a year ago. Consumed by grief, she turned to Madame Evangeline for solace, paying exorbitant sums for 'messages' from beyond the grave. She has nearly bankrupted her late husband's estate.",
+      "motive": "Revenge. She may have discovered that Evangeline was a fraud, preying on her grief and stealing her inheritance.",
+      "alibi": "Was seated next to Lord Alistair during the séance, holding hands with him as instructed by Madame Evangeline for 'channelling energy.'",
+      "isGuilty": false,
+      "relationships": {
+        "madame-evangeline": "Client and victim of emotional manipulation.",
+        "beatrice-holloway": "Pities her for having to serve such a woman."
+      },
+      "secretKnowledge": [
+        "She had recently consulted a private investigator about Evangeline, confirming her suspicions of fraud."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Soft-spoken, hesitant, and formal. Often clutches a lace handkerchief. 'Oh, it was all too dreadful... I cannot bear to think of it.'",
+      "greeting": "Must you? This evening has been a terrible shock. My nerves are quite shattered."
+    },
+    {
+      "id": "dr-arthur-crowe",
+      "name": "Dr. Arthur Crowe",
+      "role": "Physician and Skeptic",
+      "personality": "Analytical, arrogant, and clinical. He sees everything as a puzzle to be solved and has little patience for emotion or superstition.",
+      "background": "A respected physician and a member of the Society for Psychical Research, Dr. Crowe is dedicated to exposing fraudulent mediums. He attended the séance under the guise of a believer to gather evidence against Evangeline for a public debunking.",
+      "motive": "Evangeline may have discovered a secret from his past—a malpractice accusation that was quietly settled—and threatened him with it. Perhaps he killed her to silence her, his professional reputation being paramount.",
+      "alibi": "Was seated at the séance table, taking copious notes in his journal until the moment of death, at which point he was the first to examine the body.",
+      "isGuilty": false,
+      "relationships": {
+        "madame-evangeline": "Professional antagonist; viewed her as a charlatan.",
+        "lord-alistair-blackwood": "Sees him as a prime example of the gullible aristocracy."
+      },
+      "secretKnowledge": [
+        "He had identified several of Evangeline's tricks, like the hidden levers under the table and how she gathered her information on guests."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Precise, academic language. Speaks with an air of authority. 'From a medical standpoint, the symptoms were... inconsistent with mere fright.'",
+      "greeting": "Detective. I presume you require a logical assessment of the events. I am at your service. Most people here are incapable of it."
+    },
+    {
+      "id": "beatrice-holloway",
+      "name": "Beatrice Holloway",
+      "role": "Assistant and Housekeeper",
+      "personality": "Outwardly meek, subservient, and easily overlooked. She is, however, highly observant, deeply resentful, and ruthlessly cunning.",
+      "background": "Orphaned at a young age, Beatrice has served Madame Evangeline for a decade. She was not just an assistant but a co-conspirator, helping to set up the séance tricks and research the clients. She received little pay and constant abuse for her loyalty.",
+      "motive": "Evangeline was planning to flee the country with all their accumulated money, leaving Beatrice to face the consequences. She killed Evangeline to take the money for herself and escape a life of servitude.",
+      "alibi": "She was not at the séance table. She claims she was in the kitchen, washing up after serving the guests refreshments before they entered the room.",
+      "isGuilty": true,
+      "relationships": {
+        "madame-evangeline": "Abused employee and unwilling accomplice.",
+        "eleanor-vance": "Feels a mix of pity and contempt for her.",
+        "silas-croft": "Fears his temper."
+      },
+      "secretKnowledge": [
+        "Knows the location of all of Evangeline's hidden ledgers and blackmail materials.",
+        "Discovered Evangeline's plan to abandon her."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Quiet and deferential, always speaking in hushed tones. 'Yes, sir. As you say, sir. I was only in the kitchen.'",
+      "greeting": "Oh! Sir, you startled me. I was just... tidying. Can I be of any assistance?"
+    },
+    {
+      "id": "silas-croft",
+      "name": "Mr. Silas Croft",
+      "role": "Wealthy Industrialist",
+      "personality": "Gruff, impatient, and pragmatic. He has no time for pleasantries and sees everything in terms of profit and loss.",
+      "background": "A self-made man who built a vast fortune in textiles, Mr. Croft has a ruthless reputation. He came to Evangeline to contact his former business partner, whom many suspect he cheated. Evangeline 'discovered' evidence of a covered-up factory accident from his early career.",
+      "motive": "Protecting his empire. He would not hesitate to eliminate someone threatening to expose the dark secrets upon which his fortune was built.",
+      "alibi": "Was seated at the séance table, looking thoroughly bored and annoyed, until the moment of death.",
+      "isGuilty": false,
+      "relationships": {
+        "madame-evangeline": "Blackmail victim.",
+        "lord-alistair-blackwood": "Despises him as a relic of a useless class."
+      },
+      "secretKnowledge": [
+        "His ornate cane contains a hidden flask, not a weapon."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Blunt and to the point. A slight northern accent he tries to hide. 'Nonsense. Let's have the facts, not this spiritual twaddle.'",
+      "greeting": "Another interruption. Well? What is it? My time is valuable."
+    },
+    {
+      "id": "lillian-omalley",
+      "name": "Lillian O'Malley",
+      "role": "Aspiring Actress",
+      "personality": "Dramatic, ambitious, and emotionally volatile. She is desperate for fame and easily manipulated.",
+      "background": "A talented but unknown stage actress, Lillian was convinced by Evangeline that she could channel the spirit of a famous deceased thespian to guide her career. In reality, Evangeline was using her to gather gossip from the theatrical world.",
+      "motive": "Evangeline may have threatened to expose Lillian as her accomplice, or reveal a different, more personal secret, ruining her chances at stardom.",
+      "alibi": "Was at the séance table, seated next to Dr. Crowe. She claims she was so deeply in a 'receptive trance' that she saw and heard nothing unusual until the final gasp.",
+      "isGuilty": false,
+      "relationships": {
+        "madame-evangeline": "Her supposed spiritual guide; she felt betrayed.",
+        "dr-arthur-crowe": "Finds his skepticism to be terribly dull."
+      },
+      "secretKnowledge": [
+        "She saw Beatrice slip back into the hallway from the direction of the conservatory just before the séance began."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Theatrical and affected, with dramatic pauses and gestures. 'The darkness... it just... fell! A final curtain on a life extinguished!'",
+      "greeting": "Oh, detective! It is a role I never wished to play: the witness to a real-life tragedy."
+    }
+  ],
+  "locations": [
+    {
+      "id": "the-seance-room",
+      "name": "The Séance Room",
+      "description": "The heart of the house, shrouded in heavy, dark velvet curtains. A large, circular mahogany table dominates the center, surrounded by six ornate chairs. The air is thick with the cloying smell of incense and snuffed candles. The body of Madame Evangeline is slumped over the table.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "evangelines-study",
+      "name": "Evangeline's Study",
+      "description": "A lavishly appointed room lined with bookshelves. A large oak desk is covered in papers, letters, and astrological charts. A fire smolders in the hearth. The room feels like a stage, designed to impress and intimidate.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "the-foyer",
+      "name": "The Foyer",
+      "description": "A grand entrance hall with a sweeping staircase and a checkerboard marble floor. A heavy coat rack stands by the door, holding the guests' expensive outerwear. The gaslight from the street outside casts long, eerie shadows.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "the-conservatory",
+      "name": "The Conservatory",
+      "description": "A glass-walled room attached to the back of the house, filled with exotic and unusual plants. The air is humid and smells of damp earth and fragrant blossoms. Condensation drips from the glass ceiling, blurring the view of the foggy garden outside.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "beatrices-quarters",
+      "name": "Beatrice's Quarters",
+      "description": "A small, cold, and sparsely furnished room in the attic. It contains a narrow bed, a simple wooden wardrobe, and a small writing desk. The starkness of the room is a sharp contrast to the opulence of the rest of the house.",
+      "evidence": [],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "victims-water-glass",
+      "name": "Victim's Water Glass",
+      "description": "A glass of water on the table in front of the victim's chair.",
+      "location": "the-seance-room",
+      "artPrompt": "",
+      "detailedDescription": "The water in the half-empty glass has a very faint, almost unnoticeable bitter smell. Lab analysis later confirms the presence of a lethal dose of Aconite, a fast-acting cardiotoxin.",
+      "type": "physical",
+      "relatedCharacter": "madame-evangeline",
+      "pointsTo": "beatrice-holloway"
+    },
+    {
+      "id": "blackmail-letter-draft",
+      "name": "Blackmail Letter Draft",
+      "description": "A crumpled piece of paper in the study's wastebin.",
+      "location": "evangelines-study",
+      "artPrompt": "",
+      "detailedDescription": "A draft of a letter addressed to Lord Alistair Blackwood demanding £5,000 in exchange for silence regarding his 'significant debts and questionable wagers.' It is in Evangeline's handwriting.",
+      "type": "document",
+      "relatedCharacter": "madame-evangeline",
+      "pointsTo": "lord-alistair-blackwood"
+    },
+    {
+      "id": "bank-transfer-slips",
+      "name": "Bank Transfer Slips",
+      "description": "A stack of receipts in a desk drawer.",
+      "location": "evangelines-study",
+      "artPrompt": "",
+      "detailedDescription": "A series of bank transfer slips documenting payments from Eleanor Vance to Madame Evangeline, totaling over £20,000 in the last year.",
+      "type": "document",
+      "relatedCharacter": "eleanor-vance",
+      "pointsTo": "eleanor-vance"
+    },
+    {
+      "id": "dr-crowes-notebook",
+      "name": "Dr. Crowe's Notebook",
+      "description": "A leather-bound notebook left on a side table.",
+      "location": "the-seance-room",
+      "artPrompt": "",
+      "detailedDescription": "Contains detailed notes on exposing fraudulent mediums. One page lists Evangeline's methods: 'Lever under table for rapping,' 'Assistant behind curtain for ghostly whispers,' 'Information on clients gathered beforehand.'",
+      "type": "document",
+      "relatedCharacter": "dr-arthur-crowe",
+      "pointsTo": "dr-arthur-crowe"
+    },
+    {
+      "id": "empty-vial",
+      "name": "Empty Vial",
+      "description": "A small, unlabeled glass vial hidden in a potted plant.",
+      "location": "the-conservatory",
+      "artPrompt": "",
+      "detailedDescription": "A tiny glass vial, no bigger than a thumb, tucked into the soil of a large fern. It is empty, but forensic analysis reveals residue of Aconite. The fingerprints are smudged, but appear to be from a small, slender hand.",
+      "type": "physical",
+      "relatedCharacter": "beatrice-holloway",
+      "pointsTo": "beatrice-holloway"
+    },
+    {
+      "id": "beatrices-diary",
+      "name": "Beatrice's Diary",
+      "description": "A small, worn diary hidden under a floorboard.",
+      "location": "beatrices-quarters",
+      "artPrompt": "",
+      "detailedDescription": "Entries detail years of mistreatment and growing resentment. The final entry, dated yesterday, reads: 'She thinks I do not know. The final deception is hers, but the final act will be mine. She will not leave me with nothing.'",
+      "type": "document",
+      "relatedCharacter": "beatrice-holloway",
+      "pointsTo": "beatrice-holloway"
+    },
+    {
+      "id": "torn-train-ticket",
+      "name": "Torn Train Ticket",
+      "description": "A torn piece of paper in the study's fireplace, unburnt.",
+      "location": "evangelines-study",
+      "artPrompt": "",
+      "detailedDescription": "A receipt for a one-way, first-class train ticket to Dover, connecting to the Calais ferry. It is for one person, booked under the name 'E. Vane' for tomorrow morning.",
+      "type": "document",
+      "relatedCharacter": "madame-evangeline",
+      "pointsTo": "beatrice-holloway"
+    },
+    {
+      "id": "botany-book",
+      "name": "Book on Exotic Flora",
+      "description": "A heavy tome left open on a reading stand in the study.",
+      "location": "evangelines-study",
+      "artPrompt": "",
+      "detailedDescription": "The book, 'A Study of Rare and Potent Flora,' is open to a chapter on the Aconitum genus, commonly known as Monkshood or Wolfsbane. The passage describing its use as a fast-acting, difficult-to-trace poison is underlined in faint pencil.",
+      "type": "document",
+      "relatedCharacter": "madame-evangeline",
+      "pointsTo": "beatrice-holloway"
+    },
+    {
+      "id": "laudanum-bottle",
+      "name": "Laudanum Bottle",
+      "description": "A small bottle found in a coat pocket.",
+      "location": "the-foyer",
+      "artPrompt": "",
+      "detailedDescription": "A bottle of laudanum, an opium tincture, found in the pocket of Lord Alistair's overcoat. It is half-full. He claims it is for his nerves.",
+      "type": "physical",
+      "relatedCharacter": "lord-alistair-blackwood",
+      "pointsTo": "lord-alistair-blackwood"
+    },
+    {
+      "id": "ornate-cane",
+      "name": "Ornate Cane",
+      "description": "A silver-headed walking cane belonging to Silas Croft.",
+      "location": "the-foyer",
+      "artPrompt": "",
+      "detailedDescription": "An expensive ebony cane with a silver wolf's head handle. The head unscrews to reveal a small, empty compartment inside. It smells faintly of whiskey.",
+      "type": "physical",
+      "relatedCharacter": "silas-croft",
+      "pointsTo": "silas-croft"
+    },
+    {
+      "id": "false-testimony",
+      "name": "False Testimony",
+      "description": "Beatrice's initial statement about Dr. Crowe.",
+      "location": "the-seance-room",
+      "artPrompt": "",
+      "detailedDescription": "When first questioned, Beatrice Holloway tearfully claims she saw Dr. Crowe fiddling with the water carafe on the sideboard before the séance began, suggesting he 'may have put something in it.'",
+      "type": "testimony",
+      "relatedCharacter": "beatrice-holloway",
+      "pointsTo": "dr-arthur-crowe"
+    },
+    {
+      "id": "gardening-gloves",
+      "name": "Gardening Gloves",
+      "description": "A pair of mud-stained gloves in a wardrobe.",
+      "location": "beatrices-quarters",
+      "artPrompt": "",
+      "detailedDescription": "A pair of worn leather gloves found in Beatrice's quarters. They are stained with soil. A forensic analysis reveals traces of soil from the conservatory and, crucially, microscopic pollen from the Monkshood plant.",
+      "type": "physical",
+      "relatedCharacter": "beatrice-holloway",
+      "pointsTo": "beatrice-holloway"
+    }
+  ],
+  "solution": {
+    "killerId": "beatrice-holloway",
+    "method": "Beatrice cultivated a highly poisonous Monkshood plant in the conservatory, having learned of its properties from one of Evangeline's own books. She harvested the roots to create a concentrated Aconite poison. Before the séance, while serving refreshments, she added a fatal, tasteless dose to Madame Evangeline's personal water glass, knowing her mistress would sip from it during her 'trance.' The poison induced rapid cardiac arrest, mimicking a fainting spell or spiritual shock.",
+    "motive": "After a decade of abuse and complicity, Beatrice discovered that Evangeline had booked a one-way ticket to France, planning to flee with their entire fortune and leave Beatrice behind to face the angry, defrauded clients. It was not just revenge for years of cruelty, but a desperate act to prevent her own ruin and seize the wealth she felt she had earned. She planned to frame one of the wealthy attendees.",
+    "explanation": "The killer is Beatrice Holloway. Her meek demeanor was a mask for a cunning and resentful mind. Her motive is revealed by her diary and the train ticket receipt, which shows Evangeline was abandoning her. The method is pieced together through the book on poisonous plants, the empty vial with her small fingerprints found in the conservatory, and the damning gardening gloves in her room covered in Monkshood pollen. Her false testimony against Dr. Crowe was a deliberate attempt to mislead the investigation. While Lord Alistair and others had strong motives, only Beatrice had the specific knowledge of the poison, the access to the victim's glass, and the overwhelming motive of ultimate betrayal."
+  },
+  "timeline": [
+    {
+      "time": "7:30 PM",
+      "event": "The guests—Lord Alistair, Eleanor Vance, Dr. Crowe, Silas Croft, and Lillian O'Malley—arrive."
+    },
+    {
+      "time": "7:45 PM",
+      "event": "Beatrice Holloway serves water to the guests in the foyer before they enter the séance room. She poisons Madame Evangeline's specific glass at this time."
+    },
+    {
+      "time": "8:00 PM",
+      "event": "All guests are seated around the table in the Séance Room. The doors are closed and the gas lamps are dimmed."
+    },
+    {
+      "time": "8:15 PM",
+      "event": "Madame Evangeline begins her trance, speaking in a low voice. She takes a sip of water from her personal glass."
+    },
+    {
+      "time": "8:25 PM",
+      "event": "The 'spiritual activity' begins, with knocks and rattles orchestrated by Evangeline."
+    },
+    {
+      "time": "8:30 PM",
+      "event": "Madame Evangeline suddenly gasps, clutches her chest, and slumps forward onto the table, lifeless."
+    },
+    {
+      "time": "8:31 PM",
+      "event": "Dr. Crowe rushes to the victim's side, checks for a pulse, and declares her dead."
+    },
+    {
+      "time": "8:45 PM",
+      "event": "The authorities (the player) arrive at the scene."
+    }
+  ]
+}

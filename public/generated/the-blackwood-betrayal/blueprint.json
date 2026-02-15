@@ -1,0 +1,360 @@
+{
+  "id": "the-blackwood-betrayal",
+  "title": "The Blackwood Betrayal",
+  "subtitle": "October 26, 1928 — Blackwood Manor",
+  "era": "1920s",
+  "difficulty": "medium",
+  "setting": {
+    "location": "Blackwood Manor, a sprawling stone mansion on the misty coast of New England.",
+    "atmosphere": "The air in Blackwood Manor is heavy with the scent of old money, secrets, and rain. Shadows cling to the corners of the grand, gothic rooms, and the constant drumming of rain against the leaded glass windows feels like a ticking clock. Dust motes dance in the few slivers of moonlight that pierce the gloom, illuminating opulent but decaying furniture.",
+    "weather": "A cold, relentless autumn rainstorm that has been lashing the coast for two days straight, cutting off the manor from the mainland."
+  },
+  "victim": {
+    "name": "Lord Alistair Blackwood",
+    "role": "Ruthless industrialist and patriarch of the Blackwood family",
+    "causeOfDeath": "Single gunshot wound to the chest from a small caliber pistol.",
+    "timeOfDeath": "Between 9:30 PM and 10:00 PM",
+    "description": "A man who built an empire through cunning and cruelty. Lord Blackwood was respected in public but feared and despised in private. He collected enemies like he collected rare art, and his family was no exception. He was found slumped in the high-backed leather chair behind his desk."
+  },
+  "characters": [
+    {
+      "id": "lady-beatrice-blackwood",
+      "name": "Lady Beatrice Blackwood",
+      "role": "The Victim's Wife",
+      "personality": "Elegant, aloof, and icily composed. She carries her sadness like a shroud, but beneath it lies a brittle strength and profound resentment.",
+      "background": "Married Alistair for status, not love. Lived a life of gilded misery, trapped in a loveless marriage. She has recently been seeking solace elsewhere.",
+      "motive": "Stood to inherit the vast Blackwood fortune. Her husband may have discovered her affair, threatening her with social and financial ruin.",
+      "alibi": "Claims she was in her private sitting room with a headache from 9:00 PM onwards, having taken a laudanum tincture given to her by Dr. Reed.",
+      "isGuilty": false,
+      "relationships": {
+        "lord-alistair-blackwood": "A cold, transactional marriage.",
+        "julian-blackwood": "Pities her son but is frustrated by his lack of ambition.",
+        "dr-evelyn-reed": "Her physician and confidante."
+      },
+      "secretKnowledge": [
+        "She is having an affair with a local artist.",
+        "Alistair recently rewrote his will, but she doesn't know the details."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks in measured, aristocratic tones. Her language is formal and precise, often with a hint of weary condescension.",
+      "greeting": "You're the detective? Very well. Let us get this unfortunate business concluded. The draft in this house is simply dreadful."
+    },
+    {
+      "id": "julian-blackwood",
+      "name": "Julian Blackwood",
+      "role": "The Estranged Son",
+      "personality": "Brooding, artistic, and resentful. He is cynical and openly hostile about his family's wealth, viewing it as a corrupting force.",
+      "background": "The sole heir, but a disappointment to his father. Julian prefers painting and poetry to boardrooms and balance sheets. He was recently and very publicly disinherited by his father.",
+      "motive": "Deep-seated hatred for his father's tyranny and the recent disinheritance. Killing him might have been an act of rage or a desperate bid to reclaim his birthright.",
+      "alibi": "States he was in the conservatory, 'communing with the dying roses,' and drinking heavily since dinner.",
+      "isGuilty": false,
+      "relationships": {
+        "lord-alistair-blackwood": "Mutual contempt and hatred.",
+        "lady-beatrice-blackwood": "A strained relationship; he sees her as complicit in his father's cruelty."
+      },
+      "secretKnowledge": [
+        "His father was blackmailing someone, though he doesn't know who. He overheard a heated, whispered phone call last week.",
+        "Gigi Dubois was not just a singer; she was his father's mistress."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Sarcastic and morose. Uses the languid, slightly affected slang of the 'Lost Generation' artists he emulates.",
+      "greeting": "Oh, good. The constabulary. Here to poke and prod at the family corpse? Don't mind me, I'm just the resident tragedy."
+    },
+    {
+      "id": "gigi-dubois",
+      "name": "Genevieve 'Gigi' Dubois",
+      "role": "Jazz Singer & Mistress",
+      "personality": "Vivacious and flirtatious on the surface, but with a core of hardened ambition. She's a survivor who uses her charm as both a shield and a weapon.",
+      "background": "A talented singer from the city, she became Lord Blackwood's mistress after he 'discovered' her at a speakeasy. He promised to finance her career, but their relationship had soured.",
+      "motive": "Lord Blackwood was about to cast her aside for a younger woman. She may have killed him to prevent him from cutting her off financially and destroying her reputation.",
+      "alibi": "She claims she was in the music room, practicing a new number on the piano from 9:15 PM until she heard the commotion.",
+      "isGuilty": false,
+      "relationships": {
+        "lord-alistair-blackwood": "A transactional affair; she provided youth and excitement, he provided money and connections."
+      },
+      "secretKnowledge": [
+        "Lord Blackwood kept a second, hidden ledger in his study.",
+        "He had a severe heart condition that Dr. Reed was treating him for."
+      ],
+      "artPrompt": "",
+      "speechPattern": "A sultry, theatrical purr, peppered with Jazz Age slang like 'dollface' and 'the cat's pajamas'.",
+      "greeting": "A detective, huh? Tall, dark, and handsome. Shame we have to meet under such... grim circumstances, dollface."
+    },
+    {
+      "id": "silas-croft",
+      "name": "Silas Croft",
+      "role": "Business Rival",
+      "personality": "Blunt, ruthless, and simmering with rage. He carries himself with the swagger of a self-made man who has been knocked down but is not out.",
+      "background": "A former partner of Lord Blackwood, Croft claims he was swindled out of a lucrative patent that made Blackwood a fortune. He has been publicly threatening revenge for years.",
+      "motive": "Utter financial ruin and a burning desire for revenge. Blackwood's death would invalidate a recent contract that finalized his bankruptcy.",
+      "alibi": "Was in the billiard room by himself, drinking whiskey and 'contemplating his ruin' from 9:00 PM until the body was discovered.",
+      "isGuilty": false,
+      "relationships": {
+        "lord-alistair-blackwood": "Pure, unadulterated hatred."
+      },
+      "secretKnowledge": [
+        "Lord Blackwood was using the butler, Arthur Vance, to spy on his own family.",
+        "The 'locked' study door has a mechanism to be unlocked from the outside with a thin, stiff wire."
+      ],
+      "artPrompt": "",
+      "speechPattern": "A gruff, no-nonsense baritone. He clips his words and doesn't waste time on pleasantries.",
+      "greeting": "Finally. Took you long enough. Let's get this over with. The man was a snake, and someone finally had the guts to cut his head off. Can't say I'm shedding any tears."
+    },
+    {
+      "id": "arthur-vance",
+      "name": "Arthur Vance",
+      "role": "The Butler",
+      "personality": "Stoic, observant, and impeccably discreet. He moves through the manor like a ghost, seeing and hearing everything, but revealing nothing.",
+      "background": "Has served the Blackwood family for over thirty years. His loyalty was absolute, but he was privy to every dirty secret and was often the target of Alistair's cruel temper.",
+      "motive": "Years of abuse and humiliation. He knew where all the bodies were buried, metaphorically speaking, and may have snapped under the pressure.",
+      "alibi": "Was in the main hall, polishing silver, from 9:30 PM. He claims to have seen Dr. Reed leaving the West Wing corridor (where the study is located) around 9:45 PM.",
+      "isGuilty": false,
+      "relationships": {
+        "lord-alistair-blackwood": "A relationship of servitude and fear.",
+        "lady-beatrice-blackwood": "Quietly sympathetic to her plight."
+      },
+      "secretKnowledge": [
+        "He was forced by Lord Blackwood to report on Lady Beatrice's activities.",
+        "Lord Blackwood kept a pistol in his desk, but it was a large revolver, not the small gun found at the scene."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Formal, quiet, and deferential. Always uses proper titles. 'Sir,' 'Madam,' 'My Lord.'",
+      "greeting": "Good evening, sir. A terrible, terrible business. I am Arthur Vance. How may I be of assistance in your investigation?"
+    },
+    {
+      "id": "dr-evelyn-reed",
+      "name": "Dr. Evelyn Reed",
+      "role": "The Family Physician",
+      "personality": "Calm, intelligent, and meticulously professional. She exudes an aura of competence and trustworthiness, but her eyes betray a deep-seated anxiety.",
+      "background": "A respected physician who has treated the Blackwood family for a decade. She is known for her discretion and her innovative treatments for nervous afflictions.",
+      "motive": "Lord Blackwood had discovered a dark secret from her past—a fatal medical error she covered up—and was blackmailing her. He threatened to expose her tonight.",
+      "alibi": "Admits to visiting Lord Blackwood in his study at 9:15 PM to give him his nightly tonic for his heart condition. She claims she left at 9:30 PM and went directly to her guest quarters to review her medical journals.",
+      "isGuilty": true,
+      "relationships": {
+        "lord-alistair-blackwood": "A professional relationship masking fear and blackmail.",
+        "lady-beatrice-blackwood": "Acts as her confidante, building trust."
+      },
+      "secretKnowledge": [
+        "Lord Blackwood's heart was much weaker than anyone knew; a sudden shock could have been fatal.",
+        "The laudanum she gave Lady Beatrice was a very mild dose, not enough to render someone insensible."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks with clinical precision. Her vocabulary is technical, and she rarely displays emotion.",
+      "greeting": "Detective. I am Dr. Reed. I've already examined the body, but as I am a person of interest, I will of course recuse myself. A tragic end. His heart was not strong."
+    }
+  ],
+  "locations": [
+    {
+      "id": "the-study",
+      "name": "The Study",
+      "description": "A dark, mahogany-paneled room dominated by a massive desk. The air smells of old paper, leather, and the faint, coppery scent of blood. Bookshelves line the walls, and a half-empty glass of brandy sits on the desk next to a tipped-over chair. The body of Lord Blackwood is slumped in his high-backed leather chair.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "grand-ballroom",
+      "name": "The Grand Ballroom",
+      "description": "A cavernous room with a high, vaulted ceiling and dust-covered chandeliers. The parquet floor is scuffed and dull. The furniture is shrouded in white cloths, making the room look like a graveyard of forgotten parties.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "conservatory",
+      "name": "The Conservatory",
+      "description": "A glass-walled room filled with wilting, exotic plants. The rain streaks down the panes, distorting the view of the churning sea outside. The air is humid and smells of damp earth and decay. An empty bottle of gin lies on its side under a bench.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "billiard-room",
+      "name": "The Billiard Room",
+      "description": "A masculine space smelling of stale cigar smoke and whiskey. A large billiard table sits under a green-shaded lamp. A half-finished game is on the table, and a decanter of whiskey with a single glass sits on a nearby bar.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "lady-beatrices-sitting-room",
+      "name": "Lady Beatrice's Sitting Room",
+      "description": "An airy, feminine room decorated in pale silks and French furniture. It's a stark contrast to the rest of the manor. A chaise lounge is positioned by the window, and an open book lies face-down on the floor beside it. The air smells faintly of lavender.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "dr-reeds-guest-quarters",
+      "name": "Dr. Reed's Guest Quarters",
+      "description": "A spartan and impeccably tidy room. A medical bag sits open on the bed, its contents neatly arranged. A stack of medical journals sits on the nightstand. The room is impersonal and clean, almost sterile.",
+      "evidence": [],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "overturned-brandy-glass",
+      "name": "Overturned Brandy Glass",
+      "description": "A crystal brandy snifter on the floor near the desk, containing a few drops of liquid.",
+      "location": "the-study",
+      "artPrompt": "",
+      "detailedDescription": "Forensics confirms the liquid is brandy. Toxicology reports a high concentration of Chloral Hydrate, a powerful sedative. The amount in the glass suggests the victim ingested a significant dose before he was shot.",
+      "type": "physical",
+      "relatedCharacter": "dr-evelyn-reed",
+      "pointsTo": "dr-evelyn-reed"
+    },
+    {
+      "id": "small-caliber-pistol",
+      "name": "Small Caliber Pistol",
+      "description": "A small, .25 caliber pistol on the floor near the victim's right hand.",
+      "location": "the-study",
+      "artPrompt": "",
+      "detailedDescription": "The weapon has been wiped clean of prints. It is the confirmed murder weapon. It is not the large revolver Lord Blackwood was known to keep in his desk.",
+      "type": "physical",
+      "relatedCharacter": null,
+      "pointsTo": null
+    },
+    {
+      "id": "blackmail-letter-fragment",
+      "name": "Blackmail Letter Fragment",
+      "description": "A torn piece of a letter found in the fireplace grate, unburned.",
+      "location": "the-study",
+      "artPrompt": "",
+      "detailedDescription": "The fragment, written in Lord Blackwood's hand, reads: '...your fatal mistake with my first wife. Everyone will know what you did. You will pay, one way or another. Tonight.' This suggests the victim was blackmailing someone over the death of his first wife.",
+      "type": "document",
+      "relatedCharacter": "dr-evelyn-reed",
+      "pointsTo": "dr-evelyn-reed"
+    },
+    {
+      "id": "torn-contract",
+      "name": "Torn Contract",
+      "description": "A ripped piece of a business contract found in the billiard room wastebin.",
+      "location": "billiard-room",
+      "artPrompt": "",
+      "detailedDescription": "The document is the final version of a contract ceding all assets of Croft Industries to Blackwood Enterprises. It's torn in half, a clear sign of rage. This is a red herring.",
+      "type": "document",
+      "relatedCharacter": "silas-croft",
+      "pointsTo": "silas-croft"
+    },
+    {
+      "id": "perfumed-handkerchief",
+      "name": "Perfumed Handkerchief",
+      "description": "A delicate silk handkerchief with the monogram 'G.D.' dropped behind a curtain.",
+      "location": "the-study",
+      "artPrompt": "",
+      "detailedDescription": "The handkerchief smells of gardenia, Gigi's signature scent. It's stained with what appears to be mascara, as if someone was crying. A red herring to suggest Gigi was in the room.",
+      "type": "physical",
+      "relatedCharacter": "gigi-dubois",
+      "pointsTo": "gigi-dubois"
+    },
+    {
+      "id": "julians-angry-letter",
+      "name": "Julian's Angry Letter",
+      "description": "A crumpled, unsent letter found on the desk under some papers.",
+      "location": "the-study",
+      "artPrompt": "",
+      "detailedDescription": "Written by Julian to his father, it is filled with rage and violent imagery, ending with the line 'I wish you were dead.' This establishes his hatred but is ultimately a red herring.",
+      "type": "document",
+      "relatedCharacter": "julian-blackwood",
+      "pointsTo": "julian-blackwood"
+    },
+    {
+      "id": "butlers-testimony",
+      "name": "Butler's Testimony",
+      "description": "Arthur Vance states he saw Dr. Reed leaving the corridor to the study.",
+      "location": "the-study",
+      "artPrompt": "",
+      "detailedDescription": "Vance is certain he saw Dr. Reed exiting the west wing corridor around 9:45 PM. She seemed composed, but was walking more briskly than usual. This contradicts her alibi of being in her room since 9:30 PM.",
+      "type": "testimony",
+      "relatedCharacter": "arthur-vance",
+      "pointsTo": "dr-evelyn-reed"
+    },
+    {
+      "id": "hidden-compartment-in-bag",
+      "name": "Hidden Compartment in Medical Bag",
+      "description": "A false bottom in Dr. Reed's medical bag.",
+      "location": "dr-reeds-guest-quarters",
+      "artPrompt": "",
+      "detailedDescription": "A careful search of Dr. Reed's medical bag reveals a hidden compartment in the base. It is empty, but is perfectly sized to conceal a small, .25 caliber pistol. There is a faint smell of gunpowder residue inside.",
+      "type": "physical",
+      "relatedCharacter": "dr-evelyn-reed",
+      "pointsTo": "dr-evelyn-reed"
+    },
+    {
+      "id": "laudanum-tincture",
+      "name": "Laudanum Tincture",
+      "description": "A small bottle of laudanum on the nightstand in Beatrice's room.",
+      "location": "lady-beatrices-sitting-room",
+      "artPrompt": "",
+      "detailedDescription": "Dr. Reed confirms she gave this to Lady Beatrice for a headache. Analysis shows it's a very weak dose, enough to calm the nerves but not enough to render someone completely unaware, questioning Beatrice's alibi slightly but ultimately serving as a misdirection.",
+      "type": "physical",
+      "relatedCharacter": "lady-beatrice-blackwood",
+      "pointsTo": "lady-beatrice-blackwood"
+    },
+    {
+      "id": "empty-gin-bottle",
+      "name": "Empty Gin Bottle",
+      "description": "An empty bottle of high-end gin under a bench.",
+      "location": "conservatory",
+      "artPrompt": "",
+      "detailedDescription": "The bottle confirms Julian's story of drinking heavily in the conservatory. His fingerprints are the only ones on it.",
+      "type": "physical",
+      "relatedCharacter": "julian-blackwood",
+      "pointsTo": "julian-blackwood"
+    },
+    {
+      "id": "scratched-door-lock",
+      "name": "Scratched Door Lock",
+      "description": "Tiny scratches around the keyhole on the study's exterior door.",
+      "location": "the-study",
+      "artPrompt": "",
+      "detailedDescription": "The study was locked from the inside, but examination of the exterior lock shows fine scratches consistent with the lock being picked or manipulated with a thin tool, like a piece of wire or a lockpick.",
+      "type": "physical",
+      "relatedCharacter": null,
+      "pointsTo": null
+    },
+    {
+      "id": "medical-journal",
+      "name": "Medical Journal",
+      "description": "Dr. Reed's journal, open on her nightstand.",
+      "location": "dr-reeds-guest-quarters",
+      "artPrompt": "",
+      "detailedDescription": "The journal is open to a page detailing the properties of Chloral Hydrate, noting its fast-acting nature and difficulty to detect without a specific toxicology screen. This shows the substance was on her mind.",
+      "type": "document",
+      "relatedCharacter": "dr-evelyn-reed",
+      "pointsTo": "dr-evelyn-reed"
+    }
+  ],
+  "solution": {
+    "killerId": "dr-evelyn-reed",
+    "method": "Dr. Reed went to the study at 9:15 PM under the guise of giving Lord Blackwood his nightly tonic. She used a syringe to inject a potent dose of Chloral Hydrate into his brandy. After he passed out, around 9:45 PM, she shot him in the chest with a small .25 caliber pistol she'd brought in a hidden compartment in her medical bag. She wiped the gun clean, placed it near his hand, then used a stiff wire (a common tool in her bag for setting bones) to engage the lock on the door from the outside as she left, making it seem locked from within.",
+    "motive": "Lord Alistair Blackwood's first wife died years ago under Dr. Reed's care. It was a fatal malpractice error that Reed successfully covered up. Recently, Blackwood uncovered the truth and began blackmailing her. The night of the murder, he was about to expose her, which would have meant the end of her career and her freedom. She killed him to ensure his silence.",
+    "explanation": "Dr. Evelyn Reed cultivated an image of the trustworthy, professional physician, which gave her unparalleled access and opportunity. When Lord Blackwood threatened to reveal her darkest secret, she saw only one way out. Her alibi of leaving at 9:30 PM is contradicted by the butler, Arthur Vance, who saw her leaving the corridor closer to 9:45 PM. The sedative in the brandy explains why no one heard a struggle and why the Lord couldn't defend himself. The blackmail letter fragment in the fireplace confirms the motive, and the hidden compartment in her medical bag, combined with her medical journal open to a page on Chloral Hydrate, solidifies her as the killer. The other suspects had strong motives—rage, revenge, and greed—but only Dr. Reed had the unique combination of means, motive, and opportunity, all pointing to a desperate act of self-preservation disguised as a simple murder."
+  },
+  "timeline": [
+    {
+      "time": "8:00 PM",
+      "event": "Dinner concludes. The mood is tense. Lord Blackwood insults both his son, Julian, and his rival, Silas Croft, before retiring to his study."
+    },
+    {
+      "time": "9:00 PM",
+      "event": "Guests disperse. Silas Croft goes to the billiard room. Lady Beatrice retires to her sitting room."
+    },
+    {
+      "time": "9:15 PM",
+      "event": "Dr. Reed visits Lord Blackwood in his study to administer his 'tonic.' Gigi Dubois begins playing the piano in the music room."
+    },
+    {
+      "time": "9:30 PM",
+      "event": "Dr. Reed claims to have left the study and returned to her room. Lord Blackwood, having drunk the sedated brandy, loses consciousness."
+    },
+    {
+      "time": "9:45 PM",
+      "event": "A single, muffled gunshot is heard, but it's largely masked by a loud clap of thunder. Arthur Vance sees Dr. Reed leaving the west wing corridor."
+    },
+    {
+      "time": "10:15 PM",
+      "event": "Julian, drunk and looking for more liquor, finds the study door locked and gets no response. He raises the alarm."
+    },
+    {
+      "time": "10:20 PM",
+      "event": "Arthur Vance and Julian force the door open, discovering the body of Lord Alistair Blackwood."
+    }
+  ]
+}

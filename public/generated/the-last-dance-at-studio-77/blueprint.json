@@ -1,0 +1,381 @@
+{
+  "id": "the-last-dance-at-studio-77",
+  "title": "The Last Dance at Studio 77",
+  "subtitle": "October 26, 1977 — New York City",
+  "era": "1970s",
+  "difficulty": "easy",
+  "setting": {
+    "location": "Studio 77, a wild and exclusive disco nightclub in New York City",
+    "atmosphere": "The air thrums with the bass of a disco inferno. A massive, glittering disco ball casts fractured light over a sea of dancers in sequined tops and bell-bottoms. The smell of hairspray, sweat, and expensive perfume hangs heavy in the smoke-filled room. It's a palace of hedonism, where secrets are traded in hushed tones under the pulsating beat.",
+    "weather": "A crisp, cool autumn night. The city air outside is sharp, making the warmth and energy of the club even more intoxicating."
+  },
+  "victim": {
+    "name": "Rex 'The King' Royale",
+    "role": "Owner of Studio 77",
+    "causeOfDeath": "Asphyxiation by strangulation",
+    "timeOfDeath": "Approximately 12:00 AM",
+    "description": "Rex was the undisputed king of New York nightlife. Charismatic, flamboyant, and utterly ruthless, he built Studio 77 from the ground up. He knew everyone's secrets and wasn't afraid to use them to get what he wanted. He was found dead in his private lounge, a gold lamé scarf wrapped tightly around his neck."
+  },
+  "characters": [
+    {
+      "id": "roxy-comet",
+      "name": "Roxy Comet",
+      "role": "Disco Singer & Starlet",
+      "personality": "Ambitious, dramatic, and currently terrified. She projects confidence but is deeply insecure about her career.",
+      "background": "A small-town girl who Rex discovered and molded into his star attraction. Their relationship was both professional and personal, but recently soured as Rex's promises of a record deal failed to materialize.",
+      "motive": "Rex was about to cast her aside for a younger singer. Her career, which he controlled completely, would be over.",
+      "alibi": "In her dressing room, 'getting centered' for her midnight performance. No one can confirm this.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-royale": "Her mentor, lover, and controller. A volatile relationship.",
+        "sonny-shakes-malone": "Finds him crude but relies on him to play her tracks.",
+        "bianca-sterling": "Sees her as a rival for the spotlight."
+      },
+      "secretKnowledge": [
+        "Rex kept a little black book of everyone's secrets in his office safe."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Uses dramatic, breathy sentences. Calls everyone 'darling' or 'sugar'. Says things like 'It's a scene, man, a total scene.'",
+      "greeting": "Oh, thank heavens! You have to help me, darling. This is a nightmare... a total tragedy! What's going to happen to my show?"
+    },
+    {
+      "id": "sonny-shakes-malone",
+      "name": "Sonny 'Shakes' Malone",
+      "role": "Club DJ",
+      "personality": "Cynical, sarcastic, and perpetually annoyed. Believes he's the true genius behind the club's success and is deeply resentful.",
+      "background": "Sonny has been with the club since it opened. He's a master of crafting the perfect vibe on the dance floor but feels unappreciated and underpaid by Rex.",
+      "motive": "Rex recently discovered Sonny was skimming cash from the bar profits and threatened to have him blacklisted from every club in the city.",
+      "alibi": "In the DJ booth, spinning records. Claims he never left, but the booth is isolated and dark.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-royale": "Hated his boss, who he saw as a flashy suit who took all the credit.",
+        "roxy-comet": "Considers her a talentless diva.",
+        "celeste-nova": "Feels a bit sorry for her because he's seen Rex harass her."
+      },
+      "secretKnowledge": [
+        "Rex and Vinnie had a huge fight last week about some 'wise guys' Vinnie was letting in the back door."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Fast-talking, uses a lot of DJ jargon and slang. 'Can you dig it?', 'What's the skinny?', 'That ain't jive.'",
+      "greeting": "Hey, man, keep it down, you're killin' the vibe. A body? You're jivin' me. Look, I was in the booth, makin' the magic happen. Got my hands full."
+    },
+    {
+      "id": "bianca-sterling",
+      "name": "Bianca Sterling",
+      "role": "Wealthy Socialite",
+      "personality": "Elegant, aloof, and desperate. She maintains an air of detached glamour, but panic is visible in her eyes.",
+      "background": "An 'it girl' of the era, famous for being famous. She invested heavily in a side-project with Rex that failed, wiping out a significant portion of her trust fund. Rex refused to bail her out.",
+      "motive": "Financial ruin. Rex publicly humiliated her and refused to help, leaving her desperate and facing social oblivion.",
+      "alibi": "She was 'making the rounds' on the main dance floor, but no one can say they saw her for the entire time around midnight.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-royale": "Former friend and business partner, now a bitter enemy.",
+        "roxy-comet": "Views her as a tacky, temporary amusement.",
+        "flash-finnegan": "Despises him and his camera."
+      },
+      "secretKnowledge": [
+        "Celeste the bartender seemed incredibly flustered and shaky right after midnight, even getting a simple drink order wrong."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Speaks with a practiced, upper-crust accent. Very articulate and precise. Tends to sound bored even when she's nervous.",
+      "greeting": "A murder? How dreadfully common. One expects a certain standard of decorum, even for death. I was on the dance floor, naturally. One must be seen."
+    },
+    {
+      "id": "vinnie-the-velvet-gallo",
+      "name": "Vinnie 'The Velvet' Gallo",
+      "role": "Head Bouncer",
+      "personality": "Intimidating and stoic, but with a palpable sense of unease. He's a man of few words, all of them gruff.",
+      "background": "Vinnie has a past he doesn't talk about, but his connections are why the club has never had any 'trouble'. His loyalty to Rex was supposed to be absolute, but he's been letting friends of his from the old neighborhood in for favors, and Rex found out.",
+      "motive": "Rex threatened to fire him and, worse, expose his side dealings to his very dangerous associates, who would not take it well.",
+      "alibi": "At the front door and patrolling the perimeter of the dance floor. He admits he stepped into the alley for a minute to 'deal with a gatecrasher'.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-royale": "His boss. A relationship built on a tense, transactional loyalty.",
+        "sonny-shakes-malone": "Doesn't trust him. Thinks he's a weasel."
+      },
+      "secretKnowledge": [
+        "Rex kept blackmail material on Flash Finnegan in his desk drawer."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Low, gravelly voice. Short, clipped sentences. 'Yeah?', 'No.', 'Whaddaya want?'",
+      "greeting": "Police? Yeah? Rex is dead? Huh. Shame. I was at the door. Doin' my job. You got a problem with that?"
+    },
+    {
+      "id": "celeste-nova",
+      "name": "Celeste Nova",
+      "role": "Bartender",
+      "personality": "Quiet, observant, and visibly shaken. She tries to seem calm but her hands tremble as she polishes glasses.",
+      "background": "Celeste is a hard-working woman trying to make a living. She's endured Rex's constant, unwanted advances for months because she needs the job. Recently, the harassment has escalated.",
+      "motive": "Rex's harassment became unbearable. He cornered her tonight, threatening her job and her safety. She was pushed too far.",
+      "alibi": "Behind the main bar, which was swamped with people ordering drinks for the midnight rush.",
+      "isGuilty": true,
+      "relationships": {
+        "rex-royale": "Her predatory boss. She feared and despised him.",
+        "sonny-shakes-malone": "One of the few people who is consistently decent to her."
+      },
+      "secretKnowledge": [
+        "Rex had a habit of taking 'his girls' into the VIP lounge for 'private chats' they always came out of crying."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Soft-spoken and polite. Avoids slang. Gives direct, simple answers.",
+      "greeting": "Oh! Yes, officer? Can I get you something? Rex... dead? Oh my god. That's... horrible. I was right here all night. It was so busy."
+    },
+    {
+      "id": "flash-finnegan",
+      "name": "Flash Finnegan",
+      "role": "Freelance Photographer",
+      "personality": "Sleazy, opportunistic, and hyperactive. He's always looking for an angle, both for his photos and his conversations.",
+      "background": "Flash lives for the scandalous photo. He had a deal with Rex to be the exclusive house photographer, but Rex refused to pay for a recent set of photos he deemed 'too hot to handle', even for Studio 77.",
+      "motive": "Rex owed him a lot of money and was about to terminate their lucrative contract, ruining his access to the city's elite.",
+      "alibi": "Everywhere. He was constantly moving through the club, taking photos. He can't be pinned down to one spot.",
+      "isGuilty": false,
+      "relationships": {
+        "rex-royale": "A necessary evil. His meal ticket and his biggest headache.",
+        "bianca-sterling": "His favorite subject, much to her annoyance.",
+        "roxy-comet": "Loves her for the camera, but knows she's a mess."
+      },
+      "secretKnowledge": [
+        "Just before midnight, he saw Rex drag Celeste into the VIP lounge. He thought it was just Rex being Rex."
+      ],
+      "artPrompt": "",
+      "speechPattern": "Talks a mile a minute, full of energy and sleazy charm. 'Hey, baby!', 'That's the shot!', 'What a story!'",
+      "greeting": "What a night! This is front-page stuff, baby! A real whodunnit! Me? I was workin' the room, capturing the magic. My camera sees all, you dig?"
+    }
+  ],
+  "locations": [
+    {
+      "id": "main-dance-floor",
+      "name": "Main Dance Floor",
+      "description": "A throbbing mass of humanity under a giant, sparkling disco ball. The floor is lit from below with colored panels. Empty glasses and glitter litter the edges of the room.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "vip-lounge",
+      "name": "VIP Lounge",
+      "description": "Behind a velvet rope, this area is filled with plush, semi-circular booths in red velvet. The music is slightly muffled here. An overturned champagne bucket lies on the floor next to a deep crimson stain on the carpet. This is the crime scene.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "dj-booth",
+      "name": "The DJ Booth",
+      "description": "Perched above the dance floor, this small, dark space is a chaotic mess of vinyl records, oversized headphones, and complex audio equipment. The window looking out over the club is smudged with fingerprints.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "backstage-dressing-room",
+      "name": "Backstage Dressing Room",
+      "description": "Roxy Comet's private sanctuary. A large mirror is surrounded by bright vanity bulbs. A sequined dress is draped over a chair. A half-empty bottle of champagne sits on a table covered in makeup and bobby pins.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "main-bar",
+      "name": "Main Bar",
+      "description": "A long, polished mahogany bar, currently sticky with spilled drinks. Rows of liquor bottles are illuminated from behind. Bar stools are scattered about, and the cash registers are overflowing.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "managers-office",
+      "name": "Manager's Office",
+      "description": "Rex's personal domain. A large, gaudy desk dominates the room. Ashtrays overflow with cigar butts. Framed photos of Rex with celebrities line one wall. The room smells of stale smoke and leather.",
+      "evidence": [],
+      "artPrompt": ""
+    },
+    {
+      "id": "alleyway-exit",
+      "name": "Alleyway Exit",
+      "description": "A grimy service exit behind the bar. The air is cold and smells of garbage. Overflowing dumpsters line the wet pavement under a single, flickering bulb.",
+      "evidence": [],
+      "artPrompt": ""
+    }
+  ],
+  "evidence": [
+    {
+      "id": "gold-lame-scarf",
+      "name": "Gold Lamé Scarf",
+      "description": "The victim's own flashy scarf, used as the murder weapon.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "A gold lamé scarf, tied brutally tight. Forensic analysis reveals traces of the victim's DNA, as well as microscopic fibers not from the victim's clothes. A faint scent of 'Jontue' perfume, a popular brand, lingers on the fabric.",
+      "type": "physical",
+      "relatedCharacter": "celeste-nova",
+      "pointsTo": "celeste-nova"
+    },
+    {
+      "id": "sparkly-sequin",
+      "name": "Sparkly Sequin",
+      "description": "A single, iridescent sequin found in the victim's hand.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "A sequin, clearly torn from a garment. It matches the dress currently hanging in Roxy Comet's dressing room.",
+      "type": "physical",
+      "relatedCharacter": "roxy-comet",
+      "pointsTo": "roxy-comet"
+    },
+    {
+      "id": "threatening-note",
+      "name": "Threatening Note",
+      "description": "A crumpled note found in Roxy's dressing room trash.",
+      "location": "backstage-dressing-room",
+      "artPrompt": "",
+      "detailedDescription": "Written on club letterhead in Rex's handwriting, it reads: 'Don't even think about it. You're nothing without me and you'll be finished if you cross me. -R'",
+      "type": "document",
+      "relatedCharacter": "roxy-comet",
+      "pointsTo": "roxy-comet"
+    },
+    {
+      "id": "dj-booth-log",
+      "name": "DJ Booth Log",
+      "description": "A log of songs played, with a strange gap.",
+      "location": "dj-booth",
+      "artPrompt": "",
+      "detailedDescription": "Sonny's handwritten log shows a non-stop mix until 11:58 PM. Then there's a 7-minute gap before the next song is listed at 12:05 AM. Sonny claims an amp blew, but the equipment seems fine.",
+      "type": "document",
+      "relatedCharacter": "sonny-shakes-malone",
+      "pointsTo": "sonny-shakes-malone"
+    },
+    {
+      "id": "skimming-records",
+      "name": "Skimming Records",
+      "description": "Rex's notes on money being stolen from the bar.",
+      "location": "managers-office",
+      "artPrompt": "",
+      "detailedDescription": "A ledger hidden in Rex's desk details discrepancies between liquor inventory and bar receipts, with a large arrow pointing to 'SONNY'.",
+      "type": "document",
+      "relatedCharacter": "sonny-shakes-malone",
+      "pointsTo": "sonny-shakes-malone"
+    },
+    {
+      "id": "bounced-check",
+      "name": "Bounced Check",
+      "description": "A check from Bianca Sterling to Rex, returned for insufficient funds.",
+      "location": "managers-office",
+      "artPrompt": "",
+      "detailedDescription": "A check for $50,000, signed by Bianca Sterling, stamped 'NSF' by the bank. It's sitting on top of Rex's desk.",
+      "type": "document",
+      "relatedCharacter": "bianca-sterling",
+      "pointsTo": "bianca-sterling"
+    },
+    {
+      "id": "vinnie-s-ledger",
+      "name": "Vinnie's Ledger",
+      "description": "A small notebook with names and debts.",
+      "location": "main-dance-floor",
+      "artPrompt": "",
+      "detailedDescription": "Found on Vinnie. A list of names next to cash amounts. The name 'Cicero' is at the top with '$20,000 - DUE FRIDAY' circled in red.",
+      "type": "document",
+      "relatedCharacter": "vinnie-the-velvet-gallo",
+      "pointsTo": "vinnie-the-velvet-gallo"
+    },
+    {
+      "id": "muddy-boot-print",
+      "name": "Muddy Boot Print",
+      "description": "A single, muddy boot print near the back door.",
+      "location": "alleyway-exit",
+      "artPrompt": "",
+      "detailedDescription": "A clear print from a heavy work boot, left in a puddle of spilled drink. The tread pattern matches the boots worn by Vinnie.",
+      "type": "physical",
+      "relatedCharacter": "vinnie-the-velvet-gallo",
+      "pointsTo": "vinnie-the-velvet-gallo"
+    },
+    {
+      "id": "flashs-rejected-photos",
+      "name": "Flash's Rejected Photos",
+      "description": "A contact sheet of photos with a note from Rex.",
+      "location": "managers-office",
+      "artPrompt": "",
+      "detailedDescription": "A sheet of scandalous photos of a city councilman. A note from Rex is attached: 'NO PAY. TOO HOT. BURN THESE.'",
+      "type": "document",
+      "relatedCharacter": "flash-finnegan",
+      "pointsTo": "flash-finnegan"
+    },
+    {
+      "id": "smashed-tape-recorder",
+      "name": "Smashed Tape Recorder",
+      "description": "A small, broken cassette recorder.",
+      "location": "vip-lounge",
+      "artPrompt": "",
+      "detailedDescription": "Found under a cushion in the VIP lounge. It's a micro-cassette recorder, and it has been deliberately smashed. A shard of the casing has Celeste's initials 'C.N.' scratched into it.",
+      "type": "physical",
+      "relatedCharacter": "celeste-nova",
+      "pointsTo": "celeste-nova"
+    },
+    {
+      "id": "perfumed-bar-rag",
+      "name": "Perfumed Bar Rag",
+      "description": "A damp bar rag tossed in the alleyway dumpster.",
+      "location": "alleyway-exit",
+      "artPrompt": "",
+      "detailedDescription": "The rag smells of whiskey and the same distinct 'Jontue' perfume found on the murder weapon. It appears to have been used to wipe something, or someone's hands, clean.",
+      "type": "physical",
+      "relatedCharacter": "celeste-nova",
+      "pointsTo": "celeste-nova"
+    },
+    {
+      "id": "testimony-wrong-drink",
+      "name": "Testimony: The Wrong Drink",
+      "description": "Bianca Sterling's testimony about her drink order.",
+      "location": "main-dance-floor",
+      "artPrompt": "",
+      "detailedDescription": "Bianca will state, 'I ordered a Starlight Fizz from Celeste at... oh, ten past twelve. She's always perfect, but she seemed so distracted. She gave me a simple gin and tonic. When I pointed it out, she barely seemed to register.'",
+      "type": "testimony",
+      "relatedCharacter": "bianca-sterling",
+      "pointsTo": "celeste-nova"
+    },
+    {
+      "id": "testimony-vip-argument",
+      "name": "Testimony: The VIP Argument",
+      "description": "Flash Finnegan's testimony about seeing Rex and Celeste.",
+      "location": "main-dance-floor",
+      "artPrompt": "",
+      "detailedDescription": "Flash will admit, 'Yeah, I saw Rex grab the bartender, Celeste, right before midnight. He pulled her into the VIP lounge. Looked pretty heated. I figured it was just Rex being Rex, you know? Didn't think to snap a picture. Kicking myself now.'",
+      "type": "testimony",
+      "relatedCharacter": "flash-finnegan",
+      "pointsTo": "celeste-nova"
+    }
+  ],
+  "solution": {
+    "killerId": "celeste-nova",
+    "method": "During a confrontation in the VIP lounge, Rex discovered Celeste's attempt to record his harassment. He smashed her tape recorder and became physically aggressive. In a moment of panic and rage, Celeste grabbed Rex's own gold lamé scarf and strangled him with it. She then fled to the alley to compose herself before returning to the bar.",
+    "motive": "Self-defense and revenge. Rex's constant sexual harassment had escalated to physical threats against her job and her person. When he cornered her, she fought back to save herself.",
+    "explanation": "While many people had a reason to want Rex Royale dead, only Celeste Nova had the opportunity and was pushed to the breaking point. Flash Finnegan saw Rex drag her into the VIP lounge moments before the murder. Inside, Rex found and destroyed the micro-cassette recorder she was using to try and get evidence of his harassment. The confrontation turned violent, and Celeste used his scarf to defend herself, killing him in the process. She slipped out the back to the alley, where she disposed of a bar rag she used to wipe her trembling, sweaty hands. She returned to her post, but her nerves were shot, causing her to mess up Bianca Sterling's drink order just minutes after the murder. The scent of her perfume on the scarf and the rag in the dumpster confirms her presence and actions. It wasn't a premeditated plan, but a desperate act by a woman with no other way out."
+  },
+  "timeline": [
+    {
+      "time": "10:15 PM",
+      "event": "Rex Royale has a public argument with Roxy Comet, tearing a sequin from her dress."
+    },
+    {
+      "time": "11:30 PM",
+      "event": "Rex humiliates Bianca Sterling in the VIP lounge over a bounced check."
+    },
+    {
+      "time": "11:45 PM",
+      "event": "Rex confronts Sonny Malone in the DJ booth about skimming profits."
+    },
+    {
+      "time": "11:55 PM",
+      "event": "Rex grabs Celeste Nova from the bar and pulls her into the VIP lounge. Flash Finnegan witnesses this."
+    },
+    {
+      "time": "11:58 PM",
+      "event": "The murder occurs. Rex smashes Celeste's recorder, a struggle ensues, and Celeste strangles him."
+    },
+    {
+      "time": "12:05 AM",
+      "event": "Celeste returns to her station at the main bar after composing herself in the alley."
+    },
+    {
+      "time": "12:10 AM",
+      "event": "A flustered Celeste serves Bianca Sterling the wrong drink."
+    },
+    {
+      "time": "12:30 AM",
+      "event": "Roxy Comet enters the VIP lounge to speak with Rex before her show and discovers the body."
+    }
+  ]
+}
