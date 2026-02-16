@@ -1,6 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import type { EvidenceData } from '../../types/evidence'
 import { useGameStore } from '../../game/state'
+import { useMysteryStore } from '../../game/mysteryState'
 
 interface ExaminationModalProps {
   evidence: EvidenceData | null
@@ -13,7 +14,16 @@ interface ExaminationModalProps {
 export function ExaminationModal({ evidence, isOpen, onClose, isAlreadyCollected, onEvidenceCollected }: ExaminationModalProps) {
   const addEvidence = useGameStore((state) => state.addEvidence)
 
+  const mysteryId = useMysteryStore((s) => s.selectedMysteryId)
+
   if (!evidence) return null
+
+  // Resolve evidence image path — check explicit image, then generated path, then legacy path
+  const evidenceImageSrc = evidence.image
+    ? evidence.image
+    : mysteryId && mysteryId !== 'ashford-affair' && mysteryId !== 'hollywood-premiere'
+      ? `/generated/${mysteryId}/assets/evidence/${evidence.id}.webp`
+      : `/evidence/${evidence.id}.webp`
 
   const handleAddToEvidence = () => {
     addEvidence({
@@ -145,10 +155,11 @@ export function ExaminationModal({ evidence, isOpen, onClose, isAlreadyCollected
                 animate={{ filter: 'sepia(0%) brightness(1)' }}
                 transition={{ duration: 1.2, delay: 0.3 }}
               >
-                {evidence.image ? (
+                {evidenceImageSrc ? (
                   <div className="relative">
                     <img
-                      src={evidence.image}
+                      src={evidenceImageSrc}
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).parentElement!.style.display = 'none' }}
                       alt={evidence.name}
                       className="w-full h-52 object-cover"
                       style={{ borderRadius: '1px' }}
