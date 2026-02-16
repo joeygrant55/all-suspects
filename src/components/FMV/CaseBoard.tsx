@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
 import { useMysteryStore } from '../../game/mysteryState'
+import { EVIDENCE_DATABASE } from '../../data/evidence'
+import type { EvidenceData } from '../../types/evidence'
 import { GameTimer } from '../UI/GameTimer'
 import { ManorView } from './ManorView'
 
@@ -32,14 +34,57 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
   } = useGameStore()
   const [hoveredSuspect, setHoveredSuspect] = useState<string | null>(null)
   const [showEvidenceTooltip, setShowEvidenceTooltip] = useState(false)
-  const [viewMode, setViewMode] = useState<ViewMode>(lastViewMode || 'suspects')
+  const [showLockedHint, setShowLockedHint] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>(lastViewMode || 'manor')
 
   // Total evidence = room evidence + interrogation evidence
   const mystery = useMysteryStore.getState().activeMystery
   const mysteryTitle = mystery?.title || 'THE CASE'
   const mysterySubtitle = mystery?.worldState?.location || 'New Year\'s Eve, 1929'
-  const suspectIds = characters.length > 0 ? characters.map(c => c.id) : DEFAULT_SUSPECT_IDS
+  const suspectIds = characters.length > 0 ? characters.map((c) => c.id) : DEFAULT_SUSPECT_IDS
   const totalEvidence = discoveredEvidenceIds.length + collectedEvidence.length
+
+  const allEvidenceData: Record<string, EvidenceData> = {
+    ...(mystery?.evidence || {}),
+    ...EVIDENCE_DATABASE,
+  }
+
+  const suspectEvidenceById = new Map<string, Array<{ source: string; data: EvidenceData }>>()
+
+  const getSuspectEvidence = (suspectId: string) => {
+    if (suspectEvidenceById.has(suspectId)) {
+      return suspectEvidenceById.get(suspectId) || []
+    }
+
+    const evidenceForSuspect: Array<{ source: string; data: EvidenceData }> = []
+
+    for (const collected of collectedEvidence) {
+      const data = allEvidenceData[collected.source]
+      if (!data) continue
+      if (data.relatedCharacter === suspectId || data.pointsTo === suspectId) {
+        evidenceForSuspect.push({
+          source: collected.source,
+          data,
+        })
+      }
+    }
+
+    suspectEvidenceById.set(suspectId, evidenceForSuspect)
+    return evidenceForSuspect
+  }
+
+  const suspectEvidenceCount = new Map<string, { count: number; names: string[] }>()
+  suspectIds.forEach((suspectId) => {
+    const evidenceList = getSuspectEvidence(suspectId)
+    suspectEvidenceCount.set(suspectId, {
+      count: evidenceList.length,
+      names: evidenceList.map((entry) => entry.data.name),
+    })
+  })
+
+  const unlockedSuspectCount = suspectIds.reduce((count, suspectId) => {
+    return count + (suspectEvidenceCount.get(suspectId)?.count ? 1 : 0)
+  }, 0)
 
 
   // Wrapper to update both local and global view mode
@@ -54,6 +99,15 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
       setShowEvidenceTooltip(true)
     }
   }, [collectedEvidence.length, hasSeenEvidenceBoard])
+
+  useEffect(() => {
+    if (!showLockedHint) {
+      return
+    }
+
+    const timer = setTimeout(() => setShowLockedHint(null), 1800)
+    return () => clearTimeout(timer)
+  }, [showLockedHint])
 
   const handleOpenEvidence = () => {
     markEvidenceBoardViewed()
@@ -121,7 +175,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                     fontFamily: 'var(--font-serif)' 
                   }}
                 >
-                  SUSPECTS
+                  SUSPECTS ({unlockedSuspectCount}/{suspectIds.length})
                 </button>
                 <button
                   onClick={() => handleSetViewMode('manor')}
@@ -248,7 +302,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                 className="px-4 py-2 text-sm font-serif transition-all border-b-2 border-noir-gold text-noir-gold"
                 style={{ fontFamily: 'var(--font-serif)' }}
               >
-                SUSPECTS
+                SUSPECTS ({unlockedSuspectCount}/{suspectIds.length})
               </button>
               <button
                 onClick={() => setViewMode('manor')}
@@ -342,6 +396,18 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {showLockedHint && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="absolute top-16 left-1/2 -translate-x-1/2 z-20 bg-noir-black/85 border border-noir-gold/50 text-noir-gold px-3 py-2 rounded-sm text-sm"
+          >
+            {showLockedHint}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Main case board area - flex-1 to fill remaining space */}
       <div className="relative z-10 flex-1 flex flex-col justify-center p-2 overflow-hidden">
@@ -371,19 +437,29 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                 c => c.statement1.characterId === id || c.statement2.characterId === id
               )
               const questioned = hasQuestioned(id)
+              const suspectEvidenceList = getSuspectEvidence(id)
+              const unlockedEvidenceCount = suspectEvidenceList.length
+              const isUnlocked = unlockedEvidenceCount > 0
+              const firstEvidenceName = suspectEvidenceList[0]?.data.name
 
               return (
                 <motion.button
                   key={id}
-                  onClick={() => onSelectSuspect(id)}
+                  onClick={() => {
+                    if (isUnlocked) {
+                      onSelectSuspect(id)
+                    } else {
+                      setShowLockedHint('Find evidence related to this suspect first')
+                    }
+                  }}
                   onMouseEnter={() => setHoveredSuspect(id)}
                   onMouseLeave={() => setHoveredSuspect(null)}
                   className="group relative h-full"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.08 }}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={isUnlocked ? { scale: 1.02 } : {}}
+                  whileTap={isUnlocked ? { scale: 0.98 } : {}}
                 >
                   {/* Suspect card - Polaroid style */}
                   <div 
@@ -421,7 +497,7 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                         src={getPortraitPath(id)}
                         alt={character.name}
                         className={`w-full h-full object-cover object-top filter sepia-[0.3] contrast-[1.1] ${
-                          questioned ? 'brightness-75' : ''
+                          !isUnlocked ? 'brightness-[0.2] grayscale(1)' : questioned ? 'brightness-75' : ''
                         }`}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
@@ -430,8 +506,15 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                         }}
                       />
                       
+                      {/* Locked/unavailable overlay */}
+                      {!isUnlocked && (
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                          <span className="text-3xl md:text-4xl text-noir-gold">🔒</span>
+                        </div>
+                      )}
+
                       {/* Questioned overlay */}
-                      {questioned && (
+                      {questioned && isUnlocked && (
                         <div className="absolute inset-0 bg-noir-black/30 flex items-center justify-center">
                           <div className="absolute top-1 right-1 w-5 h-5 md:w-6 md:h-6 bg-noir-gold/90 rounded-full flex items-center justify-center">
                             <span className="text-noir-black text-xs">✓</span>
@@ -448,10 +531,24 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                       >
                         {character.name}
                       </h3>
-                      <p className="text-[10px] md:text-xs italic truncate" style={{ color: '#6b5c3e' }}>
-                        {character.role}
+
+                      <p className="text-[10px] md:text-xs italic truncate" style={{ color: isUnlocked ? '#6b5c3e' : '#7a6b51' }}>
+                        {isUnlocked ? character.role : 'Find evidence to unlock'}
                       </p>
+
+                      {isUnlocked && firstEvidenceName && (
+                        <p className="text-[9px] md:text-[10px] italic text-amber-600 truncate">
+                          You have evidence: {firstEvidenceName}
+                        </p>
+                      )}
                     </div>
+
+                    {/* Unlocked evidence badge */}
+                    {isUnlocked && (
+                      <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded-sm bg-black/70 text-noir-gold text-[9px] font-serif tracking-wide border border-noir-gold/70">
+                        📋 {unlockedEvidenceCount}
+                      </div>
+                    )}
 
                     {/* Contradiction indicator */}
                     {hasContradiction && (
@@ -470,7 +567,11 @@ export function CaseBoard({ onSelectSuspect, onOpenEvidence, onAccuse }: CaseBoa
                           className="absolute -bottom-6 left-0 right-0 text-center"
                         >
                           <span className="text-noir-gold text-xs">
-                            {questioned ? 'Continue interrogation →' : 'Click to interrogate →'}
+                            {isUnlocked
+                              ? questioned
+                                ? 'Continue interrogation →'
+                                : 'Click to interrogate →'
+                              : 'Collect evidence to unlock →'}
                           </span>
                         </motion.div>
                       )}
