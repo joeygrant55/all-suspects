@@ -52,8 +52,8 @@ export function AccusationPanel({
     setLoading(true)
 
     try {
-      const hostname = window.location.hostname
-      const res = await fetch(`http://${hostname}:3001/api/mystery/${mysteryId}/accuse`, {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+      const res = await fetch(`${apiBase}/mystery/${mysteryId}/accuse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ suspectId: selectedId }),

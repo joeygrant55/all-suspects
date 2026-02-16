@@ -481,9 +481,13 @@ function App() {
                     id: c.id,
                     name: c.name,
                     role: c.role || c.occupation || '',
-                    portraitUrl: `/generated/${mystery.id}/assets/portraits/${c.id}-calm.webp`,
+                    portraitUrl: `/generated/${mystery.id}/assets/portraits/${c.id}.png`,
                   }))}
-                  onVictory={() => setVictoryOpen(true)}
+                  onVictory={() => {
+                    // AccusationPanel has its own victory display for generated mysteries
+                    // Don't open the hardcoded Ashford VictoryScreen
+                    setAccusationOpen(false)
+                  }}
                 />
               )
             }

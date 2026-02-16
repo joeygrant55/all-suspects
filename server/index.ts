@@ -1953,6 +1953,64 @@ app.get('/api/mystery/:id', async (req, res) => {
 // ============================================================
 
 /**
+ * POST /api/mystery/:id/accuse
+ * Check accusation against blueprint solution
+ */
+app.post('/api/mystery/:id/accuse', (req, res) => {
+  try {
+    const { id } = req.params
+    const { suspectId } = req.body
+
+    if (!suspectId) {
+      return res.status(400).json({ error: 'Missing suspectId' })
+    }
+
+    // Load blueprint
+    const blueprintPath = path.join(__dirname, '..', 'public', 'generated', id, 'blueprint.json')
+    if (!fs.existsSync(blueprintPath)) {
+      return res.status(404).json({ error: 'Mystery not found' })
+    }
+
+    const blueprint = JSON.parse(fs.readFileSync(blueprintPath, 'utf-8'))
+    const killerId = blueprint.solution?.killerId
+    const correct = suspectId === killerId
+
+    if (correct) {
+      const killer = blueprint.characters?.find((c: any) => c.id === killerId)
+      res.json({
+        correct: true,
+        killerName: killer?.name || killerId,
+        solution: {
+          motive: blueprint.solution?.motive || '',
+          method: blueprint.solution?.method || '',
+          explanation: blueprint.solution?.explanation || blueprint.solution?.narrative || '',
+        },
+      })
+    } else {
+      const accused = blueprint.characters?.find((c: any) => c.id === suspectId)
+      // Give a hint based on the accused character
+      const hints = [
+        'Look more carefully at the evidence. Something doesn\'t add up.',
+        'Consider who had both motive and opportunity.',
+        'Re-examine the timeline. Who was where, and when?',
+        'Some suspects are hiding things, but that doesn\'t make them the killer.',
+        'The evidence tells a story. Follow where it leads, not where you assume.',
+      ]
+      const hint = hints[Math.floor(Math.random() * hints.length)]
+
+      res.json({
+        correct: false,
+        accusedName: accused?.name || suspectId,
+        hint,
+      })
+    }
+  } catch (error) {
+    console.error('[MYSTERY] Accusation check failed:', error)
+    res.status(500).json({ error: 'Accusation check failed' })
+  }
+})
+
+/**
  * GET /api/manor/activity
  * Get current manor activity summary
  */
