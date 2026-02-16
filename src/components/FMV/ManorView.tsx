@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useGameStore } from '../../game/state'
 import { useMysteryStore } from '../../game/mysteryState'
@@ -27,17 +27,31 @@ const ASHFORD_ROOM_DATA: Record<string, { name: string; description: string }> =
   garden: { name: 'Garden', description: 'Outside by the fountain' },
 }
 
+const LOCKED_ROOM_TOAST = 'Explore other rooms first — you need more evidence'
+
+const getUnlockedRoomCount = (evidenceCount: number, roomCount: number) => {
+  if (evidenceCount <= 0) return 1
+  if (evidenceCount <= 2) return Math.min(2, roomCount)
+  if (evidenceCount <= 4) return Math.min(3, roomCount)
+  if (evidenceCount <= 6) return Math.min(4, roomCount)
+  return roomCount
+}
+
 export function ManorView({ onSelectSuspect }: ManorViewProps) {
   const { discoveredEvidenceIds, characters, setCurrentRoom } = useGameStore()
   const mystery = useMysteryStore.getState().activeMystery
   const [hoveredRoom, setHoveredRoom] = useState<string | null>(null)
+  const [lockToast, setLockToast] = useState('')
+  const [newlyUnlockedRoomIds, setNewlyUnlockedRoomIds] = useState<string[]>([])
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const unlockedRef = useRef<string[]>([])
+  const hasMountedRef = useRef(false)
 
   // Build room data from mystery blueprint or fall back to Ashford
   const isGenerated = mystery?.id && mystery.id !== 'ashford-affair'
-  
+
   const rooms: Array<{ id: string; name: string; description: string; image: string }> = (() => {
     if (isGenerated && mystery?.rooms) {
-      // Use blueprint locations
       const locations = mystery.locations || []
       const roomIds = mystery.rooms || []
       return roomIds.map(roomId => {
@@ -50,11 +64,12 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
         }
       })
     }
-    // Ashford fallback
-    return Object.entries(ASHFORD_ROOM_DATA).map(([id, data]) => ({
+
+    const ashfordRoomIds = Object.keys(ASHFORD_ROOM_DATA)
+    return ashfordRoomIds.map((id) => ({
       id,
-      name: data.name,
-      description: data.description,
+      name: ASHFORD_ROOM_DATA[id].name,
+      description: ASHFORD_ROOM_DATA[id].description,
       image: ASHFORD_ROOM_IMAGES[id] || '',
     }))
   })()
@@ -87,11 +102,66 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
     return `/portraits/${id}.png`
   }
 
+  const unlockedRoomCount = getUnlockedRoomCount(discoveredEvidenceIds.length, rooms.length)
+  const unlockedRoomIds = rooms.slice(0, Math.min(unlockedRoomCount, rooms.length)).map((room) => room.id)
+
+  useEffect(() => {
+    const nextIds = unlockedRoomIds
+
+    if (!hasMountedRef.current) {
+      unlockedRef.current = nextIds
+      hasMountedRef.current = true
+      setNewlyUnlockedRoomIds([])
+      return
+    }
+
+    const newlyUnlocked = nextIds.filter((roomId) => !unlockedRef.current.includes(roomId))
+    unlockedRef.current = nextIds
+    setNewlyUnlockedRoomIds(newlyUnlocked)
+
+    const pulseTimer = setTimeout(() => {
+      setNewlyUnlockedRoomIds([])
+    }, 1000)
+
+    return () => {
+      clearTimeout(pulseTimer)
+    }
+  }, [unlockedRoomIds.join('|')])
+
+  const showLockedToast = () => {
+    setLockToast(LOCKED_ROOM_TOAST)
+
+    if (toastTimer.current) {
+      clearTimeout(toastTimer.current)
+    }
+
+    toastTimer.current = setTimeout(() => {
+      setLockToast('')
+      toastTimer.current = null
+    }, 1800)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) {
+        clearTimeout(toastTimer.current)
+      }
+    }
+  }, [])
+
   // Location/manor name
   const manorName = mystery?.worldState?.location || 'Ashford Manor'
 
   // Grid columns based on room count
   const gridCols = rooms.length <= 4 ? 'grid-cols-2' : rooms.length <= 6 ? 'grid-cols-3' : 'grid-cols-4'
+
+  const allRoomsUnlocked = unlockedRoomCount >= rooms.length
+
+  const hintText = discoveredEvidenceIds.length === 0
+    ? 'Start your investigation at the crime scene.'
+    : allRoomsUnlocked
+      ? 'All rooms are accessible. Leave no stone unturned!'
+      : 'Keep searching — new rooms will open as you uncover more clues.'
 
   return (
     <div className="fixed inset-0 bg-noir-black overflow-hidden flex flex-col">
@@ -138,14 +208,16 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
               — {manorName} —
             </h2>
             <p className="text-noir-smoke text-xs italic mt-1">
-              Click a room to search for evidence
+              {lockToast || 'Click a room to search for evidence'}
             </p>
           </div>
 
           {/* Room grid — dynamic layout */}
           <div className={`grid ${gridCols} gap-3 md:gap-4`}>
             {rooms.map((room, index) => {
-              const isHovered = hoveredRoom === room.id
+              const isUnlocked = unlockedRoomIds.includes(room.id)
+              const isLocked = !isUnlocked
+              const isNewlyUnlocked = newlyUnlockedRoomIds.includes(room.id)
               const undiscovered = getUndiscoveredCount(room.id)
               const isComplete = isRoomComplete(room.id)
               const totalEvidence = getEvidenceByRoom(room.id).length
@@ -154,21 +226,37 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
               return (
                 <motion.button
                   key={room.id}
-                  onClick={() => setCurrentRoom(room.id)}
+                  layout
+                  layoutId={`room-card-${room.id}`}
+                  onClick={() => {
+                    if (isLocked) {
+                      showLockedToast()
+                      return
+                    }
+                    setCurrentRoom(room.id)
+                  }}
                   onMouseEnter={() => setHoveredRoom(room.id)}
                   onMouseLeave={() => setHoveredRoom(null)}
                   className="group relative"
                   initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.08 }}
-                  whileHover={{ scale: 1.03 }}
-                  whileTap={{ scale: 0.97 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    scale: isNewlyUnlocked ? [1, 1.03, 1] : 1,
+                    boxShadow: isNewlyUnlocked
+                      ? ['0 0 0px rgba(201, 162, 39, 0)', '0 0 35px rgba(201, 162, 39, 0.7)', '0 0 0px rgba(201, 162, 39, 0)']
+                      : 'none',
+                  }}
+                  transition={{ delay: index * 0.08, duration: isNewlyUnlocked ? 1 : 0.3, times: isNewlyUnlocked ? [0, 0.3, 1] : undefined }}
+                  whileHover={isLocked ? undefined : { scale: 1.03 }}
+                  whileTap={isLocked ? undefined : { scale: 0.97 }}
+                  style={{ pointerEvents: isLocked ? 'auto' : 'auto' }}
                 >
                   {/* Room card */}
                   <div
                     className={`relative overflow-hidden border-2 transition-all duration-300 p-3 md:p-4 aspect-square flex flex-col items-center justify-center ${
-                      isHovered
-                        ? 'border-noir-gold shadow-lg shadow-noir-gold/30'
+                      isLocked
+                        ? 'border-noir-gold/20 bg-noir-black/50'
                         : isComplete
                           ? 'border-green-700/50'
                           : undiscovered > 0
@@ -177,18 +265,44 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                     }`}
                     style={{
                       background: 'linear-gradient(180deg, rgba(26,21,16,0.9) 0%, rgba(13,10,8,0.95) 100%)',
-                      transform: isHovered ? 'rotate(-1deg)' : 'rotate(0deg)',
+                      transform: !isLocked && hoveredRoom === room.id ? 'rotate(-1deg)' : 'rotate(0deg)',
                     }}
                   >
+                    {/* Unlock pulse overlay for newly unlocked room */}
+                    <AnimatePresence>
+                      {isNewlyUnlocked && (
+                        <motion.div
+                          className="absolute inset-0 pointer-events-none"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: [0, 0.35, 0] }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 1 }}
+                          style={{
+                            background: 'radial-gradient(circle at center, rgba(201, 162, 39, 0.5) 0%, rgba(201, 162, 39, 0) 65%)',
+                            zIndex: 5,
+                          }}
+                        />
+                      )}
+                    </AnimatePresence>
+
+                    {/* Darkness overlay for locked rooms */}
+                    {isLocked && (
+                      <div className="absolute inset-0 bg-noir-black/80 z-10" />
+                    )}
+
                     {/* Pushpin */}
-                    <div className="absolute -top-2 md:-top-3 left-1/2 -translate-x-1/2 w-4 h-4 md:w-5 md:h-5 rounded-full bg-noir-blood border-2 border-noir-blood/50 shadow-lg z-10" />
+                    {!isLocked && <div className="absolute -top-2 md:-top-3 left-1/2 -translate-x-1/2 w-4 h-4 md:w-5 md:h-5 rounded-full bg-noir-blood border-2 border-noir-blood/50 shadow-lg z-20" />}
 
                     {/* Room image thumbnail */}
                     <div
                       className="relative w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden border-2 mb-2 md:mb-3 flex-shrink-0 transition-all duration-300"
                       style={{
-                        borderColor: isHovered ? 'rgba(201, 162, 39, 0.8)' : 'rgba(201, 162, 39, 0.3)',
-                        boxShadow: isHovered ? '0 0 15px rgba(201, 162, 39, 0.3)' : 'none',
+                        borderColor: isLocked
+                          ? 'rgba(201, 162, 39, 0.35)'
+                          : hoveredRoom === room.id
+                            ? 'rgba(201, 162, 39, 0.8)'
+                            : 'rgba(201, 162, 39, 0.3)',
+                        boxShadow: hoveredRoom === room.id ? '0 0 15px rgba(201, 162, 39, 0.3)' : 'none',
                       }}
                     >
                       <img
@@ -196,9 +310,11 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                         alt={room.name}
                         className="w-full h-full object-cover transition-all duration-300"
                         style={{
-                          filter: isHovered
-                            ? 'sepia(0.2) contrast(1.1) brightness(1.1)'
-                            : 'sepia(0.5) contrast(1.05) brightness(0.8)',
+                          filter: isLocked
+                            ? 'brightness(0.15) grayscale(1) blur(2px)'
+                            : hoveredRoom === room.id
+                              ? 'sepia(0.2) contrast(1.1) brightness(1.1)'
+                              : 'sepia(0.5) contrast(1.05) brightness(0.8)',
                         }}
                         onError={(e) => {
                           // Fallback to a dark placeholder if image not generated yet
@@ -211,13 +327,24 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                       }} />
                     </div>
 
+                    {/* Lock icon */}
+                    {isLocked && (
+                      <div className="absolute inset-0 z-20 flex items-center justify-center">
+                        <div className="text-noir-gold text-3xl md:text-4xl drop-shadow-[0_0_8px_rgba(201,162,39,0.7)]">🔒</div>
+                      </div>
+                    )}
+
                     {/* Room name */}
                     <h3
-                      className="text-noir-cream font-serif text-sm md:text-base mb-0.5 transition-colors duration-300 text-center"
+                      className={`font-serif text-sm md:text-base mb-0.5 transition-colors duration-300 text-center ${
+                        isLocked ? 'text-noir-gold/70' : 'text-noir-cream'
+                      }`}
                       style={{
                         fontFamily: 'var(--font-serif)',
-                        color: isHovered ? '#c9a227' : undefined,
-                        textShadow: isHovered ? '0 0 10px rgba(201, 162, 39, 0.4)' : 'none',
+                        color: isLocked ? '#9f7d26' : hoveredRoom === room.id
+                          ? '#c9a227'
+                          : undefined,
+                        textShadow: hoveredRoom === room.id ? '0 0 10px rgba(201, 162, 39, 0.4)' : 'none',
                       }}
                     >
                       {room.name}
@@ -226,13 +353,13 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                     {/* Room description */}
                     <p
                       className="text-noir-smoke text-[10px] md:text-xs italic text-center mb-1.5 transition-opacity duration-300 line-clamp-2"
-                      style={{ opacity: isHovered ? 1 : 0.5 }}
+                      style={{ opacity: hoveredRoom === room.id ? 1 : isLocked ? 0.7 : 0.5 }}
                     >
-                      {room.description}
+                      {isLocked ? '🔒 Discover more evidence to unlock' : room.description}
                     </p>
 
                     {/* Character thumbnails */}
-                    {charactersHere.length > 0 && (
+                    {charactersHere.length > 0 && !isLocked && (
                       <div className="flex flex-wrap gap-1 justify-center mb-1.5">
                         {charactersHere.map((character) => (
                           <button
@@ -265,7 +392,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                     )}
 
                     {/* Evidence counter */}
-                    {totalEvidence > 0 && (
+                    {!isLocked && totalEvidence > 0 && (
                       <div className={`mt-auto px-2 py-1 text-xs rounded ${
                         isComplete
                           ? 'bg-green-900/50 text-green-300 border border-green-700'
@@ -285,7 +412,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
                     )}
 
                     {/* Complete checkmark */}
-                    {isComplete && (
+                    {!isLocked && isComplete && (
                       <div className="absolute -top-1 -right-1 w-6 h-6 md:w-7 md:h-7 bg-green-700 rounded-full flex items-center justify-center text-white text-xs font-bold shadow-lg z-20">
                         ✓
                       </div>
@@ -293,7 +420,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
 
                     {/* Hover instruction */}
                     <AnimatePresence>
-                      {isHovered && undiscovered > 0 && (
+                      {hoveredRoom === room.id && undiscovered > 0 && !isLocked && (
                         <motion.div
                           initial={{ opacity: 0, y: 5 }}
                           animate={{ opacity: 1, y: 0 }}
@@ -311,7 +438,6 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
               )
             })}
           </div>
-
         </div>
       </div>
 
@@ -327,11 +453,7 @@ export function ManorView({ onSelectSuspect }: ManorViewProps) {
           }}
         >
           <p className="text-amber-900 text-xs">
-            <span className="font-bold">💡 Watson:</span>{' '}
-            {discoveredEvidenceIds.length === 0
-              ? "Search each room carefully for evidence."
-              : `You've found ${discoveredEvidenceIds.length} piece${discoveredEvidenceIds.length !== 1 ? 's' : ''} of evidence. Keep searching!`
-            }
+            <span className="font-bold">💡 Watson:</span> {hintText}
           </p>
         </motion.div>
       </div>
