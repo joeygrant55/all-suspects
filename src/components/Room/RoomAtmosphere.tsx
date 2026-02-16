@@ -33,7 +33,9 @@ interface RoomAtmosphereProps {
   showRoomName?: boolean
 }
 
-const API_BASE = 'http://localhost:3001/api'
+import { getApiBase } from '../../api/client'
+
+const API_BASE = getApiBase()
 
 // Room display names
 const ROOM_NAMES: Record<RoomId, string> = {

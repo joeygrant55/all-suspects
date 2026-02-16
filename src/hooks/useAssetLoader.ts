@@ -21,7 +21,9 @@ interface AssetLoaderResult {
   hasTitleBg: boolean
 }
 
-const API_BASE = 'http://localhost:3001'
+import { getApiBase } from '../api/client'
+
+const API_BASE = getApiBase().replace(/\/api$/, '')
 
 export function useAssetLoader(mysteryId: string | null): AssetLoaderResult {
   const [status, setStatus] = useState<AssetStatus>({

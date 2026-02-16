@@ -48,7 +48,9 @@ export interface MysteryState {
   clearMystery: () => void
 }
 
-const API_BASE = 'http://localhost:3001'
+import { getApiBase } from '../api/client'
+
+const API_BASE = getApiBase().replace(/\/api$/, '')
 
 export const useMysteryStore = create<MysteryState>((set, get) => ({
   // Initial state

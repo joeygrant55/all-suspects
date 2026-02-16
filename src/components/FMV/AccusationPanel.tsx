@@ -6,6 +6,7 @@
  */
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { getApiBase } from '../../api/client'
 
 interface Suspect {
   id: string
@@ -52,7 +53,7 @@ export function AccusationPanel({
     setLoading(true)
 
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+      const apiBase = getApiBase()
       const res = await fetch(`${apiBase}/mystery/${mysteryId}/accuse`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
