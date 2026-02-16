@@ -1,7 +1,7 @@
 {
   "id": "the-blackwood-betrayal",
   "title": "The Blackwood Betrayal",
-  "subtitle": "October 26, 1928 — Blackwood Manor",
+  "subtitle": "October 26, 1928 \u2014 Blackwood Manor",
   "era": "1920s",
   "difficulty": "medium",
   "setting": {
@@ -37,7 +37,8 @@
       ],
       "artPrompt": "",
       "speechPattern": "Speaks in measured, aristocratic tones. Her language is formal and precise, often with a hint of weary condescension.",
-      "greeting": "You're the detective? Very well. Let us get this unfortunate business concluded. The draft in this house is simply dreadful."
+      "greeting": "You're the detective? Very well. Let us get this unfortunate business concluded. The draft in this house is simply dreadful.",
+      "introLine": "I do hope you'll be brief, detective. I've endured quite enough theatrics for one evening."
     },
     {
       "id": "julian-blackwood",
@@ -58,7 +59,8 @@
       ],
       "artPrompt": "",
       "speechPattern": "Sarcastic and morose. Uses the languid, slightly affected slang of the 'Lost Generation' artists he emulates.",
-      "greeting": "Oh, good. The constabulary. Here to poke and prod at the family corpse? Don't mind me, I'm just the resident tragedy."
+      "greeting": "Oh, good. The constabulary. Here to poke and prod at the family corpse? Don't mind me, I'm just the resident tragedy.",
+      "introLine": "Another vulture come to pick at the family bones. Ask your questions, then leave me be."
     },
     {
       "id": "gigi-dubois",
@@ -78,7 +80,8 @@
       ],
       "artPrompt": "",
       "speechPattern": "A sultry, theatrical purr, peppered with Jazz Age slang like 'dollface' and 'the cat's pajamas'.",
-      "greeting": "A detective, huh? Tall, dark, and handsome. Shame we have to meet under such... grim circumstances, dollface."
+      "greeting": "A detective, huh? Tall, dark, and handsome. Shame we have to meet under such... grim circumstances, dollface.",
+      "introLine": "A detective... how thrilling. I do so love a man who pays attention to the details."
     },
     {
       "id": "silas-croft",
@@ -98,7 +101,8 @@
       ],
       "artPrompt": "",
       "speechPattern": "A gruff, no-nonsense baritone. He clips his words and doesn't waste time on pleasantries.",
-      "greeting": "Finally. Took you long enough. Let's get this over with. The man was a snake, and someone finally had the guts to cut his head off. Can't say I'm shedding any tears."
+      "greeting": "Finally. Took you long enough. Let's get this over with. The man was a snake, and someone finally had the guts to cut his head off. Can't say I'm shedding any tears.",
+      "introLine": "I've got nothing to hide, detective. More than I can say for anyone else in this house."
     },
     {
       "id": "arthur-vance",
@@ -119,7 +123,8 @@
       ],
       "artPrompt": "",
       "speechPattern": "Formal, quiet, and deferential. Always uses proper titles. 'Sir,' 'Madam,' 'My Lord.'",
-      "greeting": "Good evening, sir. A terrible, terrible business. I am Arthur Vance. How may I be of assistance in your investigation?"
+      "greeting": "Good evening, sir. A terrible, terrible business. I am Arthur Vance. How may I be of assistance in your investigation?",
+      "introLine": "I am at your disposal, detective. Though I must say, the manor has seen better evenings."
     },
     {
       "id": "dr-evelyn-reed",
@@ -127,7 +132,7 @@
       "role": "The Family Physician",
       "personality": "Calm, intelligent, and meticulously professional. She exudes an aura of competence and trustworthiness, but her eyes betray a deep-seated anxiety.",
       "background": "A respected physician who has treated the Blackwood family for a decade. She is known for her discretion and her innovative treatments for nervous afflictions.",
-      "motive": "Lord Blackwood had discovered a dark secret from her past—a fatal medical error she covered up—and was blackmailing her. He threatened to expose her tonight.",
+      "motive": "Lord Blackwood had discovered a dark secret from her past\u2014a fatal medical error she covered up\u2014and was blackmailing her. He threatened to expose her tonight.",
       "alibi": "Admits to visiting Lord Blackwood in his study at 9:15 PM to give him his nightly tonic for his heart condition. She claims she left at 9:30 PM and went directly to her guest quarters to review her medical journals.",
       "isGuilty": true,
       "relationships": {
@@ -140,7 +145,8 @@
       ],
       "artPrompt": "",
       "speechPattern": "Speaks with clinical precision. Her vocabulary is technical, and she rarely displays emotion.",
-      "greeting": "Detective. I am Dr. Reed. I've already examined the body, but as I am a person of interest, I will of course recuse myself. A tragic end. His heart was not strong."
+      "greeting": "Detective. I am Dr. Reed. I've already examined the body, but as I am a person of interest, I will of course recuse myself. A tragic end. His heart was not strong.",
+      "introLine": "I'll cooperate fully, of course. I trust this can be handled with discretion."
     }
   ],
   "locations": [
@@ -325,7 +331,7 @@
     "killerId": "dr-evelyn-reed",
     "method": "Dr. Reed went to the study at 9:15 PM under the guise of giving Lord Blackwood his nightly tonic. She used a syringe to inject a potent dose of Chloral Hydrate into his brandy. After he passed out, around 9:45 PM, she shot him in the chest with a small .25 caliber pistol she'd brought in a hidden compartment in her medical bag. She wiped the gun clean, placed it near his hand, then used a stiff wire (a common tool in her bag for setting bones) to engage the lock on the door from the outside as she left, making it seem locked from within.",
     "motive": "Lord Alistair Blackwood's first wife died years ago under Dr. Reed's care. It was a fatal malpractice error that Reed successfully covered up. Recently, Blackwood uncovered the truth and began blackmailing her. The night of the murder, he was about to expose her, which would have meant the end of her career and her freedom. She killed him to ensure his silence.",
-    "explanation": "Dr. Evelyn Reed cultivated an image of the trustworthy, professional physician, which gave her unparalleled access and opportunity. When Lord Blackwood threatened to reveal her darkest secret, she saw only one way out. Her alibi of leaving at 9:30 PM is contradicted by the butler, Arthur Vance, who saw her leaving the corridor closer to 9:45 PM. The sedative in the brandy explains why no one heard a struggle and why the Lord couldn't defend himself. The blackmail letter fragment in the fireplace confirms the motive, and the hidden compartment in her medical bag, combined with her medical journal open to a page on Chloral Hydrate, solidifies her as the killer. The other suspects had strong motives—rage, revenge, and greed—but only Dr. Reed had the unique combination of means, motive, and opportunity, all pointing to a desperate act of self-preservation disguised as a simple murder."
+    "explanation": "Dr. Evelyn Reed cultivated an image of the trustworthy, professional physician, which gave her unparalleled access and opportunity. When Lord Blackwood threatened to reveal her darkest secret, she saw only one way out. Her alibi of leaving at 9:30 PM is contradicted by the butler, Arthur Vance, who saw her leaving the corridor closer to 9:45 PM. The sedative in the brandy explains why no one heard a struggle and why the Lord couldn't defend himself. The blackmail letter fragment in the fireplace confirms the motive, and the hidden compartment in her medical bag, combined with her medical journal open to a page on Chloral Hydrate, solidifies her as the killer. The other suspects had strong motives\u2014rage, revenge, and greed\u2014but only Dr. Reed had the unique combination of means, motive, and opportunity, all pointing to a desperate act of self-preservation disguised as a simple murder."
   },
   "timeline": [
     {

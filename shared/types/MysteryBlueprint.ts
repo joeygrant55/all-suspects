@@ -79,6 +79,7 @@ export interface CharacterBlueprint {
   
   // Initial Interaction
   greeting: string // The character's initial greeting when first approached
+  introLine?: string // Short voiced intro line for cinematic character reveal
   systemPrompt?: string // AI behavior instructions for interrogation
   
   // Information

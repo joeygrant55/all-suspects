@@ -88,14 +88,22 @@ export function useVoice(): VoiceManager {
       audio.src = audioUrl
       audio.volume = 0.8
 
-      await audio.play()
-      setState(s => ({ ...s, isPlaying: true, isLoading: false }))
-
-      // Clean up blob URL when done
-      audio.onended = () => {
-        URL.revokeObjectURL(audioUrl)
-        setState(s => ({ ...s, isPlaying: false }))
-      }
+      // Wait for playback to fully complete
+      await new Promise<void>((resolve, reject) => {
+        audio.onended = () => {
+          URL.revokeObjectURL(audioUrl)
+          setState(s => ({ ...s, isPlaying: false }))
+          resolve()
+        }
+        audio.onerror = () => {
+          URL.revokeObjectURL(audioUrl)
+          setState(s => ({ ...s, isPlaying: false, error: 'Audio playback failed' }))
+          reject(new Error('Audio playback failed'))
+        }
+        audio.play().then(() => {
+          setState(s => ({ ...s, isPlaying: true, isLoading: false }))
+        }).catch(reject)
+      })
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         // Request was aborted, not an error
