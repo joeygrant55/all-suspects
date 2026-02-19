@@ -1,141 +1,61 @@
 # All Suspects - Deployment Guide
 
-**Last Updated:** Jan 30, 2026, 21:51 EST
+**Last Updated:** Feb 19, 2026
 
 ## Status
-- ✅ Veo 3 fallback code committed & pushed
-- ✅ GitHub repo: `joeygrant55/all-suspects`
-- 🚧 Need to deploy Railway + Vercel
+- ✅ Backend: https://all-suspects-production.up.railway.app (Railway, auto-deploys on main push)
+- ✅ Frontend: https://allsuspects.slateworks.io (Vercel, auto-deploys on main push)
+- ✅ Blackwood Betrayal: Live and playable (6 characters, blueprint persisted on Railway fs)
+- ✅ 9 total mysteries in library
 
 ---
 
-## Step 1: Railway (Backend API)
+## Architecture Notes
 
-### Via Web UI
-1. Go to: https://railway.app/new
-2. Click: **"Deploy from GitHub repo"**
-3. Select: `joeygrant55/all-suspects`
-4. Branch: `main`
+### Mystery Storage
+- **Hardcoded mysteries** (ashford-affair, hollywood-premiere): Stored in `mysteries/` directory, loaded client-side via registry
+- **Generated mysteries** (blackwood-betrayal, etc.): Blueprint stored in `public/generated/:id/blueprint.json` on Railway filesystem
+  - ⚠️ Railway filesystem is ephemeral — redeploys may wipe generated mysteries (though blueprint.json files are committed to git if added)
+  - The `/api/mystery/:id/blueprint` and `/api/mystery/:id/chat` endpoints have disk fallbacks — gameplay works fine after restart
+  - The legacy `/api/mystery/:id` (generic info) uses in-memory store only — returns 404 after restart (not used by frontend)
 
-### Environment Variables
-Add these in Railway's "Variables" tab:
+### In-memory vs Filesystem
+- `server/mystery/store.ts` = in-memory GeneratedMystery store (legacy, not used for Blackwood gameplay)
+- `server/agents/mysteryApi.ts` = `activeMysteries` Map + disk fallback via `loadBlueprint()` (used for all chat/gameplay)
+- `activeMysteries` is rehydrated from disk on any blueprint/chat request — no action needed
+
+---
+
+## Environment Variables (Railway)
 ```
 GEMINI_API_KEY=AIzaSyChdJn3-4RDWURE2ruYBgss1b8rFT4jKvg
 FAL_KEY=4ecc99c9-6bd9-4bde-8040-e8c532587f34:a880cf9ed203b0633ba756aa905690c2
 ELEVENLABS_API_KEY=sk_2df3c5e48a9c9dd995e59edb968202156f12e42743f2240e
 PORT=3001
+ANTHROPIC_API_KEY=[set in Railway dashboard]
 ```
 
-### Settings
-- **Start Command:** `npm start`
-- **Health Check Path:** `/api/characters`
-- **Auto-Deploy:** Enabled (on `main` branch)
-
-### After Deploy
-1. Copy your Railway URL (e.g., `xxx.up.railway.app`)
-2. Test: `https://YOUR_RAILWAY_URL/api/characters`
-
----
-
-## Step 2: Update vercel.json
-
-Replace `YOUR_RAILWAY_URL_HERE` in `vercel.json` with your Railway URL:
-
-```json
-{
-  "rewrites": [
-    { "source": "/api/:path*", "destination": "https://YOUR_RAILWAY_URL/api/:path*" }
-  ]
-}
-```
-
-Then commit and push:
-```bash
-cd ~/Desktop/Slateworks.io/all-suspects
-git add vercel.json
-git commit -m "Update Railway URL in vercel.json"
-git push origin main
-```
-
----
-
-## Step 3: Vercel (Frontend)
-
-### Via Web UI
-1. Go to: https://vercel.com/new
-2. Click: **"Import Project"**
-3. Select: `joeygrant55/all-suspects`
-4. Framework: **Vite**
-
-### Build Settings
-- **Build Command:** `npm run build`
-- **Output Directory:** `dist`
-- **Install Command:** `npm install`
-
-### Deploy
-Click "Deploy" - Vercel will automatically use `vercel.json` config
-
-### After Deploy
-Your app will be live at: `https://all-suspects.vercel.app`
-
----
-
-## Verification
+## Deploy Steps (if needed)
 
 ### Backend (Railway)
-```bash
-curl https://YOUR_RAILWAY_URL/api/characters
-# Should return array of characters
-```
+- Auto-deploys on `git push origin main`
+- No manual steps needed
 
 ### Frontend (Vercel)
-1. Visit: `https://all-suspects.vercel.app`
-2. Click "BEGIN INVESTIGATION"
-3. Mystery generation should work
-4. Check browser console - API calls should go to Railway
+- Auto-deploys on `git push origin main`
+- `vercel.json` rewrites /api/* → Railway URL
 
 ---
 
-## Environment Summary
+## Testing
 
-**Backend (Railway):**
-- API endpoints for mystery generation
-- Video generation with fal.ai → Veo 3 fallback
-- Character agent logic
+```bash
+# Health check
+curl https://all-suspects-production.up.railway.app/api/characters
 
-**Frontend (Vercel):**
-- Vite static site
-- React UI
-- Proxies `/api/*` to Railway backend
+# Blackwood blueprint (should return 6 characters)
+curl https://all-suspects-production.up.railway.app/api/mystery/the-blackwood-betrayal/blueprint
 
----
-
-## Troubleshooting
-
-### Railway build fails
-- Check logs in Railway dashboard
-- Verify Node version (should use latest LTS)
-- Ensure all dependencies in package.json
-
-### Vercel build fails
-- Check TypeScript errors (might need to add `tsc --noEmit` skip)
-- Verify vercel.json has correct Railway URL
-
-### API calls fail (CORS)
-Railway needs CORS headers. Check `server/index.ts`:
-```typescript
-app.use(cors())
+# All mysteries
+curl https://all-suspects-production.up.railway.app/api/mysteries
 ```
-
-### Video generation fails
-- Check Railway logs for fal.ai errors
-- Verify GEMINI_API_KEY is set
-- Check Veo fallback logs: `[ArtPipeline] 🎬 fal.ai failed, falling back to Veo 3...`
-
----
-
-## Next Steps After Deploy
-1. Top up fal.ai credits tomorrow
-2. Test full mystery generation flow
-3. Monitor Railway logs for Veo fallback usage
-4. Update DNS if using custom domain
