@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useContext } from 'react'
+import analytics from './lib/analytics'
 import { getApiBase, setActiveMysteryId } from './api/client'
 import { IntroSequence, CaseBoard, CharacterInterrogation } from './components/FMV'
 import { IntroVideo } from './components/VideoPlayer/IntroVideo'
@@ -63,6 +64,20 @@ function App() {
       setBlueprintPreview(null)
     }
   }, [gameStarted])
+
+  // Track game abandon on tab close / navigation away
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (gameStarted) {
+        analytics.gameAbandoned({
+          lastScreen: currentScreen ?? undefined,
+          lastCharacter: currentConversation ?? undefined,
+        })
+      }
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [gameStarted, currentScreen, currentConversation])
 
   // Watson state
   const {

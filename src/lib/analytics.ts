@@ -23,6 +23,7 @@ type EventType =
   | 'accusation_attempt'
   | 'game_complete'
   | 'game_abandon'
+  | 'room_visited'
   | 'share_click'
   | 'tutorial_complete'
 
@@ -272,6 +273,13 @@ class Analytics {
       ...stats
     })
     this.gameStartTime = null
+  }
+
+  /**
+   * Track room visit (FMV navigation)
+   */
+  roomVisited(roomId: string, characterCount?: number): void {
+    this.track('room_visited' as EventType, { roomId, characterCount })
   }
 
   /**

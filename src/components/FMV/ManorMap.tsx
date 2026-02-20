@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useGameStore } from '../../game/state'
+import analytics from '../../lib/analytics'
 
 interface ManorMapProps {
   onRoomSelect: (room: string) => void
@@ -67,7 +68,10 @@ export function ManorMap({ onRoomSelect }: ManorMapProps) {
           return (
             <motion.button
               key={roomId}
-              onClick={() => onRoomSelect(roomId)}
+              onClick={() => {
+                analytics.roomVisited(roomId, charactersHere.length)
+                onRoomSelect(roomId)
+              }}
               className="absolute border-2 transition-all"
               style={{
                 left: `${pos.x}%`,
