@@ -71,81 +71,52 @@ Created `src/types/evidence.ts`:
 
 ---
 
-## 🚧 TODO / NEXT STEPS
+## ✅ Originally TODO — Now Complete
+
+### ~~2. Character Integration~~ ✅ DONE
+- `CharacterInterrogation.tsx` connects to `chatStream` API (not placeholder)
+- Pressure system fully integrated (`updateCharacterPressure`)
+- Watson hints wired in (`analyzeWithWatson`)
+- Contradiction detection UI live
+- Cinematic moments trigger on high-pressure responses
+
+### ~~6. Character Portraits~~ ✅ DONE
+- All 6 characters have portrait images in `/public/portraits/`
+- Victoria, Thomas, Eleanor, Marcus, Lillian, James
+- Each has 3 emotional states: normal, nervous, breaking
+
+---
+
+## 🚧 REMAINING WORK
 
 ### 1. **Room Backgrounds** (High Priority)
-- Replace placeholder gradients in `RoomView.tsx` with actual images/video
-- Options:
-  - Static atmospheric images (noir photography style)
-  - AI-generated room images (Midjourney, Stable Diffusion)
-  - Short looping video clips (Veo 3 integration already exists)
-- Add subtle animations (fog, dust particles)
+- Replace placeholder gradients in `RoomView.tsx` with actual images
+- Options: AI-generated noir room images (fal.ai/flux-pro) or curated photography
+- Veo 3 video loop integration already exists — could use for atmospheric backgrounds
 
-### 2. **Character Integration** (High Priority)
-- Connect `CharacterInterrogation.tsx` to actual AI backend
-  - Currently shows placeholder "[AI Response to: ...]"
-  - Replace with API call to `/api/chat` endpoint
-  - Integrate pressure system and psychology updates
-- Add Watson hints during interrogations
-- Add contradiction detection UI
+### 2. **Remove 3D Dependencies** (Quick Win — reduce bundle ~500KB)
+- `src/components/Scene/` is dead code — App.tsx imports nothing from it
+- Remove from `package.json`: `three`, `@react-three/fiber`, `@react-three/drei`, `@react-three/postprocessing`, `@types/three`
+- Delete `src/components/Scene/` and `src/App.tsx.3d-backup`
+- Expected bundle reduction: ~40-50% (three.js alone is massive)
 
-### 3. **Evidence System Integration**
-- Add interactive evidence hotspots to `RoomView.tsx`
-  - Clickable items in room (books, letters, weapons)
-  - Trigger `EvidenceReveal.tsx` on click
-- Connect to existing evidence database (`src/data/evidence.ts`)
-- Track discovered vs collected evidence
+### 3. **Evidence Hotspots in Rooms** (Nice-to-Have)
+- Add clickable evidence items to `RoomView.tsx`
+- Trigger `EvidenceReveal.tsx` on click
+- Already connected to `src/data/evidence.ts`
 
 ### 4. **Visual Polish**
-- Add more transitions (fade to black between scenes)
-- Enhance film grain effect
-- Add subtle camera shake for tension
-- Add scanlines or VHS effect for extra noir feel
-- Polish letterbox bars (maybe animated borders)
+- More scene transitions (fade to black between rooms)
+- Add ambient fog/dust particle effects
+- Audio: per-room ambient sounds + tension music during interrogations
 
-### 5. **Audio Hooks**
-- Add ambient sound per room (already have audio system)
-- Add tension music during interrogations
-- Add sound effects for:
-  - Screen transitions
-  - Evidence reveals
-  - Character entries/exits
-  - Pressure level changes
+### 5. **Onboarding Update**
+- Tutorial still references old WASD/3D controls
+- Update for click-to-navigate FMV UX
 
-### 6. **Character Portraits**
-- Generate/add actual character portrait images
-  - Already have portrait system in `CharacterPortrait.tsx`
-  - Need images for: Victoria, Thomas, Eleanor, Marcus, Lillian, James
-  - Place in `/public/portraits/` folder
-- Consider AI-generated 1920s noir portraits
-
-### 7. **Tutorial/Onboarding**
-- Update tutorial for new FMV controls
-- No more WASD/mouse controls to explain
-- Just: click rooms, click characters, ask questions
-
-### 8. **Remove 3D Dependencies** (Optional)
-If we're fully committed to FMV:
-- Remove from `package.json`:
-  - `@react-three/fiber`
-  - `@react-three/drei`
-  - `@react-three/postprocessing`
-  - `three`
-  - `@types/three`
-- Delete `src/components/Scene/` directory
-- Delete `src/App.tsx.3d-backup`
-- This will reduce bundle size significantly
-
-### 9. **Testing**
-- Test all navigation flows
-- Test on mobile/tablet (touch controls)
-- Test accessibility (keyboard navigation)
-- Test with actual AI responses
-
-### 10. **Performance**
+### 6. **Performance**
 - Lazy load FMV components
-- Preload room backgrounds
-- Optimize portrait images
+- Preload room backgrounds on map load
 
 ---
 
