@@ -232,51 +232,6 @@ export function LandingPage({ onStartInvestigation }: LandingPageProps) {
           </div>
         </section>
 
-        {/* Social Proof / Stats */}
-        <section className="bg-noir-charcoal py-16 px-4 sm:px-6" aria-labelledby="landing-stats-title">
-          <div className="mx-auto max-w-5xl">
-            <motion.div
-              initial="hidden"
-              whileInView="visible"
-              viewport={{ once: true, amount: 0.2 }}
-              variants={sectionVariants}
-              transition={{ duration: 0.5 }}
-              className="text-center mb-10"
-            >
-              <p className="text-sm uppercase tracking-[0.2em] text-noir-gold">Proof on the File</p>
-              <h2 id="landing-stats-title" className="text-2xl sm:text-3xl md:text-4xl font-semibold mt-2" style={{ fontFamily: 'Georgia, "Playfair Display", serif' }}>
-                Social Proof / Stats
-              </h2>
-            </motion.div>
-
-            {/* TODO: Replace these placeholder numbers when analytics are available */}
-            <div className="grid sm:grid-cols-2 gap-5">
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.4 }}
-                variants={sectionVariants}
-                transition={{ duration: 0.5 }}
-                className="bg-noir-black border border-noir-slate p-6 text-center"
-              >
-                <p className="text-3xl sm:text-4xl text-noir-gold font-bold">X cases solved</p>
-                <p className="mt-2 text-noir-cream/80">Placeholder milestone until analytics pipeline is wired.</p>
-              </motion.div>
-              <motion.div
-                initial="hidden"
-                whileInView="visible"
-                viewport={{ once: true, amount: 0.4 }}
-                variants={sectionVariants}
-                transition={{ duration: 0.5, delay: 0.15 }}
-                className="bg-noir-black border border-noir-slate p-6 text-center"
-              >
-                <p className="text-3xl sm:text-4xl text-noir-gold font-bold">Y% solve rate</p>
-                <p className="mt-2 text-noir-cream/80">Placeholder accuracy metric. Replace when tracking begins.</p>
-              </motion.div>
-            </div>
-          </div>
-        </section>
-
         {/* CTA Footer */}
         <section id="cta" className="relative py-20 px-4 sm:px-6 bg-noir-black/90" aria-labelledby="landing-cta-title">
           <div
