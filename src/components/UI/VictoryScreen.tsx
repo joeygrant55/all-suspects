@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react'
 import { useGameStore } from '../../game/state'
 import { useScoreStore } from '../../game/scoreState'
 import { EVIDENCE_DATABASE } from '../../data/evidence'
+import {
+  getDailyChallengeState,
+  markDailyChallengeComplete,
+  buildShareText,
+} from '../../game/dailyChallenge'
 
 interface VictoryScreenProps {
   isOpen: boolean
@@ -15,18 +20,38 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
   const [phase, setPhase] = useState<ScreenPhase>('reveal')
   const [showContent, setShowContent] = useState(false)
   const [shareSuccess, setShareSuccess] = useState(false)
+  const [isDailyRun, setIsDailyRun] = useState(false)
+  const [dailyDayNumber, setDailyDayNumber] = useState(1)
+  const [dailyStreak, setDailyStreak] = useState(0)
   const collectedEvidence = useGameStore((state) => state.collectedEvidence)
   const contradictions = useGameStore((state) => state.contradictions)
   const accusationAttempts = useGameStore((state) => state.accusationAttempts)
   const calculateScore = useScoreStore((state) => state.calculateScore)
   const gameScore = calculateScore()
 
-  // Animation sequence
+  // Animation sequence + daily challenge completion
   useEffect(() => {
     if (isOpen) {
       setPhase('reveal')
       setShowContent(false)
       const timer = setTimeout(() => setShowContent(true), 500)
+
+      // Check if this was today's daily challenge
+      const dailyState = getDailyChallengeState()
+      if (dailyState.attempted && !dailyState.completed) {
+        markDailyChallengeComplete(gameScore.totalScore, gameScore.rank, gameScore.solveTimeFormatted)
+        setIsDailyRun(true)
+        setDailyDayNumber(dailyState.dayNumber)
+        // After marking complete, streak is updated — re-read
+        const updated = getDailyChallengeState()
+        setDailyStreak(updated.streak)
+      } else if (dailyState.completed) {
+        // Already completed (re-opened screen) — still show daily badge
+        setIsDailyRun(true)
+        setDailyDayNumber(dailyState.dayNumber)
+        setDailyStreak(dailyState.streak)
+      }
+
       return () => clearTimeout(timer)
     }
   }, [isOpen])
@@ -49,20 +74,25 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
 
   // Handle share
   const handleShare = async () => {
-    const shareText = `🔍 ALL SUSPECTS - The Ashford Affair
+    const shareText = isDailyRun
+      ? buildShareText(dailyDayNumber, gameScore.totalScore, gameScore.rank, gameScore.solveTimeFormatted, dailyStreak)
+      : `🔍 All Suspects — The Ashford Affair
 Rank: ${gameScore.rank} (${gameScore.detective_title})
 Score: ${gameScore.totalScore}/1000
 Time: ${gameScore.solveTimeFormatted}
 Evidence: ${collectedEvidence.length}/9 | Contradictions: ${contradictions.length}
-
-Can you do better?`
+allsuspects.slateworks.io`
 
     try {
-      await navigator.clipboard.writeText(shareText)
+      if (navigator.share && /mobile|android|iphone/i.test(navigator.userAgent)) {
+        await navigator.share({ text: shareText })
+      } else {
+        await navigator.clipboard.writeText(shareText)
+      }
       setShareSuccess(true)
       setTimeout(() => setShareSuccess(false), 2000)
     } catch (err) {
-      console.error('Failed to copy:', err)
+      console.error('Failed to share:', err)
     }
   }
 
@@ -114,6 +144,18 @@ Can you do better?`
             </div>
 
             {/* Title */}
+            {isDailyRun && (
+              <div className="mb-4 flex flex-col items-center gap-1">
+                <span className="text-xs font-bold tracking-[0.3em] px-3 py-1 bg-lime-400/20 text-lime-400 border border-lime-400/40">
+                  DAILY MYSTERY #{dailyDayNumber}
+                </span>
+                {dailyStreak >= 2 && (
+                  <span className="text-xs text-orange-400 font-bold tracking-wide">
+                    🔥 {dailyStreak}-day streak!
+                  </span>
+                )}
+              </div>
+            )}
             <h1
               className="text-5xl text-noir-gold mb-4 tracking-widest"
               style={{

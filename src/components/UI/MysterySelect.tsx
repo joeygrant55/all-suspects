@@ -4,6 +4,11 @@ import { useGameStore } from '../../game/state'
 import { fetchAllMysteries } from '../../mysteries/registry'
 import { setActiveMysteryId } from '../../api/client'
 import analytics from '../../lib/analytics'
+import {
+  getDailyChallengeState,
+  markDailyChallengeAttempted,
+  type DailyChallengeState,
+} from '../../game/dailyChallenge'
 
 interface MysterySelectProps {
   onCreateNew?: () => void
@@ -13,6 +18,7 @@ interface MysterySelectProps {
 export function MysterySelect({ onCreateNew, onBack }: MysterySelectProps = {}) {
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [showSavedMysteries, setShowSavedMysteries] = useState(false)
+  const [dailyState, setDailyState] = useState<DailyChallengeState | null>(null)
   
   const {
     availableMysteries,
@@ -30,7 +36,25 @@ export function MysterySelect({ onCreateNew, onBack }: MysterySelectProps = {}) 
     fetchAllMysteries().then(mysteries => {
       useMysteryStore.setState({ availableMysteries: mysteries })
     })
+    setDailyState(getDailyChallengeState())
   }, [])
+
+  const handleStartDailyChallenge = async () => {
+    if (!dailyState || dailyState.completed) return
+    try {
+      analytics.mysterySelected(dailyState.mysteryId, `Daily Mystery #${dailyState.dayNumber}`)
+      markDailyChallengeAttempted()
+      await loadMystery(dailyState.mysteryId)
+      const mystery = useMysteryStore.getState().activeMystery
+      if (mystery) {
+        initializeFromMystery(mystery)
+        analytics.gameStarted(dailyState.mysteryId, { isDaily: true, dayNumber: dailyState.dayNumber })
+        startGame()
+      }
+    } catch (err) {
+      console.error('Failed to start daily challenge:', err)
+    }
+  }
 
   const handleSelectMystery = async (id: string) => {
     try {
@@ -109,6 +133,103 @@ export function MysterySelect({ onCreateNew, onBack }: MysterySelectProps = {}) 
       {/* Scrollable body */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+
+          {/* DAILY CHALLENGE CARD */}
+          {dailyState && (
+            <div className="mb-8">
+              <div
+                className={`
+                  relative border-2 p-5 transition-all duration-200
+                  ${dailyState.completed
+                    ? 'border-noir-gold/40 bg-noir-gold/5 cursor-default'
+                    : 'border-lime-400/60 bg-lime-400/5 hover:bg-lime-400/10 cursor-pointer active:scale-[0.99]'
+                  }
+                `}
+                onClick={!dailyState.completed ? handleStartDailyChallenge : undefined}
+              >
+                {/* Header row */}
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`text-xs font-bold tracking-[0.25em] px-2 py-1 ${
+                        dailyState.completed
+                          ? 'bg-noir-gold/20 text-noir-gold'
+                          : 'bg-lime-400/20 text-lime-400'
+                      }`}
+                    >
+                      DAILY CHALLENGE
+                    </span>
+                    <span className="text-xs text-noir-smoke/50 tracking-wider">
+                      #{dailyState.dayNumber}
+                    </span>
+                  </div>
+                  {dailyState.streak >= 2 && (
+                    <span className="text-xs text-orange-400 tracking-wide font-bold">
+                      🔥 {dailyState.streak}-day streak
+                    </span>
+                  )}
+                </div>
+
+                {/* Mystery info */}
+                <div className="mb-4">
+                  <h2
+                    className={`text-xl font-bold mb-1 tracking-wide ${
+                      dailyState.completed ? 'text-noir-gold' : 'text-lime-300'
+                    }`}
+                  >
+                    The Ashford Affair
+                  </h2>
+                  <p className="text-noir-smoke/60 text-sm">
+                    New Year's Eve, 1929 — can you name the killer?
+                  </p>
+                </div>
+
+                {/* State: completed */}
+                {dailyState.completed && dailyState.score !== undefined ? (
+                  <div className="flex items-center gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-noir-gold">{dailyState.rank}</div>
+                      <div className="text-[10px] text-noir-smoke/50 tracking-wider">RANK</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-noir-cream">{dailyState.score}</div>
+                      <div className="text-[10px] text-noir-smoke/50 tracking-wider">SCORE</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-sm font-bold text-noir-cream">{dailyState.solveTime}</div>
+                      <div className="text-[10px] text-noir-smoke/50 tracking-wider">TIME</div>
+                    </div>
+                    <div className="ml-auto text-xs text-noir-gold/60 tracking-wider">
+                      ✓ COMPLETE · Come back tomorrow
+                    </div>
+                  </div>
+                ) : (
+                  /* State: available */
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-noir-smoke/50 tracking-wide">
+                      {dailyState.attempted ? 'In progress — continue your investigation' : 'One chance · Same mystery for everyone'}
+                    </span>
+                    <span
+                      className={`text-sm font-bold tracking-widest ${
+                        isLoading ? 'text-noir-smoke/50' : 'text-lime-400'
+                      }`}
+                    >
+                      {isLoading ? 'LOADING...' : dailyState.attempted ? 'CONTINUE →' : 'PLAY →'}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Divider between daily and generate */}
+          {dailyState && (
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex-1 h-px bg-noir-gold/20" />
+              <span className="text-[10px] text-noir-smoke/60 tracking-[0.25em]">OR GENERATE YOUR OWN</span>
+              <div className="flex-1 h-px bg-noir-gold/20" />
+            </div>
+          )}
 
           {/* HERO: Generate New Mystery */}
           <div className="mb-8">
