@@ -973,3 +973,37 @@ export async function getSubscriptionStatus(sessionId: string): Promise<Subscrip
   
   return response.json()
 }
+
+
+// ----------------------------------------------------------------
+// Daily Challenge Leaderboard
+// ----------------------------------------------------------------
+
+export interface DailySubmitResult {
+  success: boolean
+  entryId: string
+  position: number
+  totalEntries: number
+}
+
+export async function submitDailyScore(params: {
+  date: string
+  dayNumber: number
+  nickname: string
+  score: number
+  rank: string
+  solveTime: string
+}): Promise<DailySubmitResult> {
+  const response = await fetchWithTimeout(`${API_BASE}/daily/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    throw new Error(error.error || 'Failed to submit score')
+  }
+
+  return response.json()
+}

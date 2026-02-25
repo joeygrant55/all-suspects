@@ -98,6 +98,10 @@ app.use('/api/mystery', mysteryRouter)
 // Analytics API
 app.use('/api/analytics', analyticsRoutes)
 
+// Daily Challenge Leaderboard API
+import dailyRoutes from './dailyRoutes'
+app.use('/api/daily', dailyRoutes)
+
 // Initialize Anthropic client
 const anthropic = new Anthropic()
 

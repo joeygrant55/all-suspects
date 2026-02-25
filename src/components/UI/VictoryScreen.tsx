@@ -6,7 +6,10 @@ import {
   getDailyChallengeState,
   markDailyChallengeComplete,
   buildShareText,
+  getTodayUTC,
 } from '../../game/dailyChallenge'
+import { submitDailyScore } from '../../api/client'
+import { Leaderboard } from './Leaderboard'
 
 interface VictoryScreenProps {
   isOpen: boolean
@@ -23,6 +26,12 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
   const [isDailyRun, setIsDailyRun] = useState(false)
   const [dailyDayNumber, setDailyDayNumber] = useState(1)
   const [dailyStreak, setDailyStreak] = useState(0)
+  // Leaderboard
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
+  const [leaderboardNickname, setLeaderboardNickname] = useState('')
+  const [leaderboardSubmitted, setLeaderboardSubmitted] = useState(false)
+  const [leaderboardPosition, setLeaderboardPosition] = useState<number | null>(null)
+  const [leaderboardSubmitting, setLeaderboardSubmitting] = useState(false)
   const collectedEvidence = useGameStore((state) => state.collectedEvidence)
   const contradictions = useGameStore((state) => state.contradictions)
   const accusationAttempts = useGameStore((state) => state.accusationAttempts)
@@ -71,6 +80,28 @@ export function VictoryScreen({ isOpen, onClose, onPlayAgain }: VictoryScreenPro
   }
 
   const stars = getStarsFromRank(gameScore.rank)
+
+  // Handle leaderboard submit
+  const handleLeaderboardSubmit = async () => {
+    if (!isDailyRun || leaderboardSubmitted || leaderboardSubmitting) return
+    setLeaderboardSubmitting(true)
+    try {
+      const result = await submitDailyScore({
+        date: getTodayUTC(),
+        dayNumber: dailyDayNumber,
+        nickname: leaderboardNickname.trim() || 'Anonymous',
+        score: gameScore.totalScore,
+        rank: gameScore.rank,
+        solveTime: gameScore.solveTimeFormatted,
+      })
+      setLeaderboardPosition(result.position)
+      setLeaderboardSubmitted(true)
+    } catch (err) {
+      console.error('Failed to submit to leaderboard:', err)
+    } finally {
+      setLeaderboardSubmitting(false)
+    }
+  }
 
   // Handle share
   const handleShare = async () => {
@@ -338,15 +369,66 @@ allsuspects.slateworks.io`
               </div>
             </div>
 
-            {/* Share button */}
-            <div className="text-center mb-6">
-              <button
-                onClick={handleShare}
-                className="px-6 py-3 bg-noir-slate/50 border border-noir-gold/50 text-noir-cream hover:bg-noir-slate hover:border-noir-gold transition-colors"
-                style={{ fontFamily: 'Georgia, serif' }}
-              >
-                {shareSuccess ? '✓ Copied to Clipboard!' : '📋 Share Results'}
-              </button>
+            {/* Share + Leaderboard buttons */}
+            <div className="text-center mb-6 flex flex-col items-center gap-3">
+              <div className="flex gap-3 justify-center flex-wrap">
+                <button
+                  onClick={handleShare}
+                  className="px-6 py-3 bg-noir-slate/50 border border-noir-gold/50 text-noir-cream hover:bg-noir-slate hover:border-noir-gold transition-colors"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  {shareSuccess ? '✓ Copied to Clipboard!' : '📋 Share Results'}
+                </button>
+                <button
+                  onClick={() => setShowLeaderboard(true)}
+                  className="px-6 py-3 bg-noir-slate/50 border border-gray-600 text-gray-300 hover:bg-noir-slate hover:border-gray-400 transition-colors"
+                  style={{ fontFamily: 'Georgia, serif' }}
+                >
+                  🏆 Leaderboard
+                </button>
+              </div>
+
+              {/* Daily leaderboard submission */}
+              {isDailyRun && !leaderboardSubmitted && (
+                <div className="w-full max-w-sm mt-2 p-4 bg-lime-900/20 border border-lime-600/30 rounded-sm">
+                  <p className="text-lime-400 text-sm font-medium mb-3 text-center">
+                    Post your score to today's leaderboard
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={leaderboardNickname}
+                      onChange={e => setLeaderboardNickname(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && handleLeaderboardSubmit()}
+                      placeholder="Your nickname"
+                      maxLength={20}
+                      className="flex-1 bg-noir-charcoal border border-gray-600 text-white px-3 py-2 text-sm rounded-sm placeholder-gray-500 focus:outline-none focus:border-lime-500"
+                    />
+                    <button
+                      onClick={handleLeaderboardSubmit}
+                      disabled={leaderboardSubmitting}
+                      className="px-4 py-2 bg-lime-600 text-white text-sm hover:bg-lime-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-sm"
+                    >
+                      {leaderboardSubmitting ? '...' : 'Post'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Submitted confirmation */}
+              {isDailyRun && leaderboardSubmitted && leaderboardPosition !== null && (
+                <div className="w-full max-w-sm mt-2 p-4 bg-lime-900/20 border border-lime-600/30 rounded-sm text-center">
+                  <p className="text-lime-400 text-sm font-medium">
+                    ✓ Score posted! You ranked #{leaderboardPosition} today
+                  </p>
+                  <button
+                    onClick={() => setShowLeaderboard(true)}
+                    className="text-lime-300/70 text-xs mt-1 hover:text-lime-300 transition-colors underline"
+                  >
+                    View full leaderboard
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="text-center">
@@ -615,6 +697,13 @@ allsuspects.slateworks.io`
       </div>
 
       {/* CSS animations */}
+      {/* Leaderboard modal */}
+      <Leaderboard
+        isOpen={showLeaderboard}
+        onClose={() => setShowLeaderboard(false)}
+        highlightNickname={leaderboardSubmitted ? (leaderboardNickname.trim() || 'Anonymous') : undefined}
+      />
+
       <style>{`
         @keyframes float {
           0%, 100% { transform: translateY(0px) rotate(0deg); }

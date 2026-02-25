@@ -9,6 +9,7 @@ import {
   markDailyChallengeAttempted,
   type DailyChallengeState,
 } from '../../game/dailyChallenge'
+import { Leaderboard } from './Leaderboard'
 
 interface MysterySelectProps {
   onCreateNew?: () => void
@@ -19,6 +20,7 @@ export function MysterySelect({ onCreateNew, onBack }: MysterySelectProps = {}) 
   const [selectedDifficulty, setSelectedDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium')
   const [showSavedMysteries, setShowSavedMysteries] = useState(false)
   const [dailyState, setDailyState] = useState<DailyChallengeState | null>(null)
+  const [showLeaderboard, setShowLeaderboard] = useState(false)
   
   const {
     availableMysteries,
@@ -199,8 +201,14 @@ export function MysterySelect({ onCreateNew, onBack }: MysterySelectProps = {}) 
                       <div className="text-sm font-bold text-noir-cream">{dailyState.solveTime}</div>
                       <div className="text-[10px] text-noir-smoke/50 tracking-wider">TIME</div>
                     </div>
-                    <div className="ml-auto text-xs text-noir-gold/60 tracking-wider">
-                      ✓ COMPLETE · Come back tomorrow
+                    <div className="ml-auto flex flex-col items-end gap-1">
+                      <span className="text-xs text-noir-gold/60 tracking-wider">✓ COMPLETE</span>
+                      <button
+                        onClick={e => { e.stopPropagation(); setShowLeaderboard(true) }}
+                        className="text-xs text-lime-400/70 hover:text-lime-400 transition-colors tracking-wide underline"
+                      >
+                        🏆 Leaderboard
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -411,6 +419,12 @@ export function MysterySelect({ onCreateNew, onBack }: MysterySelectProps = {}) 
           <div className="h-12" />
         </div>
       </div>
+
+      {/* Leaderboard modal */}
+      <Leaderboard
+        isOpen={showLeaderboard}
+        onClose={() => setShowLeaderboard(false)}
+      />
     </div>
   )
 }
