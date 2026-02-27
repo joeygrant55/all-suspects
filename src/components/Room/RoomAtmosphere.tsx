@@ -57,6 +57,16 @@ const ROOM_GRADIENTS: Record<RoomId, string> = {
   garden: 'from-emerald-950/60 via-stone-900/95 to-noir-black',
 }
 
+// Static room background images — used when no video is available
+const ROOM_IMAGES: Partial<Record<RoomId, string>> = {
+  study: '/rooms/study.webp',
+  parlor: '/rooms/parlor.webp',
+  dining: '/rooms/library.webp',
+  kitchen: '/rooms/kitchen.webp',
+  hallway: '/rooms/servants.webp',
+  garden: '/rooms/garden.webp',
+}
+
 // Weather overlay effects
 const WEATHER_OVERLAYS: Record<WeatherCondition, React.ReactNode> = {
   clear: null,
@@ -225,10 +235,28 @@ export function RoomAtmosphere({
 
   return (
     <div className={`relative w-full h-full overflow-hidden ${className}`}>
-      {/* Base gradient background (always visible as fallback) */}
+      {/* Base gradient background (always visible as final fallback) */}
       <div 
         className={`absolute inset-0 bg-gradient-to-br ${ROOM_GRADIENTS[roomId]} transition-all duration-1000`}
       />
+
+      {/* Static room image — shown when no video is ready */}
+      {ROOM_IMAGES[roomId] && !(atmosphere?.status === 'ready' && atmosphere.videoUrl) && (
+        <motion.div
+          key={"static-" + roomId}
+          className="absolute inset-0"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+        >
+          <img
+            src={ROOM_IMAGES[roomId]}
+            alt=""
+            className="w-full h-full object-cover"
+            style={{ filter: 'brightness(0.55) saturate(0.7)' }}
+          />
+        </motion.div>
+      )}
 
       {/* Video Background */}
       <AnimatePresence mode="wait">
