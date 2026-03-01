@@ -156,10 +156,27 @@ export function buildShareText(
   solveTime: string,
   streak: number
 ): string {
-  const streakLine = streak >= 2 ? `\n🔥 ${streak}-day streak` : ''
-  return `🔍 All Suspects — Daily Mystery #${dayNumber}
-⭐ Rank: ${rank} — ${score}/1000 pts
-⏱️ Solved in ${solveTime}${streakLine}
+  // Rank flavor text
+  const rankFlavor: Record<string, string> = {
+    S: 'Flawless. Case closed.',
+    A: 'Sharp detective work.',
+    B: 'Solid investigation.',
+    C: 'The killer almost got away.',
+    D: 'Justice served, barely.',
+    F: 'The butler still walks free.',
+  }
+  const flavor = rankFlavor[rank] ?? 'Case closed.'
+
+  // Score bar (5 blocks, filled based on score out of 1000)
+  const filled = Math.round((score / 1000) * 5)
+  const bar = '🟨'.repeat(filled) + '⬛'.repeat(5 - filled)
+
+  const streakLine = streak >= 2 ? `
+🔥 ${streak}-day streak` : ''
+
+  return `🕵️ All Suspects · Day #${dayNumber}
+${bar} ${rank} · ${score}/1000
+⏱ ${solveTime} · ${flavor}${streakLine}
 allsuspects.slateworks.io`
 }
 
