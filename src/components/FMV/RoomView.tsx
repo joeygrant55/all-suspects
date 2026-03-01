@@ -36,7 +36,17 @@ const ROOM_ATMOSPHERES: Record<string, { description: string; mood: string }> = 
   },
 }
 
-// Placeholder for room background colors (will be replaced with actual images/video)
+// Room background images (noir-style, pre-generated)
+const ROOM_IMAGES: Record<string, string> = {
+  parlor: '/rooms/parlor.webp',
+  study: '/rooms/study.webp',
+  'dining-room': '/rooms/library.webp',
+  hallway: '/rooms/servants.webp',
+  kitchen: '/rooms/kitchen.webp',
+  garden: '/rooms/garden.webp',
+}
+
+// Fallback gradient colors
 const ROOM_COLORS: Record<string, string> = {
   parlor: 'linear-gradient(180deg, #2a1a1a 0%, #1a0a0a 100%)',
   study: 'linear-gradient(180deg, #1a2a1a 0%, #0a1a0a 100%)',
@@ -54,19 +64,27 @@ export function RoomView({ onCharacterSelect, onReturnToMap }: RoomViewProps) {
 
   return (
     <div className="fixed inset-0 bg-noir-black">
-      {/* Room background */}
+      {/* Room background — image with gradient fallback */}
       <div
         className="absolute inset-0"
         style={{
           background: ROOM_COLORS[currentRoom] || ROOM_COLORS.parlor,
         }}
       >
+        {ROOM_IMAGES[currentRoom] && (
+          <img
+            src={ROOM_IMAGES[currentRoom]}
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{ opacity: 0.55, filter: 'sepia(0.4) brightness(0.55) contrast(1.1)' }}
+          />
+        )}
         {/* Vignette overlay */}
         <div
           className="absolute inset-0"
           style={{
             background:
-              'radial-gradient(ellipse at center, transparent 0%, rgba(10,10,10,0.6) 70%, rgba(10,10,10,0.9) 100%)',
+              'radial-gradient(ellipse at center, transparent 0%, rgba(10,10,10,0.55) 65%, rgba(10,10,10,0.85) 100%)',
           }}
         />
       </div>
