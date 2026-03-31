@@ -110,9 +110,9 @@ export function ChatPanel() {
   }
 
   return (
-    <div className="flex flex-1 flex-col">
+    <div className="flex min-h-0 flex-1 flex-col">
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="min-h-0 flex-1 overflow-y-auto p-6">
         <div className="mx-auto flex max-w-2xl flex-col gap-6">
           {messages.map((msg) => {
             if (msg.role === 'user') {

@@ -18,7 +18,7 @@ export default function App() {
       </aside>
 
       {/* Main chat area */}
-      <main className="flex min-w-0 flex-1 flex-col">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         {/* Mobile header */}
         <div className="border-b border-[#1a1a1a] px-4 py-3 lg:hidden">
           <h1 className="font-serif text-lg font-bold text-[var(--accent)]">All Saints</h1>
