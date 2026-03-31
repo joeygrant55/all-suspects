@@ -1,116 +1,115 @@
-import { useState, useRef, useEffect, useContext, useMemo } from 'react'
-import { useGameStore } from '../../game/state'
+import { useContext, useEffect, useMemo, useState } from 'react'
 import { sendMessage, healthCheck } from '../../api/client'
+import { useGameStore } from '../../game/state'
 import { VoiceContext } from '../../hooks/useVoice'
-import { EVIDENCE_DIALOGUE_UNLOCKS } from '../../data/evidence'
-import { CHARACTER_GREETINGS } from '../../../mysteries/ashford-affair/characters'
+import { ConversationThread } from './ConversationThread'
+
+const CHARACTER_GREETINGS: Record<string, string> = {
+  victoria: 'The house has been chaos since midnight. Ask what you need, detective.',
+  thomas: 'If you are here to blame me, at least have the decency to ask directly.',
+  eleanor: 'I kept the household records. If there is a pattern, I probably saw it first.',
+  marcus: 'I deal in facts, not gossip. Keep your questions precise.',
+  lillian: 'Secrets travel faster than champagne in this house. Choose your topic carefully.',
+  james: 'I have served this family long enough to know what should not be spoken aloud.',
+}
+
+const BASE_QUESTIONS: Record<string, string[]> = {
+  victoria: [
+    'Where were you when the disturbance began?',
+    'Who in this house had the most to gain tonight?',
+    'What changed in the family this week?',
+  ],
+  thomas: [
+    'Who can confirm your movements tonight?',
+    'What was your last argument with the family about?',
+    'Why should I trust your version first?',
+  ],
+  eleanor: [
+    'Which documents mattered most tonight?',
+    'Who requested a private meeting before midnight?',
+    'What detail are the others overlooking?',
+  ],
+  marcus: [
+    'What condition was the victim in earlier this evening?',
+    'Did anyone ask you for medical help or advice tonight?',
+    'What timeline do your notes support?',
+  ],
+  lillian: [
+    'Which conversation in the house felt staged to you?',
+    'Who looked most anxious after midnight?',
+    'What did you hear that others might deny?',
+  ],
+  james: [
+    'What did the staff notice before the guests did?',
+    'Who moved through the house when they should not have?',
+    'What have you chosen not to report yet?',
+  ],
+}
 
 export function ChatPanel() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [apiConnected, setApiConnected] = useState<boolean | null>(null)
-  const [newContradiction, setNewContradiction] = useState<string | null>(null)
-  const [hasShownGreeting, setHasShownGreeting] = useState<Set<string>>(new Set())
   const [showRetry, setShowRetry] = useState(false)
   const [lastQuestion, setLastQuestion] = useState<string | null>(null)
-  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const [hasShownGreeting, setHasShownGreeting] = useState<Set<string>>(new Set())
 
-  const currentConversation = useGameStore((state) => state.currentConversation)
-  const characters = useGameStore((state) => state.characters)
+  const saints = useGameStore((state) => state.saints)
+  const currentSaintId = useGameStore((state) => state.currentSaintId)
   const messages = useGameStore((state) => state.messages)
-  const collectedEvidence = useGameStore((state) => state.collectedEvidence)
   const addMessage = useGameStore((state) => state.addMessage)
-  const addContradictions = useGameStore((state) => state.addContradictions)
-  const updateCharacterPressure = useGameStore((state) => state.updateCharacterPressure)
-  const endConversation = useGameStore((state) => state.endConversation)
+  const clearCurrentSaint = useGameStore((state) => state.clearCurrentSaint)
+  const updateSaintPressure = useGameStore((state) => state.updateSaintPressure)
 
   const voiceManager = useContext(VoiceContext)
-  const currentCharacter = characters.find((c) => c.id === currentConversation)
+  const currentSaint = saints.find((saint) => saint.id === currentSaintId) ?? null
+  const conversationMessages = messages.filter(
+    (message) => message.characterId === currentSaintId
+  )
 
-  // Generate suggested questions based on evidence and character
   const suggestedQuestions = useMemo(() => {
-    if (!currentConversation) return []
-
-    const suggestions: string[] = []
-
-    const baseQuestions: Record<string, string[]> = {
-      victoria: [
-        'Where were you when Edmund died?',
-        'How was your relationship with Edmund?',
-      ],
-      thomas: [
-        'Where were you at 11:30 PM?',
-        'Tell me about your relationship with your father.',
-      ],
-      eleanor: [
-        'What were you working on tonight?',
-        'Did you see anyone near Edmund\'s office?',
-      ],
-      marcus: [
-        'When did you last see Edmund alive?',
-        'What was Edmund\'s state of health?',
-      ],
-      lillian: [
-        'How long have you known the family?',
-        'What brought you here tonight?',
-      ],
-      james: [
-        'Walk me through your duties tonight.',
-        'Did you notice anything out of place?',
-      ],
+    if (!currentSaintId) {
+      return []
     }
 
-    const charQuestions = baseQuestions[currentConversation] || []
-    suggestions.push(...charQuestions)
+    return BASE_QUESTIONS[currentSaintId] ?? [
+      'Where were you when everything changed?',
+      'Who do you think is lying to me?',
+      'What have you left out so far?',
+    ]
+  }, [currentSaintId])
 
-    collectedEvidence.forEach((evidence) => {
-      const unlocks = EVIDENCE_DIALOGUE_UNLOCKS[evidence.source]
-      if (unlocks) {
-        unlocks.forEach((unlock) => {
-          if (unlock.characterId === currentConversation && !suggestions.includes(unlock.prompt)) {
-            suggestions.push(unlock.prompt)
-          }
-        })
-      }
-    })
-
-    return suggestions.slice(0, 4)
-  }, [currentConversation, collectedEvidence])
-
-  // Check API connection on mount
   useEffect(() => {
     healthCheck().then(setApiConnected)
   }, [])
 
-  // Show greeting when starting a new conversation
   useEffect(() => {
-    if (currentConversation && !hasShownGreeting.has(currentConversation)) {
-      const greeting = CHARACTER_GREETINGS[currentConversation]
-      if (greeting) {
-        // Add the greeting as a character message
-        addMessage({
-          role: 'character',
-          characterId: currentConversation,
-          content: greeting,
-        })
-        setHasShownGreeting(prev => new Set([...prev, currentConversation]))
-      }
+    if (!currentSaintId || hasShownGreeting.has(currentSaintId)) {
+      return
     }
-  }, [currentConversation, hasShownGreeting, addMessage])
 
-  // Filter messages for current conversation
-  const conversationMessages = messages.filter((m) => m.characterId === currentConversation)
+    const greeting = CHARACTER_GREETINGS[currentSaintId]
+    if (!greeting) {
+      return
+    }
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [conversationMessages])
+    addMessage({
+      role: 'character',
+      characterId: currentSaintId,
+      content: greeting,
+    })
+    setHasShownGreeting((previous) => new Set([...previous, currentSaintId]))
+  }, [addMessage, currentSaintId, hasShownGreeting])
 
   const sendQuestion = async (question: string, addPlayerMessage = true) => {
-    if (!currentConversation || isLoading) return
+    if (!currentSaintId || isLoading) {
+      return
+    }
 
     const trimmedQuestion = question.trim()
-    if (!trimmedQuestion) return
+    if (!trimmedQuestion) {
+      return
+    }
 
     setShowRetry(false)
     setLastQuestion(trimmedQuestion)
@@ -119,7 +118,7 @@ export function ChatPanel() {
       setInput('')
       addMessage({
         role: 'player',
-        characterId: currentConversation,
+        characterId: currentSaintId,
         content: trimmedQuestion,
       })
     }
@@ -127,234 +126,163 @@ export function ChatPanel() {
     setIsLoading(true)
 
     try {
-      const response = await sendMessage(currentConversation, trimmedQuestion)
+      const response = await sendMessage(currentSaintId, trimmedQuestion)
+
       addMessage({
         role: 'character',
-        characterId: currentConversation,
+        characterId: currentSaintId,
         content: response.message,
       })
 
-      if (response.contradictions && response.contradictions.length > 0) {
-        addContradictions(response.contradictions)
-        const firstContradiction = response.contradictions[0]
-        setNewContradiction(firstContradiction.explanation)
-        setTimeout(() => setNewContradiction(null), 6000)
-      }
-
       if (response.pressure) {
-        updateCharacterPressure(currentConversation, response.pressure)
+        updateSaintPressure(currentSaintId, response.pressure)
       }
 
       if (voiceManager?.voiceEnabled && response.message) {
-        voiceManager.speak(currentConversation, response.message)
+        await voiceManager.speak(currentSaintId, response.message)
       }
+
+      setApiConnected(true)
     } catch (error) {
-      console.error('Error:', error)
+      console.error('Error sending message:', error)
       addMessage({
         role: 'character',
-        characterId: currentConversation,
-        content: "The suspect doesn't seem to want to answer. Try again?",
+        characterId: currentSaintId,
+        content: "They're not answering right now. Try the question again in a moment.",
       })
-      setShowRetry(true)
       setApiConnected(false)
+      setShowRetry(true)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || !currentConversation || isLoading) return
-    await sendQuestion(input, true)
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
+
+    if (!input.trim() || !currentSaintId || isLoading) {
+      return
+    }
+
+    await sendQuestion(input)
   }
 
   const handleRetry = () => {
-    if (lastQuestion) {
-      sendQuestion(lastQuestion, false)
+    if (!lastQuestion) {
+      return
     }
+
+    void sendQuestion(lastQuestion, false)
   }
 
   const handleEndConversation = () => {
     voiceManager?.stop()
-    endConversation()
+    clearCurrentSaint()
   }
 
-  if (!currentConversation || !currentCharacter) {
+  if (!currentSaint) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-noir-ash p-6 bg-noir-charcoal">
-        <div className="w-20 h-20 rounded-full mb-4 flex items-center justify-center border-2 border-noir-slate bg-noir-black/50">
+      <section className="flex h-full flex-col items-center justify-center bg-noir-black/40 p-8 text-center">
+        <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-full border-2 border-noir-slate bg-noir-charcoal">
           <span className="text-4xl text-noir-gold/50">?</span>
         </div>
-        <p className="text-center mb-2 text-noir-cream/60 font-serif text-lg">Select a Suspect</p>
-        <p className="text-center text-sm text-noir-smoke">
-          Click on a character in the scene to begin questioning.
+        <h2
+          className="text-2xl text-noir-cream"
+          style={{ fontFamily: 'Georgia, "Playfair Display", serif' }}
+        >
+          Select a suspect
+        </h2>
+        <p className="mt-3 max-w-md text-sm leading-relaxed text-noir-ash">
+          Use the roster to open an interview thread. Previous exchanges stay attached to each suspect.
         </p>
         {apiConnected === false && (
-          <div className="mt-6 p-3 bg-noir-blood/20 rounded border border-noir-blood/30 text-center">
-            <p className="text-noir-blood text-sm font-medium">Server Offline</p>
-            <p className="text-xs text-noir-ash mt-1">Run: npm run server</p>
+          <div className="mt-6 rounded border border-noir-blood/40 bg-noir-blood/15 px-4 py-3 text-sm text-noir-blood">
+            API unavailable. Start the server with `npm run server`.
           </div>
         )}
-        {apiConnected === true && (
-          <div className="mt-6 text-green-500/80 text-sm flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            AI Connected
-          </div>
-        )}
-      </div>
+      </section>
     )
   }
 
+  const pressureLevel = currentSaint.pressure?.level ?? 0
+
   return (
-    <div className="h-full flex flex-col bg-noir-charcoal">
-      {/* Header with character info */}
-      <div className="px-4 py-3 border-b border-noir-slate/50 bg-gradient-to-r from-noir-black/50 to-transparent">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Character avatar */}
-            <div className="w-12 h-12 rounded-full bg-noir-slate flex items-center justify-center border-2 border-noir-gold/30">
-              <span className="text-lg font-serif text-noir-gold">
-                {currentCharacter.name.split(' ').map(n => n[0]).join('')}
-              </span>
-            </div>
-            <div>
-              <h3 className="text-noir-gold font-serif text-lg">{currentCharacter.name}</h3>
-              <p className="text-noir-smoke text-xs">{currentCharacter.role}</p>
-            </div>
+    <section className="flex h-full flex-col bg-noir-charcoal">
+      <div className="border-b border-noir-slate/60 bg-gradient-to-r from-noir-black/70 to-transparent px-5 py-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-noir-gold">Interview Active</p>
+            <h2
+              className="mt-1 text-2xl text-noir-cream"
+              style={{ fontFamily: 'Georgia, "Playfair Display", serif' }}
+            >
+              {currentSaint.name}
+            </h2>
+            <p className="text-sm text-noir-smoke">{currentSaint.role}</p>
           </div>
 
-          <div className="flex items-center gap-3">
-            {/* Pressure indicator */}
-            {currentCharacter.pressure && currentCharacter.pressure.level > 0 && (
-              <div className="flex flex-col items-end" title={`Pressure: ${Math.round(currentCharacter.pressure.level)}%`}>
-                <span className="text-[10px] text-noir-smoke mb-1">PRESSURE</span>
-                <div className="w-20 h-2 bg-noir-slate/50 rounded-full overflow-hidden">
-                  <div
-                    className={`h-full transition-all duration-500 ${
-                      currentCharacter.pressure.level >= 80 ? 'bg-noir-blood animate-pulse' :
-                      currentCharacter.pressure.level >= 50 ? 'bg-amber-500' :
-                      'bg-noir-gold/60'
-                    }`}
-                    style={{ width: `${currentCharacter.pressure.level}%` }}
-                  />
-                </div>
+          <div className="flex items-center gap-4">
+            <div className="min-w-28 text-right">
+              <p className="text-[10px] uppercase tracking-[0.2em] text-noir-smoke">Pressure</p>
+              <div className="mt-1 h-2 overflow-hidden rounded-full bg-noir-slate/60">
+                <div
+                  className={`h-full transition-all ${
+                    pressureLevel >= 75
+                      ? 'bg-noir-blood'
+                      : pressureLevel >= 45
+                        ? 'bg-amber-500'
+                        : 'bg-noir-gold/70'
+                  }`}
+                  style={{ width: `${pressureLevel}%` }}
+                />
               </div>
-            )}
+            </div>
 
             <button
               onClick={handleEndConversation}
-              className="px-3 py-1.5 text-xs border border-noir-slate text-noir-smoke hover:border-noir-gold hover:text-noir-gold transition-colors rounded"
+              className="rounded border border-noir-slate px-3 py-2 text-xs tracking-[0.18em] text-noir-smoke transition-colors hover:border-noir-gold hover:text-noir-gold"
             >
-              END
+              CLOSE
             </button>
           </div>
         </div>
       </div>
 
-      {/* API Status */}
       {apiConnected === false && (
-        <div className="px-4 py-2 bg-noir-blood/20 text-noir-blood text-sm flex items-center gap-2 border-b border-noir-blood/30">
-          <span className="w-2 h-2 bg-noir-blood rounded-full" />
-          Server offline - run `npm run server`
+        <div className="border-b border-noir-blood/30 bg-noir-blood/15 px-5 py-3 text-sm text-noir-blood">
+          API unavailable. Responses will fail until `npm run server` is running.
         </div>
       )}
 
-      {/* Contradiction notification */}
-      {newContradiction && (
-        <div className="px-4 py-3 bg-noir-blood/20 border-b border-noir-blood/50 animate-pulse">
-          <div className="flex items-start gap-3">
-            <span className="text-noir-blood text-xl">⚠</span>
-            <div className="flex-1">
-              <p className="text-xs font-bold text-noir-blood uppercase tracking-wider mb-1">
-                Contradiction Detected
-              </p>
-              <p className="text-sm text-noir-cream">{newContradiction}</p>
-            </div>
-            <button
-              onClick={() => setNewContradiction(null)}
-              className="text-noir-smoke hover:text-noir-cream"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      )}
+      <ConversationThread
+        messages={conversationMessages}
+        characterName={currentSaint.name}
+        isLoading={isLoading}
+      />
 
-      {/* Messages */}
-      <div
-        className="flex-1 overflow-y-auto p-4 space-y-4"
-        onWheel={(e) => e.stopPropagation()}
-      >
-        {conversationMessages.map((message) => (
-          <div
-            key={message.id}
-            className={`${message.role === 'player' ? 'flex justify-end' : ''}`}
+      {showRetry && (
+        <div className="border-t border-noir-slate/40 bg-noir-black/30 px-5 py-3">
+          <p className="text-sm text-noir-blood">The last request failed. Retry the same question when ready.</p>
+          <button
+            type="button"
+            onClick={handleRetry}
+            className="mt-3 rounded border border-noir-gold/40 px-4 py-2 text-xs tracking-[0.18em] text-noir-gold transition-colors hover:bg-noir-gold/10"
           >
-            {message.role === 'player' ? (
-              /* Player message - right aligned */
-              <div className="max-w-[85%]">
-                <div className="px-4 py-2.5 bg-noir-gold/20 border border-noir-gold/40 rounded-lg rounded-br-sm">
-                  <p className="text-sm text-noir-cream">{message.content}</p>
-                </div>
-              </div>
-            ) : (
-              /* Character message - left aligned */
-              <div className="max-w-[90%]">
-                <div className="px-4 py-3 bg-noir-slate/40 border border-noir-slate/60 rounded-lg rounded-bl-sm">
-                  <p className="text-sm text-noir-cream whitespace-pre-wrap leading-relaxed">
-                    {message.content}
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        ))}
+            Retry Question
+          </button>
+        </div>
+      )}
 
-        {isLoading && (
-          <div className="max-w-[85%]">
-            <div className="px-4 py-3 bg-noir-slate/40 border border-noir-slate/60 rounded-lg rounded-bl-sm">
-              <div className="flex items-center gap-2 text-noir-ash">
-                <div className="flex gap-1">
-                  <span className="w-2 h-2 bg-noir-gold/50 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 bg-noir-gold/50 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 bg-noir-gold/50 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-                <span className="text-sm italic">{currentCharacter.name} is thinking...</span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {showRetry && (
-          <div className="px-4 py-2">
-            <p className="text-center text-noir-blood text-sm">The suspect doesn't seem to want to answer. Try again?</p>
-            <div className="text-center mt-2">
-              <button
-                type="button"
-                onClick={handleRetry}
-                className="px-4 py-1.5 text-sm border border-noir-gold/50 text-noir-gold rounded hover:bg-noir-gold/20 transition-colors"
-              >
-                Retry
-              </button>
-            </div>
-          </div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Suggested questions */}
       {suggestedQuestions.length > 0 && !isLoading && (
-        <div
-          className="px-4 py-2 border-t border-noir-slate/30 bg-noir-black/30"
-          onWheel={(e) => e.stopPropagation()}
-        >
-          <p className="text-[10px] text-noir-smoke uppercase tracking-wider mb-2">Suggested Questions</p>
+        <div className="border-t border-noir-slate/40 bg-noir-black/20 px-5 py-3">
+          <p className="mb-2 text-[10px] uppercase tracking-[0.22em] text-noir-smoke">Suggested Angles</p>
           <div className="flex flex-wrap gap-2">
-            {suggestedQuestions.map((question, index) => (
+            {suggestedQuestions.map((question) => (
               <button
-                key={index}
+                key={question}
+                type="button"
                 onClick={() => setInput(question)}
-                className="px-3 py-1.5 text-xs bg-noir-slate/40 hover:bg-noir-gold/20 text-noir-cream/80 hover:text-noir-cream rounded border border-noir-slate/50 hover:border-noir-gold/50 transition-all"
+                className="rounded border border-noir-slate/60 bg-noir-slate/20 px-3 py-2 text-xs text-noir-cream transition-colors hover:border-noir-gold/50 hover:bg-noir-gold/10"
               >
                 {question}
               </button>
@@ -363,26 +291,26 @@ export function ChatPanel() {
         </div>
       )}
 
-      {/* Input */}
-      <form onSubmit={handleSubmit} className="p-4 border-t border-noir-slate/50 bg-noir-black/30">
+      <form onSubmit={handleSubmit} className="border-t border-noir-slate/60 bg-noir-black/30 p-5">
         <div className="flex gap-3">
           <input
             type="text"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask your question..."
+            onChange={(event) => setInput(event.target.value)}
+            placeholder={`Question ${currentSaint.name.split(' ')[0]}...`}
             disabled={isLoading}
-            className="flex-1 bg-noir-black/60 text-noir-cream placeholder-noir-smoke/50 px-4 py-3 text-sm rounded-lg border border-noir-slate/50 focus:outline-none focus:border-noir-gold transition-colors"
+            className="flex-1 rounded border border-noir-slate/60 bg-noir-black/60 px-4 py-3 text-sm text-noir-cream placeholder:text-noir-smoke/60 focus:border-noir-gold focus:outline-none"
           />
           <button
             type="submit"
             disabled={isLoading || !input.trim()}
-            className="px-6 py-3 bg-noir-gold text-noir-black rounded-lg hover:bg-noir-gold/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all font-medium text-sm"
+            className="rounded bg-noir-gold px-6 py-3 text-sm tracking-[0.16em] text-noir-black transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ fontFamily: 'Georgia, serif' }}
           >
             ASK
           </button>
         </div>
       </form>
-    </div>
+    </section>
   )
 }

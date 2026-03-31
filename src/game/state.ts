@@ -1,5 +1,4 @@
 import { create } from 'zustand'
-import type { LoadedMystery } from './mysteryState'
 
 export interface PressureLevel {
   level: number
@@ -8,39 +7,14 @@ export interface PressureLevel {
   contradictionsExposed: number
 }
 
-export interface Character {
+export interface Saint {
   id: string
   name: string
   role: string
-  location: string
-  portrait?: string
   pressure?: PressureLevel
 }
 
-export interface Evidence {
-  id: string
-  type: 'testimony' | 'contradiction' | 'physical' | 'document'
-  description: string
-  source: string
-  timestamp: number
-}
-
-export interface CaseTheory {
-  suspectId: string | null
-  method: string | null
-  motive: string | null
-  supportingEvidence: string[]
-}
-
-export interface StatementRecord {
-  id: string
-  characterId: string
-  characterName: string
-  topic: string
-  content: string
-  timestamp: number
-  playerQuestion: string
-}
+export type Character = Saint
 
 export interface Contradiction {
   id: string
@@ -69,143 +43,49 @@ export interface Message {
   timestamp: number
 }
 
-export interface Psychology {
-  pressureLevel: 1 | 2 | 3 | 4 | 5
-  isLying: boolean
-  nervousTicks: string[]
-}
-
-export type GameScreen = 'intro' | 'map' | 'room' | 'interrogation'
+export type GameMode = 'landing' | 'investigation'
 
 export interface GameState {
-  // UI State
-  currentScreen: GameScreen
-  showIntro: boolean
-
-  // World
-  currentRoom: string
-  rooms: string[]
-  lastViewMode: 'suspects' | 'manor' | null
-
-  // Characters
-  characters: Character[]
-  currentConversation: string | null
-
-  // Conversation
+  saints: Saint[]
+  currentSaintId: string | null
   messages: Message[]
-
-  // Evidence
-  collectedEvidence: Evidence[]
-  discoveredEvidenceIds: string[] // Evidence IDs that have been examined
-  contradictions: Contradiction[]
-  statements: StatementRecord[]
-  newEvidenceCount: number // Count of unviewed evidence
-  hasSeenEvidenceBoard: boolean // Whether player has opened the board
-  caseTheory: CaseTheory
-
-  // Vision
-  detectiveVisionActive: boolean
-
-  // Progress
-  accusationUnlocked: boolean
-  gameComplete: boolean
-  gameStarted: boolean
-  tutorialSeen: boolean
-  accusationAttempts: number
-  lastWrongAccusation: string | null // Character ID of last wrong guess
-
-  // Psychology (for cinematic overlay)
-  psychology: Psychology
-
-  // Actions
-  setCurrentScreen: (screen: GameScreen) => void
-  completeIntro: () => void
-  setCurrentRoom: (room: string) => void
-  setLastViewMode: (mode: 'suspects' | 'manor') => void
-  startConversation: (characterId: string) => void
-  endConversation: () => void
+  mode: GameMode
+  setMode: (mode: GameMode) => void
+  selectSaint: (saintId: string) => void
+  clearCurrentSaint: () => void
   addMessage: (message: Omit<Message, 'id' | 'timestamp'>) => void
-  addEvidence: (evidence: Omit<Evidence, 'id' | 'timestamp'>) => void
-  markEvidenceDiscovered: (evidenceId: string) => void
-  addContradiction: (contradiction: Contradiction) => void
-  addContradictions: (contradictions: Contradiction[]) => void
-  addStatement: (statement: Omit<StatementRecord, 'id' | 'timestamp'>) => void
-  updateCharacterPressure: (characterId: string, pressure: PressureLevel) => void
-  updatePsychology: (updates: Partial<Psychology>) => void
-  resetPsychology: () => void
-  resetGame: () => void
-  startGame: () => void
-  setTutorialSeen: () => void
-  recordAccusationAttempt: (characterId: string, isCorrect: boolean) => void
-  isEvidenceDiscovered: (evidenceId: string) => boolean
-  isEvidenceCollected: (evidenceId: string) => boolean
-  markEvidenceBoardViewed: () => void
-  setCaseTheory: (theory: Partial<CaseTheory>) => void
-  getCaseStrength: () => number
-  initializeFromMystery: (mystery: LoadedMystery) => void
-  toggleDetectiveVision: () => void
+  updateSaintPressure: (saintId: string, pressure: PressureLevel) => void
+  resetInvestigation: () => void
 }
 
-const ROOMS = ['parlor', 'study', 'dining-room', 'garden', 'kitchen', 'hallway']
-
-const INITIAL_CHARACTERS: Character[] = [
-  { id: 'victoria', name: 'Victoria Ashford', role: 'Wife of the deceased', location: 'parlor' },
-  { id: 'thomas', name: 'Thomas Ashford', role: 'Son of the deceased', location: 'study' },
-  { id: 'eleanor', name: 'Eleanor Crane', role: 'Secretary', location: 'hallway' },
-  { id: 'marcus', name: 'Dr. Marcus Webb', role: 'Family physician', location: 'dining-room' },
-  { id: 'lillian', name: 'Lillian Moore', role: 'Old friend of the family', location: 'garden' },
-  { id: 'james', name: 'James', role: 'The butler', location: 'kitchen' },
+const INITIAL_SAINTS: Saint[] = [
+  { id: 'victoria', name: 'Victoria Ashford', role: 'Family Matriarch' },
+  { id: 'thomas', name: 'Thomas Ashford', role: 'Prodigal Heir' },
+  { id: 'eleanor', name: 'Eleanor Crane', role: 'Private Secretary' },
+  { id: 'marcus', name: 'Dr. Marcus Webb', role: 'House Physician' },
+  { id: 'lillian', name: 'Lillian Moore', role: 'Society Guest' },
+  { id: 'james', name: 'James Whitmore', role: 'Butler' },
 ]
 
-const INITIAL_PSYCHOLOGY: Psychology = {
-  pressureLevel: 1,
-  isLying: false,
-  nervousTicks: [],
-}
+const createInitialState = () => ({
+  saints: INITIAL_SAINTS,
+  currentSaintId: null,
+  messages: [] as Message[],
+  mode: 'landing' as GameMode,
+})
 
-export const useGameStore = create<GameState>((set, get) => ({
-  // Initial state
-  currentScreen: 'intro',
-  showIntro: true,
-  currentRoom: 'parlor',
-  rooms: ROOMS,
-  lastViewMode: null,
-  characters: INITIAL_CHARACTERS,
-  currentConversation: null,
-  messages: [],
-  collectedEvidence: [],
-  discoveredEvidenceIds: [],
-  contradictions: [],
-  statements: [],
-  newEvidenceCount: 0,
-  hasSeenEvidenceBoard: false,
-  detectiveVisionActive: false,
-  caseTheory: {
-    suspectId: null,
-    method: null,
-    motive: null,
-    supportingEvidence: [],
-  },
-  accusationUnlocked: false,
-  gameComplete: false,
-  gameStarted: false,
-  tutorialSeen: false,
-  accusationAttempts: 0,
-  lastWrongAccusation: null,
-  psychology: INITIAL_PSYCHOLOGY,
+export const useGameStore = create<GameState>((set) => ({
+  ...createInitialState(),
 
-  // Actions
-  setCurrentScreen: (screen) => set({ currentScreen: screen }),
+  setMode: (mode) => set({ mode }),
 
-  completeIntro: () => set({ showIntro: false, currentScreen: 'map' }),
+  selectSaint: (saintId) =>
+    set({
+      currentSaintId: saintId,
+      mode: 'investigation',
+    }),
 
-  setCurrentRoom: (room) => set({ currentRoom: room, currentScreen: 'room', lastViewMode: 'manor' }),
-
-  setLastViewMode: (mode) => set({ lastViewMode: mode }),
-
-  startConversation: (characterId) => set({ currentConversation: characterId, currentScreen: 'interrogation' }),
-
-  endConversation: () => set({ currentConversation: null, currentScreen: 'map' }),
+  clearCurrentSaint: () => set({ currentSaintId: null }),
 
   addMessage: (message) =>
     set((state) => ({
@@ -219,220 +99,12 @@ export const useGameStore = create<GameState>((set, get) => ({
       ],
     })),
 
-  addEvidence: (evidence) =>
-    set((state) => {
-      // Don't add duplicate evidence
-      if (state.collectedEvidence.some((e) => e.source === evidence.source)) {
-        return state
-      }
-      const newEvidence = {
-        ...evidence,
-        id: crypto.randomUUID(),
-        timestamp: Date.now(),
-      }
-      const updatedEvidence = [...state.collectedEvidence, newEvidence]
-      // Unlock accusation at 5 pieces of evidence (counting both room + interrogation evidence)
-      const totalEvidence = updatedEvidence.length + state.discoveredEvidenceIds.length
-      const accusationUnlocked = totalEvidence >= 5
-      return {
-        collectedEvidence: updatedEvidence,
-        accusationUnlocked,
-        newEvidenceCount: state.newEvidenceCount + 1
-      }
-    }),
-
-  markEvidenceDiscovered: (evidenceId) =>
-    set((state) => {
-      if (state.discoveredEvidenceIds.includes(evidenceId)) {
-        return state
-      }
-      const updatedDiscovered = [...state.discoveredEvidenceIds, evidenceId]
-      // Unlock accusation at 5 pieces of evidence (counting both room + interrogation evidence)
-      const totalEvidence = updatedDiscovered.length + state.collectedEvidence.length
-      const accusationUnlocked = totalEvidence >= 5
-      return {
-        discoveredEvidenceIds: updatedDiscovered,
-        accusationUnlocked
-      }
-    }),
-
-  addContradiction: (contradiction) =>
-    set((state) => {
-      // Don't add duplicate contradictions
-      if (state.contradictions.some((c) => c.id === contradiction.id)) {
-        return state
-      }
-      return {
-        contradictions: [...state.contradictions, contradiction],
-      }
-    }),
-
-  addContradictions: (contradictions) =>
-    set((state) => {
-      // Filter out duplicates
-      const newContradictions = contradictions.filter(
-        (c) => !state.contradictions.some((existing) => existing.id === c.id)
-      )
-      if (newContradictions.length === 0) {
-        return state
-      }
-      return {
-        contradictions: [...state.contradictions, ...newContradictions],
-      }
-    }),
-
-  addStatement: (statement) =>
-    set((state) => {
-      const duplicates = state.statements.some(
-        (s) =>
-          s.characterId === statement.characterId &&
-          s.content === statement.content
-      )
-      if (duplicates) {
-        return state
-      }
-
-      return {
-        statements: [
-          ...state.statements,
-          {
-            ...statement,
-            id: crypto.randomUUID(),
-            timestamp: Date.now(),
-          },
-        ],
-      }
-    }),
-
-  updateCharacterPressure: (characterId, pressure) =>
+  updateSaintPressure: (saintId, pressure) =>
     set((state) => ({
-      characters: state.characters.map((c) =>
-        c.id === characterId ? { ...c, pressure } : c
+      saints: state.saints.map((saint) =>
+        saint.id === saintId ? { ...saint, pressure } : saint
       ),
     })),
 
-  updatePsychology: (updates) =>
-    set((state) => ({
-      psychology: {
-        ...state.psychology,
-        ...updates,
-        // Clamp pressure level between 1 and 5
-        pressureLevel: updates.pressureLevel !== undefined
-          ? Math.max(1, Math.min(5, updates.pressureLevel)) as 1 | 2 | 3 | 4 | 5
-          : state.psychology.pressureLevel,
-      },
-    })),
-
-  resetPsychology: () =>
-    set({ psychology: INITIAL_PSYCHOLOGY }),
-
-  resetGame: () =>
-    set({
-      currentScreen: 'intro',
-      showIntro: true,
-      currentRoom: 'parlor',
-      lastViewMode: null,
-      characters: INITIAL_CHARACTERS,
-      currentConversation: null,
-      messages: [],
-      collectedEvidence: [],
-      discoveredEvidenceIds: [],
-      contradictions: [],
-      statements: [],
-      newEvidenceCount: 0,
-      hasSeenEvidenceBoard: false,
-      detectiveVisionActive: false,
-      caseTheory: {
-        suspectId: null,
-        method: null,
-        motive: null,
-        supportingEvidence: [],
-      },
-      accusationUnlocked: false,
-      gameComplete: false,
-      gameStarted: false,
-      accusationAttempts: 0,
-      lastWrongAccusation: null,
-      psychology: INITIAL_PSYCHOLOGY,
-    }),
-
-  startGame: () => set({ gameStarted: true }),
-
-  setTutorialSeen: () => set({ tutorialSeen: true }),
-
-  recordAccusationAttempt: (characterId, isCorrect) =>
-    set((state) => ({
-      accusationAttempts: state.accusationAttempts + 1,
-      lastWrongAccusation: isCorrect ? null : characterId,
-      gameComplete: isCorrect,
-    })),
-
-  isEvidenceDiscovered: (evidenceId) => get().discoveredEvidenceIds.includes(evidenceId),
-
-  isEvidenceCollected: (evidenceId) => get().collectedEvidence.some((e) => e.source === evidenceId),
-
-  markEvidenceBoardViewed: () =>
-    set({ newEvidenceCount: 0, hasSeenEvidenceBoard: true }),
-
-  setCaseTheory: (theory) =>
-    set((state) => ({
-      caseTheory: {
-        ...state.caseTheory,
-        ...theory,
-        supportingEvidence: theory.supportingEvidence ?? state.caseTheory.supportingEvidence,
-      },
-    })),
-
-  getCaseStrength: () => {
-    const state = get()
-    const evidenceScore = Math.min(45, state.collectedEvidence.length * 10)
-    const contradictionScore = Math.min(25, state.contradictions.length * 8)
-    const questionedChars = new Set(
-      state.messages
-        .filter((message) => message.role === 'player' && message.characterId)
-        .map((message) => message.characterId)
-    ).size
-    const interrogationScore = Math.min(30, questionedChars * 8)
-
-    return Math.round(evidenceScore + contradictionScore + interrogationScore)
-  },
-
-  initializeFromMystery: (mystery) =>
-    set({
-      // Convert mystery characters to game characters
-      characters: mystery.characters.map((c) => ({
-        id: c.id,
-        name: c.name,
-        role: c.role,
-        location: mystery.rooms[0] || 'parlor', // Default to first room
-      })),
-      rooms: mystery.rooms,
-      currentRoom: mystery.rooms[0] || 'parlor',
-      // Reset other state for a new game
-      currentConversation: null,
-      messages: [],
-      collectedEvidence: [],
-      discoveredEvidenceIds: [],
-      contradictions: [],
-      statements: [],
-      newEvidenceCount: 0,
-      hasSeenEvidenceBoard: false,
-      detectiveVisionActive: false,
-      caseTheory: {
-        suspectId: null,
-        method: null,
-        motive: null,
-        supportingEvidence: [],
-      },
-      accusationUnlocked: false,
-      gameComplete: false,
-      accusationAttempts: 0,
-      lastWrongAccusation: null,
-      psychology: INITIAL_PSYCHOLOGY,
-    }),
-
-  toggleDetectiveVision: () =>
-    set((state) => ({
-      detectiveVisionActive: !state.detectiveVisionActive,
-    })),
+  resetInvestigation: () => set(createInitialState()),
 }))
