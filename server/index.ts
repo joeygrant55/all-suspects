@@ -51,6 +51,19 @@ app.post('/api/ask', async (req, res) => {
         .json({ error: 'mode must be either "single" or "council"' })
     }
 
+    // Fast path: saint already selected — skip orchestrator entirely
+    if (preferredSaint && mode !== 'council') {
+      const saint = getSaint(preferredSaint)
+      if (!saint) {
+        return res.status(404).json({ error: `Saint not found: ${preferredSaint}` })
+      }
+      const response = await chat(preferredSaint, message, sessionId)
+      return res.json({
+        mode: 'single',
+        saints: [{ saintId: preferredSaint, name: saint.name, response }],
+      })
+    }
+
     const response = await askDirector(message, sessionId, { preferredSaint, mode })
     return res.json(response)
   } catch (error) {
