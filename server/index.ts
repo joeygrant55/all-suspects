@@ -2,6 +2,7 @@ import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import { chat } from './agents/saintAgent.js'
+import { askDirector } from './agents/orchestrator.js'
 import { getSaint, listSaints } from './agents/saintRegistry.js'
 
 const app = express()
@@ -25,6 +26,40 @@ app.get('/api/saints/:id', (req, res) => {
   }
 
   return res.json(saint)
+})
+
+app.post('/api/ask', async (req, res) => {
+  try {
+    const { message, sessionId, preferredSaint, mode } = req.body ?? {}
+
+    if (
+      typeof message !== 'string' ||
+      typeof sessionId !== 'string' ||
+      !message.trim() ||
+      !sessionId.trim()
+    ) {
+      return res.status(400).json({ error: 'Missing message or sessionId' })
+    }
+
+    if (preferredSaint !== undefined && typeof preferredSaint !== 'string') {
+      return res.status(400).json({ error: 'preferredSaint must be a string' })
+    }
+
+    if (mode !== undefined && mode !== 'single' && mode !== 'council') {
+      return res
+        .status(400)
+        .json({ error: 'mode must be either "single" or "council"' })
+    }
+
+    const response = await askDirector(message, sessionId, { preferredSaint, mode })
+    return res.json(response)
+  } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : 'Failed to process director request'
+    const statusCode = errorMessage.startsWith('Saint not found:') ? 404 : 500
+
+    return res.status(statusCode).json({ error: errorMessage })
+  }
 })
 
 app.post('/api/chat', async (req, res) => {
