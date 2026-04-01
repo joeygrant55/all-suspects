@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { buildApiUrl } from '../api/client'
 
 const VOICE_PREFERENCE_KEY = 'all-saints-voice-enabled'
+const VOICE_STATUS_TIMEOUT_MS = 8_000
+const VOICE_REQUEST_TIMEOUT_MS = 20_000
 
 interface VoiceStatusResponse {
   configured: boolean
@@ -41,6 +43,15 @@ function getInitialVoicePreference(): boolean {
 
   const storedPreference = window.localStorage.getItem(VOICE_PREFERENCE_KEY)
   return storedPreference !== 'false'
+}
+
+function browserSupportsMpegPlayback(): boolean {
+  if (typeof document === 'undefined') {
+    return true
+  }
+
+  const audio = document.createElement('audio')
+  return audio.canPlayType('audio/mpeg') !== ''
 }
 
 async function getVoiceErrorMessage(response: Response): Promise<string> {
@@ -95,6 +106,20 @@ export function useVoice(): VoiceManager {
     URL.revokeObjectURL(audioUrl)
   }, [])
 
+  const disableVoice = useCallback((statusMessage: string) => {
+    setState((currentState) => ({
+      ...currentState,
+      isPlaying: false,
+      isLoading: false,
+      isChecking: false,
+      isConfigured: false,
+      voiceEnabled: false,
+      statusMessage,
+      error: null,
+      activeUtteranceId: null,
+    }))
+  }, [])
+
   const resetAudioElement = useCallback(() => {
     const audio = audioRef.current
     if (!audio) {
@@ -130,28 +155,48 @@ export function useVoice(): VoiceManager {
       error: null,
     }))
 
+    const controller = new AbortController()
+    let timedOut = false
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, VOICE_STATUS_TIMEOUT_MS)
+
     try {
-      const response = await fetch(buildApiUrl('/api/voice/status'))
+      const response = await fetch(buildApiUrl('/api/voice/status'), {
+        signal: controller.signal,
+      })
       if (!response.ok) {
         throw new Error(await getVoiceErrorMessage(response))
       }
 
       const data = (await response.json()) as VoiceStatusResponse
+      const isPlayable = browserSupportsMpegPlayback()
+      const isConfigured = data.configured && isPlayable
+      const statusMessage = isPlayable
+        ? data.message
+        : 'Voice playback is unavailable in this browser.'
+
       setState((currentState) => ({
         ...currentState,
         isChecking: false,
-        isConfigured: data.configured,
-        statusMessage: data.message,
+        isConfigured,
+        voiceEnabled: isConfigured ? currentState.voiceEnabled : false,
+        statusMessage,
       }))
-    } catch (error) {
+    } catch {
       setState((currentState) => ({
         ...currentState,
         isChecking: false,
         isConfigured: false,
-        statusMessage: 'Voice playback is unavailable.',
-        error:
-          error instanceof Error ? error.message : 'Unable to check voice availability.',
+        voiceEnabled: false,
+        statusMessage: timedOut
+          ? 'Voice playback is unavailable right now.'
+          : 'Voice playback is unavailable.',
+        error: null,
       }))
+    } finally {
+      window.clearTimeout(timeoutId)
     }
   }, [])
 
@@ -181,13 +226,7 @@ export function useVoice(): VoiceManager {
       resetAudioElement()
       revokeAudioUrl(audioUrl)
 
-      setState((currentState) => ({
-        ...currentState,
-        isPlaying: false,
-        isLoading: false,
-        activeUtteranceId: null,
-        error: 'Audio playback failed.',
-      }))
+      disableVoice('Voice playback is unavailable on this device right now.')
     }
 
     audio.addEventListener('ended', handleEnded)
@@ -207,7 +246,7 @@ export function useVoice(): VoiceManager {
       audioRef.current = null
       revokeAudioUrl(audioUrl)
     }
-  }, [detachAudioUrl, refreshStatus, resetAudioElement, revokeAudioUrl])
+  }, [detachAudioUrl, disableVoice, refreshStatus, resetAudioElement, revokeAudioUrl])
 
   const speak = useCallback(
     async (saintId: string, text: string, utteranceId?: string) => {
@@ -238,6 +277,12 @@ export function useVoice(): VoiceManager {
         activeUtteranceId: utteranceId ?? saintId,
       }))
 
+      let timedOut = false
+      const timeoutId = window.setTimeout(() => {
+        timedOut = true
+        abortControllerRef.current?.abort()
+      }, VOICE_REQUEST_TIMEOUT_MS)
+
       try {
         abortControllerRef.current = new AbortController()
 
@@ -254,7 +299,16 @@ export function useVoice(): VoiceManager {
           throw new Error(await getVoiceErrorMessage(response))
         }
 
+        const contentType = response.headers.get('content-type') ?? ''
+        if (!contentType.toLowerCase().startsWith('audio/')) {
+          throw new Error(await getVoiceErrorMessage(response))
+        }
+
         const audioBlob = await response.blob()
+        if (audioBlob.size === 0) {
+          throw new Error('Voice playback is unavailable right now.')
+        }
+
         const audioUrl = URL.createObjectURL(audioBlob)
         audioUrlRef.current = audioUrl
 
@@ -273,26 +327,37 @@ export function useVoice(): VoiceManager {
         revokeAudioUrl(audioUrl)
 
         if (error instanceof Error && error.name === 'AbortError') {
-          setState((currentState) => ({
-            ...currentState,
-            isLoading: false,
-          }))
+          if (timedOut) {
+            disableVoice('Voice playback is unavailable right now.')
+          } else {
+            setState((currentState) => ({
+              ...currentState,
+              isLoading: false,
+            }))
+          }
+
           return
         }
 
-        setState((currentState) => ({
-          ...currentState,
-          isPlaying: false,
-          isLoading: false,
-          activeUtteranceId: null,
-          error:
-            error instanceof Error ? error.message : 'Voice playback failed.',
-        }))
+        disableVoice(
+          error instanceof Error && error.message.trim()
+            ? error.message.trim()
+            : 'Voice playback is unavailable right now.'
+        )
       } finally {
+        window.clearTimeout(timeoutId)
         abortControllerRef.current = null
       }
     },
-    [detachAudioUrl, resetAudioElement, revokeAudioUrl, state.isConfigured, state.voiceEnabled, stop]
+    [
+      detachAudioUrl,
+      disableVoice,
+      resetAudioElement,
+      revokeAudioUrl,
+      state.isConfigured,
+      state.voiceEnabled,
+      stop,
+    ]
   )
 
   const toggleVoice = useCallback(() => {

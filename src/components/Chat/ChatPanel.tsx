@@ -26,6 +26,8 @@ interface ApiErrorResponse {
   error?: string
 }
 
+const ASK_REQUEST_TIMEOUT_MS = 45_000
+
 const SAINT_DISPLAY_NAMES: Record<string, string> = {
   aquinas: 'St. Thomas Aquinas',
   augustine: 'St. Augustine',
@@ -72,6 +74,10 @@ function getPromptSuggestions(saintId: string): string[] {
     'How do I grow in virtue in ordinary life?',
     'What should I do when I feel spiritually stuck?',
   ]
+}
+
+function getAskTimeoutMessage(saintName: string): string {
+  return `${saintName} took too long to reply. Please try again.`
 }
 
 async function getApiErrorMessage(response: Response): Promise<string> {
@@ -233,10 +239,18 @@ export function ChatPanel() {
     setLoading(true)
     setChatError(null)
 
+    const controller = new AbortController()
+    let timedOut = false
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true
+      controller.abort()
+    }, ASK_REQUEST_TIMEOUT_MS)
+
     try {
       const response = await fetch(buildApiUrl('/api/ask'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           message: trimmed,
           sessionId,
@@ -259,7 +273,11 @@ export function ChatPanel() {
       setMessages((currentMessages) => [...currentMessages, saintMessage])
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : 'Something went wrong. Please try again.'
+        timedOut
+          ? getAskTimeoutMessage(selectedSaintName)
+          : error instanceof Error
+            ? error.message
+            : 'Something went wrong. Please try again.'
 
       setChatError(message)
       setMessages((currentMessages) => [
@@ -280,6 +298,7 @@ export function ChatPanel() {
         },
       ])
     } finally {
+      window.clearTimeout(timeoutId)
       setLoading(false)
     }
   }
@@ -348,19 +367,10 @@ export function ChatPanel() {
         </div>
       </div>
 
-      {(voice.error || chatError) && (
+      {chatError && (
         <div className="border-b border-[#2e1f1f] bg-[#1c1414] px-4 py-3 sm:px-6">
           <div className="mx-auto flex max-w-3xl items-start justify-between gap-3 text-sm text-[#d8c2c2]">
-            <p>{voice.error ?? chatError}</p>
-            {voice.error && (
-              <button
-                type="button"
-                onClick={voice.clearError}
-                className="rounded-full border border-[#4a3333] px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#e7d7d7]"
-              >
-                Dismiss
-              </button>
-            )}
+            <p>{chatError}</p>
           </div>
         </div>
       )}

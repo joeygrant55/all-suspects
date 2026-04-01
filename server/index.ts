@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
-import { chat } from './agents/saintAgent.js'
+import { chat, SaintChatError } from './agents/saintAgent.js'
 import { askDirector } from './agents/orchestrator.js'
 import { getSaint, listSaints } from './agents/saintRegistry.js'
 import {
@@ -112,9 +112,20 @@ app.post('/api/ask', async (req, res) => {
     const response = await askDirector(message, sessionId, { preferredSaint, mode })
     return res.json(response)
   } catch (error) {
+    if (error instanceof SaintChatError) {
+      return res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+      })
+    }
+
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to process director request'
     const statusCode = errorMessage.startsWith('Saint not found:') ? 404 : 500
+
+    if (statusCode === 500) {
+      console.error('Saint ask failed', error)
+    }
 
     return res.status(statusCode).json({ error: errorMessage })
   }
@@ -138,9 +149,20 @@ app.post('/api/chat', async (req, res) => {
     const response = await chat(saintId, message, sessionId)
     return res.json({ response })
   } catch (error) {
+    if (error instanceof SaintChatError) {
+      return res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+      })
+    }
+
     const errorMessage =
       error instanceof Error ? error.message : 'Failed to process saint chat'
     const statusCode = errorMessage.startsWith('Saint not found:') ? 404 : 500
+
+    if (statusCode === 500) {
+      console.error('Saint chat failed', error)
+    }
 
     return res.status(statusCode).json({ error: errorMessage })
   }

@@ -7,6 +7,7 @@ const DEFAULT_OUTPUT_FORMAT =
 const DEFAULT_VOICE_ID =
   process.env.ELEVENLABS_DEFAULT_VOICE_ID?.trim() || 'JBFqnCBsd6RMkjVDRZzb'
 const MAX_TTS_CHARACTERS = 1800
+const VOICE_REQUEST_TIMEOUT_MS = 15_000
 
 interface VoiceSettings {
   stability: number
@@ -282,34 +283,72 @@ export async function synthesizeSaintVoice(
   const url = new URL(`${ELEVENLABS_BASE_URL}/text-to-speech/${voice.voiceId}`)
   url.searchParams.set('output_format', voice.outputFormat)
 
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: {
-      'xi-api-key': apiKey,
-      'Content-Type': 'application/json',
-      Accept: 'audio/mpeg',
-    },
-    body: JSON.stringify({
-      text: speechText,
-      model_id: voice.modelId,
-      voice_settings: {
-        stability: voice.settings.stability,
-        similarity_boost: voice.settings.similarityBoost,
-        style: voice.settings.style,
-        use_speaker_boost: voice.settings.useSpeakerBoost,
+  const controller = new AbortController()
+  let timedOut = false
+  const timeoutId = setTimeout(() => {
+    timedOut = true
+    controller.abort()
+  }, VOICE_REQUEST_TIMEOUT_MS)
+
+  let response: Response
+
+  try {
+    response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'xi-api-key': apiKey,
+        'Content-Type': 'application/json',
+        Accept: 'audio/mpeg',
       },
-    }),
-  })
+      body: JSON.stringify({
+        text: speechText,
+        model_id: voice.modelId,
+        voice_settings: {
+          stability: voice.settings.stability,
+          similarity_boost: voice.settings.similarityBoost,
+          style: voice.settings.style,
+          use_speaker_boost: voice.settings.useSpeakerBoost,
+        },
+      }),
+      signal: controller.signal,
+    })
+  } catch (error) {
+    if (timedOut) {
+      throw new SaintVoiceError(
+        'Voice playback timed out. Please try again.',
+        504,
+        'VOICE_UPSTREAM_TIMEOUT'
+      )
+    }
+
+    throw error
+  } finally {
+    clearTimeout(timeoutId)
+  }
 
   if (!response.ok) {
     const message = await getUpstreamErrorMessage(response)
     throw new SaintVoiceError(message, 502, 'VOICE_UPSTREAM_ERROR')
   }
 
+  const contentType = response.headers.get('content-type') ?? ''
+  if (!contentType.toLowerCase().startsWith('audio/')) {
+    const message = await getUpstreamErrorMessage(response)
+    throw new SaintVoiceError(
+      message || 'Voice provider returned invalid audio.',
+      502,
+      'VOICE_INVALID_RESPONSE'
+    )
+  }
+
   const audioBuffer = Buffer.from(await response.arrayBuffer())
+  if (audioBuffer.length === 0) {
+    throw new SaintVoiceError('Voice provider returned empty audio.', 502, 'VOICE_EMPTY_AUDIO')
+  }
+
   return {
     audio: audioBuffer,
-    contentType: response.headers.get('content-type') ?? 'audio/mpeg',
+    contentType: contentType || 'audio/mpeg',
     contentLength: audioBuffer.length,
     voice: {
       saintId: voice.saintId,
