@@ -81,27 +81,39 @@ export function useVoice(): VoiceManager {
   const audioUrlRef = useRef<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  const releaseAudioUrl = useCallback(() => {
-    if (!audioUrlRef.current) {
+  const detachAudioUrl = useCallback(() => {
+    const audioUrl = audioUrlRef.current
+    audioUrlRef.current = null
+    return audioUrl
+  }, [])
+
+  const revokeAudioUrl = useCallback((audioUrl: string | null) => {
+    if (!audioUrl) {
       return
     }
 
-    URL.revokeObjectURL(audioUrlRef.current)
-    audioUrlRef.current = null
+    URL.revokeObjectURL(audioUrl)
+  }, [])
+
+  const resetAudioElement = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio) {
+      return
+    }
+
+    audio.pause()
+    audio.currentTime = 0
+    audio.removeAttribute('src')
+    audio.load()
   }, [])
 
   const stop = useCallback(() => {
     abortControllerRef.current?.abort()
     abortControllerRef.current = null
 
-    const audio = audioRef.current
-    if (audio) {
-      audio.pause()
-      audio.currentTime = 0
-      audio.src = ''
-    }
-
-    releaseAudioUrl()
+    const audioUrl = detachAudioUrl()
+    resetAudioElement()
+    revokeAudioUrl(audioUrl)
 
     setState((currentState) => ({
       ...currentState,
@@ -109,7 +121,7 @@ export function useVoice(): VoiceManager {
       isLoading: false,
       activeUtteranceId: null,
     }))
-  }, [releaseAudioUrl])
+  }, [detachAudioUrl, resetAudioElement, revokeAudioUrl])
 
   const refreshStatus = useCallback(async () => {
     setState((currentState) => ({
@@ -148,7 +160,10 @@ export function useVoice(): VoiceManager {
     audio.preload = 'none'
 
     const handleEnded = () => {
-      releaseAudioUrl()
+      const audioUrl = detachAudioUrl()
+      resetAudioElement()
+      revokeAudioUrl(audioUrl)
+
       setState((currentState) => ({
         ...currentState,
         isPlaying: false,
@@ -158,7 +173,14 @@ export function useVoice(): VoiceManager {
     }
 
     const handleError = () => {
-      releaseAudioUrl()
+      if (!audioUrlRef.current) {
+        return
+      }
+
+      const audioUrl = detachAudioUrl()
+      resetAudioElement()
+      revokeAudioUrl(audioUrl)
+
       setState((currentState) => ({
         ...currentState,
         isPlaying: false,
@@ -179,11 +201,13 @@ export function useVoice(): VoiceManager {
       audio.pause()
       audio.removeEventListener('ended', handleEnded)
       audio.removeEventListener('error', handleError)
-      audio.src = ''
+      const audioUrl = detachAudioUrl()
+      audio.removeAttribute('src')
+      audio.load()
       audioRef.current = null
-      releaseAudioUrl()
+      revokeAudioUrl(audioUrl)
     }
-  }, [refreshStatus, releaseAudioUrl])
+  }, [detachAudioUrl, refreshStatus, resetAudioElement, revokeAudioUrl])
 
   const speak = useCallback(
     async (saintId: string, text: string, utteranceId?: string) => {
@@ -244,7 +268,9 @@ export function useVoice(): VoiceManager {
           isLoading: false,
         }))
       } catch (error) {
-        releaseAudioUrl()
+        const audioUrl = detachAudioUrl()
+        resetAudioElement()
+        revokeAudioUrl(audioUrl)
 
         if (error instanceof Error && error.name === 'AbortError') {
           setState((currentState) => ({
@@ -266,7 +292,7 @@ export function useVoice(): VoiceManager {
         abortControllerRef.current = null
       }
     },
-    [releaseAudioUrl, state.isConfigured, state.voiceEnabled, stop]
+    [detachAudioUrl, resetAudioElement, revokeAudioUrl, state.isConfigured, state.voiceEnabled, stop]
   )
 
   const toggleVoice = useCallback(() => {

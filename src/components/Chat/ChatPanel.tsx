@@ -96,6 +96,84 @@ async function getApiErrorMessage(response: Response): Promise<string> {
   }
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function normalizeSaintResponse(payload: unknown): SaintResponse | null {
+  if (!isRecord(payload)) {
+    return null
+  }
+
+  const response = typeof payload.response === 'string' ? payload.response.trim() : ''
+  if (!response) {
+    return null
+  }
+
+  const saintId =
+    typeof payload.saintId === 'string' && payload.saintId.trim()
+      ? payload.saintId.trim()
+      : 'system'
+  const fallbackName = saintId === 'system' ? 'System' : getSaintDisplayName(saintId)
+  const name =
+    typeof payload.name === 'string' && payload.name.trim()
+      ? payload.name.trim()
+      : fallbackName
+
+  return {
+    saintId,
+    name,
+    response,
+  }
+}
+
+function normalizeDirectorResponse(payload: unknown, selectedSaintId: string): DirectorResponse {
+  if (!isRecord(payload)) {
+    throw new Error('The saints response was empty or malformed.')
+  }
+
+  const saints = Array.isArray(payload.saints)
+    ? payload.saints
+        .map((saint) => normalizeSaintResponse(saint))
+        .filter((saint): saint is SaintResponse => saint !== null)
+    : []
+
+  if (saints.length > 0) {
+    const scripture = isRecord(payload.scripture)
+      && typeof payload.scripture.reference === 'string'
+      && payload.scripture.reference.trim()
+      && typeof payload.scripture.text === 'string'
+      && payload.scripture.text.trim()
+      ? {
+          reference: payload.scripture.reference.trim(),
+          text: payload.scripture.text.trim(),
+        }
+      : undefined
+
+    return {
+      mode: payload.mode === 'council' && saints.length > 1 ? 'council' : 'single',
+      saints,
+      ...(scripture ? { scripture } : {}),
+    }
+  }
+
+  const legacyResponse = typeof payload.response === 'string' ? payload.response.trim() : ''
+  if (legacyResponse) {
+    return {
+      mode: 'single',
+      saints: [
+        {
+          saintId: selectedSaintId,
+          name: getSaintDisplayName(selectedSaintId),
+          response: legacyResponse,
+        },
+      ],
+    }
+  }
+
+  throw new Error('The saints response was empty or malformed.')
+}
+
 export function ChatPanel() {
   const selectedSaintId = useSaintsStore((state) => state.selectedSaintId)
   const sessionId = useSaintsStore((state) => state.sessionId)
@@ -170,7 +248,8 @@ export function ChatPanel() {
         throw new Error(await getApiErrorMessage(response))
       }
 
-      const data = (await response.json()) as DirectorResponse
+      const payload = (await response.json()) as unknown
+      const data = normalizeDirectorResponse(payload, selectedSaintId)
       const saintMessage: ChatMessage = {
         id: `saint-${Date.now()}`,
         role: 'saints',
@@ -326,9 +405,13 @@ export function ChatPanel() {
               )
             }
 
+            const saintReplies = Array.isArray(message.director?.saints)
+              ? message.director.saints
+              : []
+
             return (
               <div key={message.id} className="flex flex-col gap-4">
-                {message.director?.saints.map((saint) => {
+                {saintReplies.map((saint) => {
                   const utteranceId = `${message.id}:${saint.saintId}`
                   const isVoiceActive = voice.activeUtteranceId === utteranceId
 
