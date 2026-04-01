@@ -3,3 +3,8 @@ export const getApiBase = () => {
   if (import.meta.env.DEV) return 'http://localhost:3001'
   return ''
 }
+
+export const buildApiUrl = (path: string) => {
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  return `${getApiBase()}${normalizedPath}`
+}

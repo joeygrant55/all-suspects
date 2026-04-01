@@ -1,160 +1,296 @@
-import { useState, useCallback, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { buildApiUrl } from '../api/client'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+const VOICE_PREFERENCE_KEY = 'all-saints-voice-enabled'
+
+interface VoiceStatusResponse {
+  configured: boolean
+  message: string
+}
+
+interface VoiceErrorResponse {
+  error?: string
+  code?: string
+}
 
 interface VoiceState {
   isPlaying: boolean
   isLoading: boolean
+  isChecking: boolean
   voiceEnabled: boolean
+  isConfigured: boolean
+  statusMessage: string
   error: string | null
+  activeUtteranceId: string | null
 }
 
 interface VoiceActions {
-  speak: (characterId: string, text: string) => Promise<void>
+  speak: (saintId: string, text: string, utteranceId?: string) => Promise<void>
   stop: () => void
   toggleVoice: () => void
-  setVoiceEnabled: (enabled: boolean) => void
+  clearError: () => void
+  refreshStatus: () => Promise<void>
 }
 
 export type VoiceManager = VoiceState & VoiceActions
+
+function getInitialVoicePreference(): boolean {
+  if (typeof window === 'undefined') {
+    return true
+  }
+
+  const storedPreference = window.localStorage.getItem(VOICE_PREFERENCE_KEY)
+  return storedPreference !== 'false'
+}
+
+async function getVoiceErrorMessage(response: Response): Promise<string> {
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (contentType.includes('application/json')) {
+    try {
+      const payload = (await response.json()) as VoiceErrorResponse
+      if (payload.error?.trim()) {
+        return payload.error.trim()
+      }
+    } catch {
+      return 'Voice playback failed.'
+    }
+  }
+
+  try {
+    const text = (await response.text()).trim()
+    return text || 'Voice playback failed.'
+  } catch {
+    return 'Voice playback failed.'
+  }
+}
 
 export function useVoice(): VoiceManager {
   const [state, setState] = useState<VoiceState>({
     isPlaying: false,
     isLoading: false,
-    voiceEnabled: true,
+    isChecking: true,
+    voiceEnabled: getInitialVoicePreference(),
+    isConfigured: false,
+    statusMessage: 'Checking voice availability...',
     error: null,
+    activeUtteranceId: null,
   })
 
   const audioRef = useRef<HTMLAudioElement | null>(null)
+  const audioUrlRef = useRef<string | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  // Create audio element on first use
-  const getAudio = useCallback(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio()
-      audioRef.current.addEventListener('ended', () => {
-        setState(s => ({ ...s, isPlaying: false }))
-      })
-      audioRef.current.addEventListener('error', () => {
-        setState(s => ({ ...s, isPlaying: false, error: 'Audio playback failed' }))
-      })
+  const releaseAudioUrl = useCallback(() => {
+    if (!audioUrlRef.current) {
+      return
     }
-    return audioRef.current
+
+    URL.revokeObjectURL(audioUrlRef.current)
+    audioUrlRef.current = null
   }, [])
 
-  // Speak text with character voice
-  const speak = useCallback(async (characterId: string, text: string) => {
-    if (!state.voiceEnabled) return
+  const stop = useCallback(() => {
+    abortControllerRef.current?.abort()
+    abortControllerRef.current = null
 
-    // Abort any pending request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
+    const audio = audioRef.current
+    if (audio) {
+      audio.pause()
+      audio.currentTime = 0
+      audio.src = ''
     }
 
-    // Stop any playing audio
-    const audio = getAudio()
-    audio.pause()
-    audio.currentTime = 0
+    releaseAudioUrl()
 
-    setState(s => ({ ...s, isLoading: true, error: null }))
+    setState((currentState) => ({
+      ...currentState,
+      isPlaying: false,
+      isLoading: false,
+      activeUtteranceId: null,
+    }))
+  }, [releaseAudioUrl])
+
+  const refreshStatus = useCallback(async () => {
+    setState((currentState) => ({
+      ...currentState,
+      isChecking: true,
+      error: null,
+    }))
 
     try {
-      abortControllerRef.current = new AbortController()
-
-      const response = await fetch(`${API_URL}/api/voice`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ characterId, text }),
-        signal: abortControllerRef.current.signal,
-      })
-
+      const response = await fetch(buildApiUrl('/api/voice/status'))
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || error.error || 'Voice synthesis failed')
+        throw new Error(await getVoiceErrorMessage(response))
       }
 
-      const data = await response.json()
-
-      // Convert base64 to blob and play
-      const audioBlob = new Blob(
-        [Uint8Array.from(atob(data.audio), c => c.charCodeAt(0))],
-        { type: 'audio/mpeg' }
-      )
-      const audioUrl = URL.createObjectURL(audioBlob)
-
-      audio.src = audioUrl
-      audio.volume = 0.8
-
-      // Wait for playback to fully complete
-      await new Promise<void>((resolve, reject) => {
-        audio.onended = () => {
-          URL.revokeObjectURL(audioUrl)
-          setState(s => ({ ...s, isPlaying: false }))
-          resolve()
-        }
-        audio.onerror = () => {
-          URL.revokeObjectURL(audioUrl)
-          setState(s => ({ ...s, isPlaying: false, error: 'Audio playback failed' }))
-          reject(new Error('Audio playback failed'))
-        }
-        audio.play().then(() => {
-          setState(s => ({ ...s, isPlaying: true, isLoading: false }))
-        }).catch(reject)
-      })
+      const data = (await response.json()) as VoiceStatusResponse
+      setState((currentState) => ({
+        ...currentState,
+        isChecking: false,
+        isConfigured: data.configured,
+        statusMessage: data.message,
+      }))
     } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        // Request was aborted, not an error
-        setState(s => ({ ...s, isLoading: false }))
+      setState((currentState) => ({
+        ...currentState,
+        isChecking: false,
+        isConfigured: false,
+        statusMessage: 'Voice playback is unavailable.',
+        error:
+          error instanceof Error ? error.message : 'Unable to check voice availability.',
+      }))
+    }
+  }, [])
+
+  useEffect(() => {
+    const audio = new Audio()
+    audio.preload = 'none'
+
+    const handleEnded = () => {
+      releaseAudioUrl()
+      setState((currentState) => ({
+        ...currentState,
+        isPlaying: false,
+        isLoading: false,
+        activeUtteranceId: null,
+      }))
+    }
+
+    const handleError = () => {
+      releaseAudioUrl()
+      setState((currentState) => ({
+        ...currentState,
+        isPlaying: false,
+        isLoading: false,
+        activeUtteranceId: null,
+        error: 'Audio playback failed.',
+      }))
+    }
+
+    audio.addEventListener('ended', handleEnded)
+    audio.addEventListener('error', handleError)
+    audioRef.current = audio
+
+    void refreshStatus()
+
+    return () => {
+      abortControllerRef.current?.abort()
+      audio.pause()
+      audio.removeEventListener('ended', handleEnded)
+      audio.removeEventListener('error', handleError)
+      audio.src = ''
+      audioRef.current = null
+      releaseAudioUrl()
+    }
+  }, [refreshStatus, releaseAudioUrl])
+
+  const speak = useCallback(
+    async (saintId: string, text: string, utteranceId?: string) => {
+      if (!state.voiceEnabled || !state.isConfigured) {
         return
       }
 
-      console.log('Voice synthesis not available:', error)
-      setState(s => ({
-        ...s,
-        isLoading: false,
-        error: error instanceof Error ? error.message : 'Voice synthesis failed',
+      const trimmedText = text.trim()
+      if (!trimmedText) {
+        return
+      }
+
+      stop()
+
+      const audio = audioRef.current
+      if (!audio) {
+        setState((currentState) => ({
+          ...currentState,
+          error: 'Audio playback is not ready yet.',
+        }))
+        return
+      }
+
+      setState((currentState) => ({
+        ...currentState,
+        isLoading: true,
+        error: null,
+        activeUtteranceId: utteranceId ?? saintId,
       }))
-    }
-  }, [state.voiceEnabled, getAudio])
 
-  // Stop audio playback
-  const stop = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-    const audio = getAudio()
-    audio.pause()
-    audio.currentTime = 0
-    setState(s => ({ ...s, isPlaying: false, isLoading: false }))
-  }, [getAudio])
+      try {
+        abortControllerRef.current = new AbortController()
 
-  // Toggle voice on/off
-  const toggleVoice = useCallback(() => {
-    setState(s => {
-      if (s.voiceEnabled) {
-        // Turning off - stop any playing audio
-        if (audioRef.current) {
-          audioRef.current.pause()
-          audioRef.current.currentTime = 0
+        const response = await fetch(buildApiUrl('/api/voice'), {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ saintId, text: trimmedText }),
+          signal: abortControllerRef.current.signal,
+        })
+
+        if (!response.ok) {
+          throw new Error(await getVoiceErrorMessage(response))
         }
-        return { ...s, voiceEnabled: false, isPlaying: false }
-      }
-      return { ...s, voiceEnabled: true }
-    })
-  }, [])
 
-  // Set voice enabled state
-  const setVoiceEnabled = useCallback((enabled: boolean) => {
-    setState(s => {
-      if (!enabled && audioRef.current) {
-        audioRef.current.pause()
-        audioRef.current.currentTime = 0
+        const audioBlob = await response.blob()
+        const audioUrl = URL.createObjectURL(audioBlob)
+        audioUrlRef.current = audioUrl
+
+        audio.src = audioUrl
+        audio.volume = 0.9
+        await audio.play()
+
+        setState((currentState) => ({
+          ...currentState,
+          isPlaying: true,
+          isLoading: false,
+        }))
+      } catch (error) {
+        releaseAudioUrl()
+
+        if (error instanceof Error && error.name === 'AbortError') {
+          setState((currentState) => ({
+            ...currentState,
+            isLoading: false,
+          }))
+          return
+        }
+
+        setState((currentState) => ({
+          ...currentState,
+          isPlaying: false,
+          isLoading: false,
+          activeUtteranceId: null,
+          error:
+            error instanceof Error ? error.message : 'Voice playback failed.',
+        }))
+      } finally {
+        abortControllerRef.current = null
       }
-      return { ...s, voiceEnabled: enabled, isPlaying: enabled ? s.isPlaying : false }
-    })
+    },
+    [releaseAudioUrl, state.isConfigured, state.voiceEnabled, stop]
+  )
+
+  const toggleVoice = useCallback(() => {
+    const nextEnabled = !state.voiceEnabled
+
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem(VOICE_PREFERENCE_KEY, String(nextEnabled))
+    }
+
+    if (!nextEnabled) {
+      stop()
+    }
+
+    setState((currentState) => ({
+      ...currentState,
+      voiceEnabled: nextEnabled,
+    }))
+  }, [state.voiceEnabled, stop])
+
+  const clearError = useCallback(() => {
+    setState((currentState) => ({
+      ...currentState,
+      error: null,
+    }))
   }, [])
 
   return {
@@ -162,19 +298,7 @@ export function useVoice(): VoiceManager {
     speak,
     stop,
     toggleVoice,
-    setVoiceEnabled,
+    clearError,
+    refreshStatus,
   }
-}
-
-// Voice context for components
-import { createContext, useContext } from 'react'
-
-export const VoiceContext = createContext<VoiceManager | null>(null)
-
-export function useVoiceContext() {
-  const context = useContext(VoiceContext)
-  if (!context) {
-    throw new Error('useVoiceContext must be used within a VoiceProvider')
-  }
-  return context
 }

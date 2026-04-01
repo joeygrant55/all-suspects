@@ -3,9 +3,8 @@ import { ChatPanel } from './components/Chat/ChatPanel'
 
 export default function App() {
   return (
-    <div className="flex h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      {/* Sidebar */}
-      <aside className="hidden w-[320px] shrink-0 overflow-y-auto border-r border-[#1a1a1a] bg-[var(--bg-primary)] lg:block">
+    <div className="flex h-dvh min-h-0 flex-col bg-[var(--bg-primary)] text-[var(--text-primary)] lg:flex-row">
+      <aside className="w-full shrink-0 border-b border-[#1a1a1a] bg-[var(--bg-primary)] lg:flex lg:min-h-0 lg:w-[320px] lg:flex-col lg:border-r lg:border-b-0">
         <div className="border-b border-[#1a1a1a] px-6 py-5">
           <h1 className="font-serif text-xl font-bold tracking-wide text-[var(--accent)]">
             All Saints
@@ -14,15 +13,12 @@ export default function App() {
             Conversations with the communion of saints
           </p>
         </div>
-        <SaintList />
+        <div className="max-h-[42vh] overflow-y-auto lg:min-h-0 lg:max-h-none lg:flex-1">
+          <SaintList />
+        </div>
       </aside>
 
-      {/* Main chat area */}
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
-        {/* Mobile header */}
-        <div className="border-b border-[#1a1a1a] px-4 py-3 lg:hidden">
-          <h1 className="font-serif text-lg font-bold text-[var(--accent)]">All Saints</h1>
-        </div>
         <ChatPanel />
       </main>
     </div>

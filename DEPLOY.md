@@ -1,61 +1,63 @@
-# All Suspects - Deployment Guide
+# All Saints Deployment Guide
 
-**Last Updated:** Feb 19, 2026
+## Runtime Shape
 
-## Status
-- ✅ Backend: https://all-suspects-production.up.railway.app (Railway, auto-deploys on main push)
-- ✅ Frontend: https://allsuspects.slateworks.io (Vercel, auto-deploys on main push)
-- ✅ Blackwood Betrayal: Live and playable (6 characters, blueprint persisted on Railway fs)
-- ✅ 9 total mysteries in library
+- Frontend: Vercel static build from `dist/`
+- Backend: Railway running `npm start`
+- Frontend API access: same-origin `/api/*` rewrite to the Railway backend, or explicit `VITE_API_URL`
 
----
+## Required Backend Environment Variables
 
-## Architecture Notes
-
-### Mystery Storage
-- **Hardcoded mysteries** (ashford-affair, hollywood-premiere): Stored in `mysteries/` directory, loaded client-side via registry
-- **Generated mysteries** (blackwood-betrayal, etc.): Blueprint stored in `public/generated/:id/blueprint.json` on Railway filesystem
-  - ⚠️ Railway filesystem is ephemeral — redeploys may wipe generated mysteries (though blueprint.json files are committed to git if added)
-  - The `/api/mystery/:id/blueprint` and `/api/mystery/:id/chat` endpoints have disk fallbacks — gameplay works fine after restart
-  - The legacy `/api/mystery/:id` (generic info) uses in-memory store only — returns 404 after restart (not used by frontend)
-
-### In-memory vs Filesystem
-- `server/mystery/store.ts` = in-memory GeneratedMystery store (legacy, not used for Blackwood gameplay)
-- `server/agents/mysteryApi.ts` = `activeMysteries` Map + disk fallback via `loadBlueprint()` (used for all chat/gameplay)
-- `activeMysteries` is rehydrated from disk on any blueprint/chat request — no action needed
-
----
-
-## Environment Variables (Railway)
-```
-GEMINI_API_KEY=AIzaSyChdJn3-4RDWURE2ruYBgss1b8rFT4jKvg
-FAL_KEY=4ecc99c9-6bd9-4bde-8040-e8c532587f34:a880cf9ed203b0633ba756aa905690c2
-ELEVENLABS_API_KEY=sk_2df3c5e48a9c9dd995e59edb968202156f12e42743f2240e
+```env
+ANTHROPIC_API_KEY=
 PORT=3001
-ANTHROPIC_API_KEY=[set in Railway dashboard]
 ```
 
-## Deploy Steps (if needed)
+## Optional Voice Environment Variables
 
-### Backend (Railway)
-- Auto-deploys on `git push origin main`
-- No manual steps needed
+```env
+ELEVENLABS_API_KEY=
+ELEVENLABS_MODEL_ID=eleven_flash_v2_5
+ELEVENLABS_DEFAULT_VOICE_ID=
+ELEVENLABS_VOICE_ID_AQUINAS=
+ELEVENLABS_VOICE_ID_AUGUSTINE=
+ELEVENLABS_VOICE_ID_THERESE=
+ELEVENLABS_VOICE_ID_IGNATIUS=
+ELEVENLABS_VOICE_ID_FRANCIS_DE_SALES=
+```
 
-### Frontend (Vercel)
-- Auto-deploys on `git push origin main`
-- `vercel.json` rewrites /api/* → Railway URL
+Notes:
 
----
+- `ELEVENLABS_API_KEY` enables saint reply playback.
+- Saint-specific voice IDs override the built-in fallback mapping.
+- If voice env vars are absent, chat remains fully functional and voice controls stay unavailable.
 
-## Testing
+## Frontend Environment Variables
+
+```env
+VITE_API_URL=
+```
+
+Leave `VITE_API_URL` unset if the frontend should use same-origin `/api` rewrites in production.
+
+## Health Check
+
+Railway should probe:
+
+```text
+/api/health
+```
+
+## Basic Verification
 
 ```bash
-# Health check
-curl https://all-suspects-production.up.railway.app/api/characters
-
-# Blackwood blueprint (should return 6 characters)
-curl https://all-suspects-production.up.railway.app/api/mystery/the-blackwood-betrayal/blueprint
-
-# All mysteries
-curl https://all-suspects-production.up.railway.app/api/mysteries
+curl http://localhost:3001/api/health
+curl http://localhost:3001/api/saints
+curl http://localhost:3001/api/voice/status
+npm run build
 ```
+
+## Security
+
+- Keep real API keys in platform dashboards or untracked local env files only.
+- Do not place live credentials in `README.md`, `DEPLOY.md`, or tracked `.env` files.

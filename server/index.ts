@@ -4,6 +4,11 @@ import cors from 'cors'
 import { chat } from './agents/saintAgent.js'
 import { askDirector } from './agents/orchestrator.js'
 import { getSaint, listSaints } from './agents/saintRegistry.js'
+import {
+  SaintVoiceError,
+  getSaintVoiceStatus,
+  synthesizeSaintVoice,
+} from './voice/saintVoice.js'
 
 const app = express()
 
@@ -26,6 +31,46 @@ app.get('/api/saints/:id', (req, res) => {
   }
 
   return res.json(saint)
+})
+
+app.get('/api/voice/status', (_req, res) => {
+  res.json(getSaintVoiceStatus())
+})
+
+app.post('/api/voice', async (req, res) => {
+  try {
+    const { saintId, text } = req.body ?? {}
+
+    if (typeof saintId !== 'string' || typeof text !== 'string') {
+      return res.status(400).json({
+        error: 'Missing saintId or text',
+        code: 'VOICE_REQUEST_INVALID',
+      })
+    }
+
+    const audio = await synthesizeSaintVoice(saintId, text)
+
+    res.setHeader('Content-Type', audio.contentType)
+    res.setHeader('Content-Length', String(audio.contentLength))
+    res.setHeader('Cache-Control', 'no-store')
+    res.setHeader('X-Voice-Saint', audio.voice.saintId)
+    res.setHeader('X-Voice-Label', audio.voice.voiceLabel)
+    res.setHeader('X-Voice-Truncated', audio.truncated ? 'true' : 'false')
+    return res.send(audio.audio)
+  } catch (error) {
+    if (error instanceof SaintVoiceError) {
+      return res.status(error.statusCode).json({
+        error: error.message,
+        code: error.code,
+      })
+    }
+
+    console.error('Voice synthesis failed', error)
+    return res.status(500).json({
+      error: 'Failed to synthesize saint voice',
+      code: 'VOICE_SYNTHESIS_FAILED',
+    })
+  }
 })
 
 app.post('/api/ask', async (req, res) => {

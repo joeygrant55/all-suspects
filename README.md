@@ -1,65 +1,70 @@
-# All Suspects
+# All Saints
 
-A browser-based 3D murder mystery game where every NPC is an AI agent capable of real conversation, deception, and memory.
+A saint conversation app built with React, Vite, Express, and Anthropic. Users can select a saint, ask questions about faith and life, and receive replies in the saint's voice and perspective. If ElevenLabs is configured, saint replies can also be played back as audio.
 
-## Overview
+## Stack
 
-Players investigate a murder mystery by interrogating AI-powered suspects in an interactive 3D manor environment. Each character has their own personality, secrets, and the ability to lie or deflect during questioning.
-
-## Tech Stack
-
-- **Frontend**: React 18 + TypeScript + Vite
-- **3D Graphics**: React Three Fiber + Drei
-- **State Management**: Zustand
-- **Styling**: Tailwind CSS v4
-- **AI Backend**: Anthropic SDK (Claude) + Express
+- Frontend: React 19 + TypeScript + Vite
+- Backend: Express + `tsx`
+- AI: Anthropic Claude
+- Voice: ElevenLabs text-to-speech for saint replies
 
 ## Quick Start
 
 ```bash
 npm install
-npm run dev:all    # Runs frontend + backend concurrently
+cp .env.example .env.local
+npm run dev:all
 ```
 
-Or run separately:
+Frontend runs on `http://localhost:5173`. Backend runs on `http://localhost:3001`.
+
+## Environment Variables
+
+Required:
+
+```env
+ANTHROPIC_API_KEY=
+```
+
+Optional:
+
+```env
+VITE_API_URL=http://localhost:3001
+ELEVENLABS_API_KEY=
+ELEVENLABS_MODEL_ID=eleven_flash_v2_5
+ELEVENLABS_DEFAULT_VOICE_ID=
+ELEVENLABS_VOICE_ID_AQUINAS=
+ELEVENLABS_VOICE_ID_AUGUSTINE=
+ELEVENLABS_VOICE_ID_THERESE=
+ELEVENLABS_VOICE_ID_IGNATIUS=
+ELEVENLABS_VOICE_ID_FRANCIS_DE_SALES=
+```
+
+If `ELEVENLABS_API_KEY` is unset, the app keeps the existing text chat flow and hides voice playback controls gracefully.
+
+## Scripts
+
 ```bash
-npm run dev        # Frontend only (port 5173)
-npm run server     # Backend only (port 3001)
+npm run dev        # Frontend only
+npm run server     # Backend only
+npm run dev:all    # Frontend + backend
+npm run build      # Frontend production build
+npm run start      # Production backend entry
 ```
 
-## Current Mystery: The Ashford Affair
+## API Surface
 
-**Setting**: New Year's Eve, 1929 at Ashford Manor during a snowstorm
+- `GET /api/health`
+- `GET /api/saints`
+- `GET /api/saints/:id`
+- `POST /api/ask`
+- `POST /api/chat`
+- `GET /api/voice/status`
+- `POST /api/voice`
 
-**Victim**: Edmund Ashford, wealthy industrialist
+## Deployment Notes
 
-**Suspects**: 6 characters, each with motives and secrets to uncover
-
-## Project Structure
-
-```
-all-suspects/
-├── src/
-│   ├── components/
-│   │   ├── Scene/       # React Three Fiber 3D components
-│   │   ├── UI/          # Game interface components
-│   │   └── Chat/        # Conversation interface
-│   ├── agents/          # AI agent system
-│   ├── game/            # Zustand state management
-│   └── App.tsx
-├── server/              # Express backend with Claude integration
-├── mysteries/           # Mystery scenario data
-└── package.json
-```
-
-## Development Status
-
-- Phase 1: Foundation (Complete)
-- Phase 2: Agent System (In Progress)
-- Phase 3: Mystery Content (Planned)
-- Phase 4: Polish (Planned)
-- Phase 5: Game Loop (Planned)
-
-## License
-
-Private - All rights reserved
+- Vercel frontend can use same-origin `/api` rewrites to the Railway backend.
+- Railway health checks should target `/api/health`.
+- Do not commit real secrets into docs or tracked env files.
