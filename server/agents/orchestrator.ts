@@ -6,6 +6,11 @@ import {
   listSaints,
   type SaintSummary,
 } from './saintRegistry.js'
+import {
+  DEFAULT_INTERACTION_MODE,
+  normalizeInteractionMode,
+  type SaintInteractionMode,
+} from './studyMode.js'
 
 const anthropic = new Anthropic()
 const DIRECTOR_MODEL = 'claude-sonnet-4-5-20250929'
@@ -15,13 +20,15 @@ const DIRECTOR_SESSION_PREFIX = 'director'
 
 export interface DirectorResponse {
   mode: 'single' | 'council'
+  interactionMode: SaintInteractionMode
   saints: Array<{ saintId: string; name: string; response: string }>
   scripture?: { reference: string; text: string }
 }
 
 interface DirectorOptions {
   preferredSaint?: string
-  mode?: 'single' | 'council'
+  directorMode?: 'single' | 'council'
+  interactionMode?: SaintInteractionMode
 }
 
 interface RoutingAnalysis {
@@ -357,6 +364,9 @@ export async function askDirector(
 ): Promise<DirectorResponse> {
   const normalizedMessage = message.trim()
   const normalizedSessionId = sessionId.trim()
+  const interactionMode = normalizeInteractionMode(
+    options?.interactionMode ?? DEFAULT_INTERACTION_MODE
+  )
 
   if (!normalizedMessage || !normalizedSessionId) {
     throw new Error('Missing message or sessionId')
@@ -376,7 +386,8 @@ export async function askDirector(
     const response = await chat(
       preferredSaint.id,
       normalizedMessage,
-      buildSaintSessionId(normalizedSessionId, preferredSaint.id)
+      buildSaintSessionId(normalizedSessionId, preferredSaint.id),
+      { mode: interactionMode }
     )
     const saintResponses: DirectorResponse['saints'] = [
       {
@@ -389,6 +400,7 @@ export async function askDirector(
 
     return {
       mode: 'single',
+      interactionMode,
       saints: saintResponses,
       ...(scripture ? { scripture } : {}),
     }
@@ -399,8 +411,8 @@ export async function askDirector(
     ? [onlySaint]
     : selectSaints(
         saints,
-        await analyzeRouting(normalizedMessage, saints, options?.mode),
-        options?.mode
+        await analyzeRouting(normalizedMessage, saints, options?.directorMode),
+        options?.directorMode
       )
 
   const saintResponses: DirectorResponse['saints'] = []
@@ -408,7 +420,8 @@ export async function askDirector(
     const response = await chat(
       saint.id,
       normalizedMessage,
-      buildSaintSessionId(normalizedSessionId, saint.id)
+      buildSaintSessionId(normalizedSessionId, saint.id),
+      { mode: interactionMode }
     )
 
     saintResponses.push({
@@ -422,6 +435,7 @@ export async function askDirector(
 
   return {
     mode: saintResponses.length > 1 ? 'council' : 'single',
+    interactionMode,
     saints: saintResponses,
     ...(scripture ? { scripture } : {}),
   }

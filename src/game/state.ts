@@ -1,9 +1,15 @@
 import { create } from 'zustand'
+import {
+  DEFAULT_SAINT_INTERACTION_MODE,
+  type SaintInteractionMode,
+} from '../types/saintChat'
 
 interface SaintsState {
   selectedSaintId: string | null
   sessionId: string
+  interactionMode: SaintInteractionMode
   selectSaint: (id: string) => void
+  setInteractionMode: (mode: SaintInteractionMode) => void
 }
 
 const generateSessionId = (): string => {
@@ -16,5 +22,7 @@ const generateSessionId = (): string => {
 export const useSaintsStore = create<SaintsState>((set) => ({
   selectedSaintId: null,
   sessionId: generateSessionId(),
+  interactionMode: DEFAULT_SAINT_INTERACTION_MODE,
   selectSaint: (id: string) => set({ selectedSaintId: id }),
+  setInteractionMode: (interactionMode) => set({ interactionMode }),
 }))

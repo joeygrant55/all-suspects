@@ -9,6 +9,11 @@ import {
   getSaintVoiceStatus,
   synthesizeSaintVoice,
 } from './voice/saintVoice.js'
+import {
+  DEFAULT_INTERACTION_MODE,
+  isSaintInteractionMode,
+  type SaintInteractionMode,
+} from './agents/studyMode.js'
 
 const app = express()
 
@@ -75,7 +80,7 @@ app.post('/api/voice', async (req, res) => {
 
 app.post('/api/ask', async (req, res) => {
   try {
-    const { message, sessionId, preferredSaint, mode } = req.body ?? {}
+    const { message, sessionId, preferredSaint, mode, directorMode } = req.body ?? {}
 
     if (
       typeof message !== 'string' ||
@@ -90,26 +95,57 @@ app.post('/api/ask', async (req, res) => {
       return res.status(400).json({ error: 'preferredSaint must be a string' })
     }
 
-    if (mode !== undefined && mode !== 'single' && mode !== 'council') {
+    const interactionMode: SaintInteractionMode =
+      isSaintInteractionMode(mode) ? mode : DEFAULT_INTERACTION_MODE
+    const resolvedDirectorMode =
+      directorMode === 'single' || directorMode === 'council'
+        ? directorMode
+        : mode === 'single' || mode === 'council'
+          ? mode
+          : undefined
+
+    if (
+      mode !== undefined &&
+      !isSaintInteractionMode(mode) &&
+      mode !== 'single' &&
+      mode !== 'council'
+    ) {
       return res
         .status(400)
-        .json({ error: 'mode must be either "single" or "council"' })
+        .json({ error: 'mode must be "counsel", "study", "single", or "council"' })
+    }
+
+    if (
+      directorMode !== undefined &&
+      directorMode !== 'single' &&
+      directorMode !== 'council'
+    ) {
+      return res
+        .status(400)
+        .json({ error: 'directorMode must be either "single" or "council"' })
     }
 
     // Fast path: saint already selected — skip orchestrator entirely
-    if (preferredSaint && mode !== 'council') {
+    if (preferredSaint && resolvedDirectorMode !== 'council') {
       const saint = getSaint(preferredSaint)
       if (!saint) {
         return res.status(404).json({ error: `Saint not found: ${preferredSaint}` })
       }
-      const response = await chat(preferredSaint, message, sessionId)
+      const response = await chat(preferredSaint, message, sessionId, {
+        mode: interactionMode,
+      })
       return res.json({
         mode: 'single',
+        interactionMode,
         saints: [{ saintId: preferredSaint, name: saint.name, response }],
       })
     }
 
-    const response = await askDirector(message, sessionId, { preferredSaint, mode })
+    const response = await askDirector(message, sessionId, {
+      preferredSaint,
+      directorMode: resolvedDirectorMode,
+      interactionMode,
+    })
     return res.json(response)
   } catch (error) {
     if (error instanceof SaintChatError) {
@@ -133,7 +169,7 @@ app.post('/api/ask', async (req, res) => {
 
 app.post('/api/chat', async (req, res) => {
   try {
-    const { saintId, message, sessionId } = req.body ?? {}
+    const { saintId, message, sessionId, mode } = req.body ?? {}
 
     if (
       typeof saintId !== 'string' ||
@@ -146,8 +182,14 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'Missing saintId, message, or sessionId' })
     }
 
-    const response = await chat(saintId, message, sessionId)
-    return res.json({ response })
+    if (mode !== undefined && !isSaintInteractionMode(mode)) {
+      return res.status(400).json({ error: 'mode must be either "counsel" or "study"' })
+    }
+
+    const interactionMode: SaintInteractionMode =
+      isSaintInteractionMode(mode) ? mode : DEFAULT_INTERACTION_MODE
+    const response = await chat(saintId, message, sessionId, { mode: interactionMode })
+    return res.json({ response, interactionMode })
   } catch (error) {
     if (error instanceof SaintChatError) {
       return res.status(error.statusCode).json({

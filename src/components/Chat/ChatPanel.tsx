@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { buildApiUrl } from '../../api/client'
 import { useSaintsStore } from '../../game/state'
 import { useVoice } from '../../hooks/useVoice'
+import { type SaintInteractionMode } from '../../types/saintChat'
 
 interface SaintResponse {
   saintId: string
@@ -11,6 +12,7 @@ interface SaintResponse {
 
 interface DirectorResponse {
   mode: 'single' | 'council'
+  interactionMode: SaintInteractionMode
   saints: SaintResponse[]
   scripture?: { reference: string; text: string }
 }
@@ -36,7 +38,7 @@ const SAINT_DISPLAY_NAMES: Record<string, string> = {
   'francis-de-sales': 'St. Francis de Sales',
 }
 
-const SAINT_PROMPTS: Record<string, string[]> = {
+const COUNSEL_PROMPTS: Record<string, string[]> = {
   aquinas: [
     'How should I think about faith and reason together?',
     'What does the beatific vision have to do with ordinary life?',
@@ -64,16 +66,63 @@ const SAINT_PROMPTS: Record<string, string[]> = {
   ],
 }
 
+const STUDY_PROMPTS: Record<string, string[]> = {
+  aquinas: [
+    'How would Aquinas respond to Nietzsche?',
+    'How would a medieval theologian study justice?',
+    'What should I read first if I want Aquinas on virtue?',
+    'How would Aquinas understand happiness?',
+  ],
+  augustine: [
+    'How would Augustine understand restlessness and desire?',
+    'Where should I start in Augustine if I want to study conversion?',
+    'How would Augustine frame memory and self-knowledge?',
+    'What first-hand text should I read on desire?',
+  ],
+}
+
 function getSaintDisplayName(saintId: string): string {
   return SAINT_DISPLAY_NAMES[saintId] ?? saintId
 }
 
-function getPromptSuggestions(saintId: string): string[] {
-  return SAINT_PROMPTS[saintId] ?? [
+function getPromptSuggestions(
+  saintId: string,
+  interactionMode: SaintInteractionMode
+): string[] {
+  if (interactionMode === 'study') {
+    return STUDY_PROMPTS[saintId] ?? [
+      'How would this saint frame the question in his or her own period?',
+      'What first-hand text should I read first on this theme?',
+      'How would this saint reason through the question step by step?',
+      'What authorities or sources would this saint turn to first?',
+    ]
+  }
+
+  return COUNSEL_PROMPTS[saintId] ?? [
     'How can I pray with more honesty?',
     'How do I grow in virtue in ordinary life?',
     'What should I do when I feel spiritually stuck?',
   ]
+}
+
+function getModeLabel(interactionMode: SaintInteractionMode): string {
+  return interactionMode === 'study' ? 'Study' : 'Counsel'
+}
+
+function getModeDescription(
+  saintId: string,
+  saintName: string,
+  interactionMode: SaintInteractionMode
+): string {
+  if (interactionMode === 'study') {
+    if (saintId === 'aquinas') {
+      return `${saintName} will answer with more method, historical grounding, and first-hand reading guidance.`
+    }
+
+    return `Study mode adds a more historical and educational frame. In this first slice, it is strongest with Aquinas.`
+  }
+
+  return `${saintName} will answer conversationally, with warmth, presence, and practical counsel.`
 }
 
 function getAskTimeoutMessage(saintName: string): string {
@@ -133,7 +182,11 @@ function normalizeSaintResponse(payload: unknown): SaintResponse | null {
   }
 }
 
-function normalizeDirectorResponse(payload: unknown, selectedSaintId: string): DirectorResponse {
+function normalizeDirectorResponse(
+  payload: unknown,
+  selectedSaintId: string,
+  fallbackInteractionMode: SaintInteractionMode
+): DirectorResponse {
   if (!isRecord(payload)) {
     throw new Error('The saints response was empty or malformed.')
   }
@@ -158,6 +211,10 @@ function normalizeDirectorResponse(payload: unknown, selectedSaintId: string): D
 
     return {
       mode: payload.mode === 'council' && saints.length > 1 ? 'council' : 'single',
+      interactionMode:
+        payload.interactionMode === 'study' || payload.interactionMode === 'counsel'
+          ? payload.interactionMode
+          : fallbackInteractionMode,
       saints,
       ...(scripture ? { scripture } : {}),
     }
@@ -167,6 +224,7 @@ function normalizeDirectorResponse(payload: unknown, selectedSaintId: string): D
   if (legacyResponse) {
     return {
       mode: 'single',
+      interactionMode: fallbackInteractionMode,
       saints: [
         {
           saintId: selectedSaintId,
@@ -180,9 +238,96 @@ function normalizeDirectorResponse(payload: unknown, selectedSaintId: string): D
   throw new Error('The saints response was empty or malformed.')
 }
 
+function renderInlineResponseText(text: string, keyPrefix: string) {
+  return text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, index) => {
+    const isStrong = part.startsWith('**') && part.endsWith('**') && part.length > 4
+
+    if (isStrong) {
+      return (
+        <strong key={`${keyPrefix}-strong-${index}`} className="font-semibold text-[var(--text-primary)]">
+          {part.slice(2, -2)}
+        </strong>
+      )
+    }
+
+    return <span key={`${keyPrefix}-text-${index}`}>{part}</span>
+  })
+}
+
+function SaintResponseBody({ response }: { response: string }) {
+  const blocks = response
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+
+  return (
+    <div className="space-y-4">
+      {blocks.map((block, blockIndex) => {
+        const lines = block.split('\n').map((line) => line.trim()).filter(Boolean)
+        const headingMatch = lines[0]?.match(/^(#{1,6})\s+(.+)$/)
+        const allBullets = lines.length > 0 && lines.every((line) => /^[-*]\s+/.test(line))
+        const allOrdered =
+          lines.length > 0 && lines.every((line) => /^\d+\.\s+/.test(line))
+
+        if (headingMatch) {
+          const [, hashes, headingText] = headingMatch
+          const remainder = lines.slice(1).join(' ')
+          const headingClassName =
+            hashes.length <= 2
+              ? 'font-serif text-lg font-semibold text-[var(--text-primary)]'
+              : 'text-sm font-semibold uppercase tracking-[0.14em] text-[var(--accent)]'
+
+          return (
+            <div key={`block-${blockIndex}`} className="space-y-2">
+              <p className={headingClassName}>
+                {renderInlineResponseText(headingText, `heading-${blockIndex}`)}
+              </p>
+              {remainder && (
+                <p className="leading-relaxed text-[var(--text-primary)]">
+                  {renderInlineResponseText(remainder, `heading-body-${blockIndex}`)}
+                </p>
+              )}
+            </div>
+          )
+        }
+
+        if (allBullets || allOrdered) {
+          const ListTag = allOrdered ? 'ol' : 'ul'
+          const normalizedLines = lines.map((line) =>
+            line.replace(allOrdered ? /^\d+\.\s+/ : /^[-*]\s+/, '')
+          )
+
+          return (
+            <ListTag
+              key={`block-${blockIndex}`}
+              className={`space-y-2 pl-5 leading-relaxed text-[var(--text-primary)] ${
+                allOrdered ? 'list-decimal' : 'list-disc'
+              }`}
+            >
+              {normalizedLines.map((line, lineIndex) => (
+                <li key={`block-${blockIndex}-item-${lineIndex}`}>
+                  {renderInlineResponseText(line, `list-${blockIndex}-${lineIndex}`)}
+                </li>
+              ))}
+            </ListTag>
+          )
+        }
+
+        return (
+          <p key={`block-${blockIndex}`} className="leading-relaxed text-[var(--text-primary)]">
+            {renderInlineResponseText(lines.join(' '), `paragraph-${blockIndex}`)}
+          </p>
+        )
+      })}
+    </div>
+  )
+}
+
 export function ChatPanel() {
   const selectedSaintId = useSaintsStore((state) => state.selectedSaintId)
   const sessionId = useSaintsStore((state) => state.sessionId)
+  const interactionMode = useSaintsStore((state) => state.interactionMode)
+  const setInteractionMode = useSaintsStore((state) => state.setInteractionMode)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -221,6 +366,13 @@ export function ChatPanel() {
   }
 
   const selectedSaintName = getSaintDisplayName(selectedSaintId)
+  const modeDescription = getModeDescription(
+    selectedSaintId,
+    selectedSaintName,
+    interactionMode
+  )
+  const isStudyMode = interactionMode === 'study'
+  const studyModeIsStrong = selectedSaintId === 'aquinas'
 
   const handleSend = async () => {
     const trimmed = input.trim()
@@ -255,6 +407,7 @@ export function ChatPanel() {
           message: trimmed,
           sessionId,
           preferredSaint: selectedSaintId,
+          mode: interactionMode,
         }),
       })
 
@@ -263,7 +416,7 @@ export function ChatPanel() {
       }
 
       const payload = (await response.json()) as unknown
-      const data = normalizeDirectorResponse(payload, selectedSaintId)
+      const data = normalizeDirectorResponse(payload, selectedSaintId, interactionMode)
       const saintMessage: ChatMessage = {
         id: `saint-${Date.now()}`,
         role: 'saints',
@@ -287,6 +440,7 @@ export function ChatPanel() {
           role: 'saints',
           director: {
             mode: 'single',
+            interactionMode,
             saints: [
               {
                 saintId: 'system',
@@ -314,6 +468,15 @@ export function ChatPanel() {
     setInput(prompt)
   }
 
+  const handleModeChange = (nextMode: SaintInteractionMode) => {
+    if (nextMode === interactionMode) {
+      return
+    }
+
+    setInteractionMode(nextMode)
+    setChatError(null)
+  }
+
   const handleSpeak = async (saint: SaintResponse, utteranceId: string) => {
     if (voice.activeUtteranceId === utteranceId && (voice.isLoading || voice.isPlaying)) {
       voice.stop()
@@ -323,7 +486,7 @@ export function ChatPanel() {
     await voice.speak(saint.saintId, saint.response, utteranceId)
   }
 
-  const promptSuggestions = getPromptSuggestions(selectedSaintId)
+  const promptSuggestions = getPromptSuggestions(selectedSaintId, interactionMode)
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -337,32 +500,65 @@ export function ChatPanel() {
               {selectedSaintName}
             </h2>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Direct mode is active. The selected saint will answer without routing through the council.
+              {modeDescription}
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <span
-              className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                voice.isConfigured
-                  ? 'border-[rgba(212,175,55,0.35)] bg-[var(--accent-dim)] text-[var(--accent)]'
-                  : 'border-[#2a2a2a] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
-              }`}
-            >
-              {voice.isChecking
-                ? 'Checking voice'
-                : voice.isConfigured
-                  ? 'ElevenLabs ready'
-                  : 'Voice unavailable'}
-            </span>
-            <button
-              type="button"
-              onClick={voice.toggleVoice}
-              disabled={!voice.isConfigured || voice.isChecking}
-              className="rounded-full border border-[#383838] bg-[var(--bg-secondary)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              Voice {voice.voiceEnabled ? 'On' : 'Off'}
-            </button>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
+            <div className="flex flex-col items-start gap-1 sm:items-end">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+                Conversation mode
+              </span>
+              <div className="inline-flex rounded-full border border-[rgba(212,175,55,0.18)] bg-[rgba(10,10,10,0.72)] p-1">
+                {(['counsel', 'study'] as SaintInteractionMode[]).map((mode) => {
+                  const isActive = mode === interactionMode
+
+                  return (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => handleModeChange(mode)}
+                      className={`rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors ${
+                        isActive
+                          ? 'bg-[var(--accent)] text-black'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {getModeLabel(mode)}
+                    </button>
+                  )
+                })}
+              </div>
+              {isStudyMode && !studyModeIsStrong && (
+                <p className="max-w-xs text-right text-[11px] leading-relaxed text-[var(--text-secondary)]">
+                  Study mode is strongest with Aquinas in this first slice.
+                </p>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <span
+                className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                  voice.isConfigured
+                    ? 'border-[rgba(212,175,55,0.35)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                    : 'border-[#2a2a2a] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
+                }`}
+              >
+                {voice.isChecking
+                  ? 'Checking voice'
+                  : voice.isConfigured
+                    ? 'ElevenLabs ready'
+                    : 'Voice unavailable'}
+              </span>
+              <button
+                type="button"
+                onClick={voice.toggleVoice}
+                disabled={!voice.isConfigured || voice.isChecking}
+                className="rounded-full border border-[#383838] bg-[var(--bg-secondary)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Voice {voice.voiceEnabled ? 'On' : 'Off'}
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -380,15 +576,24 @@ export function ChatPanel() {
           {messages.length === 0 && (
             <div className="rounded-[28px] border border-[rgba(212,175,55,0.18)] bg-[linear-gradient(180deg,rgba(20,20,20,0.96),rgba(14,14,14,0.98))] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
-                Begin the conversation
+                {isStudyMode ? 'Begin the study' : 'Begin the conversation'}
               </p>
               <h3 className="mt-2 font-serif text-2xl text-[var(--text-primary)]">
-                Ask {selectedSaintName} something real.
+                {isStudyMode
+                  ? `Study with ${selectedSaintName}.`
+                  : `Ask ${selectedSaintName} something real.`}
               </h3>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">
-                This is a text-first conversation. If ElevenLabs is configured, each saint reply can also
-                be played aloud without changing the chat flow.
+                {isStudyMode
+                  ? 'Study mode leans into historical framing, method, and first-hand reading without losing the saint’s presence.'
+                  : 'This is a text-first conversation. If ElevenLabs is configured, each saint reply can also be played aloud without changing the chat flow.'}
               </p>
+              {isStudyMode && !studyModeIsStrong && (
+                <p className="mt-2 max-w-2xl text-xs leading-relaxed text-[var(--text-secondary)]">
+                  Aquinas currently has the strongest study-specific backend implementation. Other saints
+                  still answer with a lighter study frame.
+                </p>
+              )}
               <div className="mt-5 flex flex-wrap gap-2">
                 {promptSuggestions.map((prompt) => (
                   <button
@@ -432,6 +637,17 @@ export function ChatPanel() {
                           <span className="font-serif text-xs font-semibold tracking-wide text-[var(--accent)]">
                             {saint.name}
                           </span>
+                          <span
+                            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                              message.director?.interactionMode === 'study'
+                                ? 'border-[rgba(212,175,55,0.3)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                                : 'border-[#2d2d2d] bg-[rgba(255,255,255,0.03)] text-[var(--text-secondary)]'
+                            }`}
+                          >
+                            {getModeLabel(
+                              message.director?.interactionMode ?? interactionMode
+                            )}
+                          </span>
                           {voice.isConfigured && saint.saintId !== 'system' && (
                             <button
                               type="button"
@@ -451,8 +667,8 @@ export function ChatPanel() {
                             </button>
                           )}
                         </div>
-                        <div className="rounded-3xl rounded-bl-md bg-[var(--bg-secondary)] px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap text-[var(--text-primary)] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
-                          {saint.response}
+                        <div className="rounded-3xl rounded-bl-md bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+                          <SaintResponseBody response={saint.response} />
                         </div>
                       </div>
                     </div>
@@ -476,7 +692,7 @@ export function ChatPanel() {
           {loading && (
             <div className="flex justify-start">
               <div className="rounded-3xl rounded-bl-md bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-secondary)]">
-                {selectedSaintName} is composing a reply...
+                {selectedSaintName} is composing a {interactionMode} reply...
               </div>
             </div>
           )}
@@ -491,7 +707,11 @@ export function ChatPanel() {
             value={input}
             onChange={(event) => setInput(event.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={`Ask ${selectedSaintName} a question...`}
+            placeholder={
+              isStudyMode
+                ? `Study a question with ${selectedSaintName}...`
+                : `Ask ${selectedSaintName} a question...`
+            }
             disabled={loading}
             className="min-w-0 flex-1 rounded-2xl border border-[#333] bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] placeholder-[var(--text-secondary)] outline-none transition-colors focus:border-[var(--accent)] disabled:opacity-70"
           />

@@ -1,5 +1,10 @@
 import Anthropic, { APIConnectionTimeoutError } from '@anthropic-ai/sdk'
 import { getSaint } from './saintRegistry.js'
+import {
+  buildSaintSystemPrompt,
+  normalizeInteractionMode,
+  type SaintInteractionMode,
+} from './studyMode.js'
 import * as memoryStore from './memoryStore.js'
 
 const CHAT_CATEGORY = 'saint-chat'
@@ -72,11 +77,15 @@ function getResponseText(response: Awaited<ReturnType<typeof anthropic.messages.
 export async function chat(
   saintId: string,
   message: string,
-  sessionId: string
+  sessionId: string,
+  options?: {
+    mode?: SaintInteractionMode
+  }
 ): Promise<string> {
   const normalizedSaintId = saintId.trim()
   const normalizedMessage = message.trim()
   const normalizedSessionId = sessionId.trim()
+  const interactionMode = normalizeInteractionMode(options?.mode)
 
   if (!normalizedSaintId || !normalizedMessage || !normalizedSessionId) {
     throw new Error('Missing saintId, message, or sessionId')
@@ -87,10 +96,11 @@ export async function chat(
     throw new Error(`Saint not found: ${normalizedSaintId}`)
   }
 
-  const systemPrompt = [
-    `You are ${saint.name}. Respond in character, drawing on your writings, theology, and life experience. Stay faithful to your actual teachings. Be warm but substantive.`,
-    saint.content,
-  ].join('\n\n')
+  const systemPrompt = buildSaintSystemPrompt({
+    saint,
+    mode: interactionMode,
+    userMessage: normalizedMessage,
+  })
 
   let response: Awaited<ReturnType<typeof anthropic.messages.create>>
 
