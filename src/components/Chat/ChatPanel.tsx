@@ -36,6 +36,10 @@ const SAINT_DISPLAY_NAMES: Record<string, string> = {
   therese: 'St. Therese of Lisieux',
   ignatius: 'St. Ignatius of Loyola',
   'francis-de-sales': 'St. Francis de Sales',
+  'joan-of-arc': 'St. Joan of Arc',
+  'john-paul-ii': 'St. John Paul II',
+  'padre-pio': 'St. Padre Pio',
+  'thomas-more': 'St. Thomas More',
 }
 
 const COUNSEL_PROMPTS: Record<string, string[]> = {
