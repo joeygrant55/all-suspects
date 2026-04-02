@@ -57,6 +57,25 @@ curl http://localhost:3001/api/voice/status
 npm run build
 ```
 
+Current frontend rewrite target in `vercel.json`:
+
+```text
+https://all-suspects-production.up.railway.app/api/:path*
+```
+
+If that Railway host changes, update the rewrite before the next share or deploy.
+
+## Smoke Test Discipline
+
+Before wider sharing, run through `docs/SMOKE-TEST-CHECKLIST.md`.
+
+Minimum bar:
+- single-saint chat works
+- council mode works
+- study/counsel mode switching works
+- voice either works correctly or degrades gracefully
+- production `/api` rewrite is hitting the right backend
+
 ## Security
 
 - Keep real API keys in platform dashboards or untracked local env files only.
