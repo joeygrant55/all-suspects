@@ -68,3 +68,9 @@ npm run start      # Production backend entry
 - Vercel frontend can use same-origin `/api` rewrites to the Railway backend.
 - Railway health checks should target `/api/health`.
 - Do not commit real secrets into docs or tracked env files.
+
+## Operational Docs
+
+- `DEPLOY.md` — deployment shape, env vars, and verification steps
+- `docs/SMOKE-TEST-CHECKLIST.md` — pre-share smoke test flow
+- `docs/FIRST-SHAREABLE-BETA.md` — quality gate before outside sharing
