@@ -74,3 +74,4 @@ npm run start      # Production backend entry
 - `DEPLOY.md` — deployment shape, env vars, and verification steps
 - `docs/SMOKE-TEST-CHECKLIST.md` — pre-share smoke test flow
 - `docs/FIRST-SHAREABLE-BETA.md` — quality gate before outside sharing
+- `docs/KNOWN-ISSUES.md` — active risk log and share notes before sending it out
