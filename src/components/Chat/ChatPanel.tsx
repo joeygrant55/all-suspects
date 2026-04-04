@@ -574,6 +574,7 @@ export function ChatPanel() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [chatError, setChatError] = useState<string | null>(null)
+  const [mobileControlsCollapsed, setMobileControlsCollapsed] = useState(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const voice = useVoice()
   const { stop: stopVoice, clearError: clearVoiceError } = voice
@@ -586,6 +587,7 @@ export function ChatPanel() {
     setMessages([])
     setInput('')
     setChatError(null)
+    setMobileControlsCollapsed(true)
     stopVoice()
     clearVoiceError()
   }, [clearVoiceError, selectedSaintId, stopVoice])
@@ -742,11 +744,8 @@ export function ChatPanel() {
               <h2 className="font-serif text-xl leading-tight text-[var(--text-primary)] sm:text-2xl">
                 {selectedSaintName}
               </h2>
-              <span className="rounded-full border border-[#2d2d2d] bg-[rgba(255,255,255,0.03)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] sm:hidden">
-                {getModeLabel(interactionMode)}
-              </span>
             </div>
-            <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--text-secondary)] sm:text-sm">
+            <p className="mt-1 hidden max-w-2xl text-[13px] leading-relaxed text-[var(--text-secondary)] sm:block sm:text-sm">
               {modeDescription}
             </p>
             <div className="mt-2 hidden gap-2 sm:grid sm:grid-cols-3">
@@ -781,60 +780,88 @@ export function ChatPanel() {
             </div>
           </div>
 
-          <div className="flex flex-col items-start gap-2 sm:items-end">
-            <div className="flex flex-col items-start gap-1 sm:items-end">
-              <span className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] sm:inline">
-                Conversation mode
-              </span>
-              <div className="inline-flex rounded-full border border-[rgba(212,175,55,0.18)] bg-[rgba(10,10,10,0.72)] p-1">
-                {(['counsel', 'study'] as SaintInteractionMode[]).map((mode) => {
-                  const isActive = mode === interactionMode
-
-                  return (
-                    <button
-                      key={mode}
-                      type="button"
-                      onClick={() => handleModeChange(mode)}
-                      className={`rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors ${
-                        isActive
-                          ? 'bg-[var(--accent)] text-black'
-                          : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
-                      }`}
-                    >
-                      {getModeLabel(mode)}
-                    </button>
-                  )
-                })}
-              </div>
-              {isStudyMode && !studyModeIsStrong && (
-                <p className="hidden max-w-xs text-right text-[11px] leading-relaxed text-[var(--text-secondary)] sm:block">
-                  Study mode is strongest with Aquinas in this first slice.
-                </p>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <span
-                className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+          <div className="flex w-full flex-col items-start gap-2 sm:w-auto sm:items-end">
+            <button
+              type="button"
+              onClick={() => setMobileControlsCollapsed((current) => !current)}
+              className="flex w-full items-center justify-between rounded-2xl border border-[rgba(212,175,55,0.18)] bg-[rgba(10,10,10,0.55)] px-3 py-2 sm:hidden"
+            >
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="rounded-full bg-[var(--accent)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-black">
+                  {getModeLabel(interactionMode)}
+                </span>
+                <span className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] ${
                   voice.isConfigured
                     ? 'border-[rgba(212,175,55,0.35)] bg-[var(--accent-dim)] text-[var(--accent)]'
                     : 'border-[#2a2a2a] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
-                }`}
-              >
-                {voice.isChecking
-                  ? 'Checking voice'
-                  : voice.isConfigured
-                    ? 'ElevenLabs ready'
-                    : 'Voice unavailable'}
+                }`}>
+                  {voice.isChecking
+                    ? 'Checking voice'
+                    : voice.isConfigured
+                      ? 'ElevenLabs ready'
+                      : 'Voice unavailable'}
+                </span>
+              </div>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+                {mobileControlsCollapsed ? 'Expand' : 'Minimize'}
               </span>
-              <button
-                type="button"
-                onClick={voice.toggleVoice}
-                disabled={!voice.isConfigured || voice.isChecking}
-                className="rounded-full border border-[#383838] bg-[var(--bg-secondary)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Voice {voice.voiceEnabled ? 'On' : 'Off'}
-              </button>
+            </button>
+
+            <div className={`${mobileControlsCollapsed ? 'hidden' : 'flex'} w-full flex-col items-start gap-2 sm:flex sm:w-auto sm:items-end`}>
+              <div className="flex flex-col items-start gap-1 sm:items-end">
+                <span className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] sm:inline">
+                  Conversation mode
+                </span>
+                <div className="inline-flex rounded-full border border-[rgba(212,175,55,0.18)] bg-[rgba(10,10,10,0.72)] p-1">
+                  {(['counsel', 'study'] as SaintInteractionMode[]).map((mode) => {
+                    const isActive = mode === interactionMode
+
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => handleModeChange(mode)}
+                        className={`rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em] transition-colors ${
+                          isActive
+                            ? 'bg-[var(--accent)] text-black'
+                            : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                        }`}
+                      >
+                        {getModeLabel(mode)}
+                      </button>
+                    )
+                  })}
+                </div>
+                {isStudyMode && !studyModeIsStrong && (
+                  <p className="hidden max-w-xs text-right text-[11px] leading-relaxed text-[var(--text-secondary)] sm:block">
+                    Study mode is strongest with Aquinas in this first slice.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span
+                  className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
+                    voice.isConfigured
+                      ? 'border-[rgba(212,175,55,0.35)] bg-[var(--accent-dim)] text-[var(--accent)]'
+                      : 'border-[#2a2a2a] bg-[var(--bg-secondary)] text-[var(--text-secondary)]'
+                  }`}
+                >
+                  {voice.isChecking
+                    ? 'Checking voice'
+                    : voice.isConfigured
+                      ? 'ElevenLabs ready'
+                      : 'Voice unavailable'}
+                </span>
+                <button
+                  type="button"
+                  onClick={voice.toggleVoice}
+                  disabled={!voice.isConfigured || voice.isChecking}
+                  className="rounded-full border border-[#383838] bg-[var(--bg-secondary)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Voice {voice.voiceEnabled ? 'On' : 'Off'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -897,18 +924,23 @@ export function ChatPanel() {
                   ))}
                 </div>
               )}
-              <div className="mt-4 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
-                {promptSuggestions.map((prompt) => (
-                  <button
-                    key={prompt}
-                    type="button"
-                    onClick={() => handlePromptClick(prompt)}
-                    className="min-w-[190px] snap-start rounded-2xl border border-[#2d2d2d] bg-[var(--bg-secondary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] sm:min-w-0 sm:rounded-full"
-                  >
-                    {prompt}
-                  </button>
-                ))}
-              </div>
+              <details className="mt-4 rounded-2xl border border-[#2d2d2d] bg-[rgba(255,255,255,0.02)] px-3 py-3 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0" open>
+                <summary className="cursor-pointer list-none text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)] sm:hidden">
+                  Suggested prompts
+                </summary>
+                <div className="mt-3 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 sm:mt-4 sm:flex-wrap sm:overflow-visible">
+                  {promptSuggestions.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => handlePromptClick(prompt)}
+                      className="min-w-[190px] snap-start rounded-2xl border border-[#2d2d2d] bg-[var(--bg-secondary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] sm:min-w-0 sm:rounded-full"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </details>
             </div>
           )}
 
