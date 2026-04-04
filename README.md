@@ -76,3 +76,4 @@ npm run start      # Production backend entry
 - `docs/FIRST-SHAREABLE-BETA.md` — quality gate before outside sharing
 - `docs/KNOWN-ISSUES.md` — active risk log and share notes before sending it out
 - `docs/RELEASE-CHECKLIST.md` — final pre-deploy / pre-share release pass
+- `docs/SHIP-SEQUENCE.md` — shortest safe path from local changes to a real shareable build
