@@ -13,7 +13,7 @@ export default function App() {
             Conversations with the communion of saints
           </p>
         </div>
-        <div className="max-h-[34vh] overflow-y-auto lg:min-h-0 lg:max-h-none lg:flex-1">
+        <div className="max-h-[25vh] overflow-y-auto lg:min-h-0 lg:max-h-none lg:flex-1">
           <SaintList />
         </div>
       </aside>

@@ -20,9 +20,9 @@ const generateSessionId = (): string => {
 }
 
 export const useSaintsStore = create<SaintsState>((set) => ({
-  selectedSaintId: null,
+  selectedSaintId: 'aquinas',
   sessionId: generateSessionId(),
   interactionMode: DEFAULT_SAINT_INTERACTION_MODE,
-  selectSaint: (id: string) => set({ selectedSaintId: id }),
+  selectSaint: (id) => set({ selectedSaintId: id }),
   setInteractionMode: (interactionMode) => set({ interactionMode }),
 }))

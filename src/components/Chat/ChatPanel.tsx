@@ -733,15 +733,20 @@ export function ChatPanel() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="border-b border-[#1a1a1a] bg-[linear-gradient(180deg,rgba(212,175,55,0.08),rgba(212,175,55,0.02))] px-4 py-3 sm:px-6 sm:py-4">
-        <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)] sm:text-[11px]">
               Current companion
             </p>
-            <h2 className="mt-1 font-serif text-xl leading-tight text-[var(--text-primary)] sm:text-2xl">
-              {selectedSaintName}
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">
+            <div className="mt-1 flex items-center gap-2">
+              <h2 className="font-serif text-xl leading-tight text-[var(--text-primary)] sm:text-2xl">
+                {selectedSaintName}
+              </h2>
+              <span className="rounded-full border border-[#2d2d2d] bg-[rgba(255,255,255,0.03)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)] sm:hidden">
+                {getModeLabel(interactionMode)}
+              </span>
+            </div>
+            <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--text-secondary)] sm:text-sm">
               {modeDescription}
             </p>
             <div className="mt-2 hidden gap-2 sm:grid sm:grid-cols-3">
@@ -778,7 +783,7 @@ export function ChatPanel() {
 
           <div className="flex flex-col items-start gap-2 sm:items-end">
             <div className="flex flex-col items-start gap-1 sm:items-end">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)]">
+              <span className="hidden text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--text-secondary)] sm:inline">
                 Conversation mode
               </span>
               <div className="inline-flex rounded-full border border-[rgba(212,175,55,0.18)] bg-[rgba(10,10,10,0.72)] p-1">
@@ -802,7 +807,7 @@ export function ChatPanel() {
                 })}
               </div>
               {isStudyMode && !studyModeIsStrong && (
-                <p className="max-w-xs text-right text-[11px] leading-relaxed text-[var(--text-secondary)]">
+                <p className="hidden max-w-xs text-right text-[11px] leading-relaxed text-[var(--text-secondary)] sm:block">
                   Study mode is strongest with Aquinas in this first slice.
                 </p>
               )}
@@ -852,7 +857,7 @@ export function ChatPanel() {
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-6 sm:py-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-6">
           {messages.length === 0 && (
             <div className="rounded-[24px] border border-[rgba(212,175,55,0.18)] bg-[linear-gradient(180deg,rgba(20,20,20,0.96),rgba(14,14,14,0.98))] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.35)] sm:rounded-[28px] sm:p-6">
@@ -864,7 +869,7 @@ export function ChatPanel() {
                   ? `Study with ${selectedSaintName}.`
                   : `Ask ${selectedSaintName} something real.`}
               </h3>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">
+              <p className="mt-3 max-w-2xl text-[13px] leading-relaxed text-[var(--text-secondary)] sm:text-sm">
                 {isStudyMode
                   ? "Study mode now surfaces source lineage, method, historical setting, and a next-step study trail without losing the saint's presence."
                   : 'This is a text-first conversation. If ElevenLabs is configured, each saint reply can also be played aloud without changing the chat flow.'}
@@ -876,7 +881,7 @@ export function ChatPanel() {
                 </p>
               )}
               {isStudyMode && (
-                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                <div className="mt-4 hidden gap-2 sm:grid sm:grid-cols-3">
                   {MODE_COMPASS.map((item) => (
                     <div
                       key={item.label}
@@ -892,13 +897,13 @@ export function ChatPanel() {
                   ))}
                 </div>
               )}
-              <div className="mt-5 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
+              <div className="mt-4 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
                 {promptSuggestions.map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
                     onClick={() => handlePromptClick(prompt)}
-                    className="min-w-[220px] snap-start rounded-2xl border border-[#2d2d2d] bg-[var(--bg-secondary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] sm:min-w-0 sm:rounded-full"
+                    className="min-w-[190px] snap-start rounded-2xl border border-[#2d2d2d] bg-[var(--bg-secondary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] sm:min-w-0 sm:rounded-full"
                   >
                     {prompt}
                   </button>

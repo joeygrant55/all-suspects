@@ -112,9 +112,14 @@ export function SaintList() {
 
   return (
     <div className="flex min-h-0 flex-col gap-2 p-3 sm:gap-3 sm:p-4">
-      <h2 className="font-serif text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent)] sm:text-sm">
-        Saints
-      </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-serif text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent)] sm:text-sm">
+          Saints
+        </h2>
+        <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-secondary)] lg:hidden">
+          Swipe
+        </p>
+      </div>
       <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pr-2 lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:pb-6 lg:pr-0">
         {saints.map((saint) => {
           const isSelected = selectedSaintId === saint.id
@@ -124,7 +129,7 @@ export function SaintList() {
               key={saint.id}
               type="button"
               onClick={() => selectSaint(saint.id)}
-              className={`min-w-[240px] snap-start rounded-2xl border p-3 text-left transition-all lg:min-w-0 lg:p-4 ${
+              className={`min-w-[220px] snap-start rounded-2xl border p-3 text-left transition-all lg:min-w-0 lg:p-4 ${
                 isSelected
                   ? 'border-[var(--accent)] bg-[var(--accent-dim)] shadow-[0_0_0_1px_rgba(212,175,55,0.15)]'
                   : 'border-[#222] bg-[var(--bg-secondary)] hover:border-[#444]'
@@ -134,13 +139,13 @@ export function SaintList() {
                 {saint.name}
               </span>
               {saint.titles.length > 0 && (
-                <span className="mt-1 block text-[11px] leading-relaxed text-[var(--text-secondary)] sm:text-xs">
+                <span className="mt-1 line-clamp-2 block text-[11px] leading-relaxed text-[var(--text-secondary)] sm:text-xs">
                   {saint.titles.slice(0, 2).join(' · ')}
                 </span>
               )}
               {saint.patronage.length > 0 && (
-                <div className="mt-3 flex flex-wrap gap-1">
-                  {saint.patronage.slice(0, 3).map((patronage) => (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {saint.patronage.slice(0, 2).map((patronage) => (
                     <span
                       key={patronage}
                       className="rounded-full bg-[#1a1a1a] px-2 py-0.5 text-[10px] text-[var(--text-secondary)]"
