@@ -15,6 +15,7 @@ export function SaintList() {
   const [saints, setSaints] = useState<SaintSummary[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [mobileExpanded, setMobileExpanded] = useState(false)
   const selectedSaintId = useSaintsStore((s) => s.selectedSaintId)
   const selectSaint = useSaintsStore((s) => s.selectSaint)
 
@@ -110,17 +111,52 @@ export function SaintList() {
     )
   }
 
+  const selectedSaint =
+    saints.find((saint) => saint.id === selectedSaintId) ?? saints[0] ?? null
+
+  const handleSelect = (saintId: string) => {
+    selectSaint(saintId)
+    setMobileExpanded(false)
+  }
+
   return (
     <div className="flex min-h-0 flex-col gap-2 p-3 sm:gap-3 sm:p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="font-serif text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent)] sm:text-sm">
           Saints
         </h2>
-        <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--text-secondary)] lg:hidden">
-          Swipe
-        </p>
+        <button
+          type="button"
+          onClick={() => setMobileExpanded((current) => !current)}
+          className="rounded-full border border-[#2d2d2d] bg-[rgba(255,255,255,0.03)] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)] lg:hidden"
+        >
+          {mobileExpanded ? 'Hide' : 'Choose'}
+        </button>
       </div>
-      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pr-2 lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:pb-6 lg:pr-0">
+
+      {selectedSaint && (
+        <button
+          type="button"
+          onClick={() => setMobileExpanded((current) => !current)}
+          className="flex items-center justify-between rounded-2xl border border-[rgba(212,175,55,0.18)] bg-[rgba(10,10,10,0.55)] px-3 py-3 text-left lg:hidden"
+        >
+          <div className="min-w-0">
+            <p className="font-serif text-[15px] font-semibold leading-tight text-[var(--text-primary)]">
+              {selectedSaint.name}
+            </p>
+            {selectedSaint.titles.length > 0 && (
+              <p className="mt-1 line-clamp-1 text-[11px] leading-relaxed text-[var(--text-secondary)]">
+                {selectedSaint.titles[0]}
+              </p>
+            )}
+          </div>
+          <span className="ml-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)]">
+            {mobileExpanded ? 'Collapse' : 'Change'}
+          </span>
+        </button>
+      )}
+
+      <div className={`${mobileExpanded ? 'flex' : 'hidden'} snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pr-2 lg:flex lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:pb-6 lg:pr-0`}>
         {saints.map((saint) => {
           const isSelected = selectedSaintId === saint.id
 
@@ -128,7 +164,7 @@ export function SaintList() {
             <button
               key={saint.id}
               type="button"
-              onClick={() => selectSaint(saint.id)}
+              onClick={() => handleSelect(saint.id)}
               className={`min-w-[220px] snap-start rounded-2xl border p-3 text-left transition-all lg:min-w-0 lg:p-4 ${
                 isSelected
                   ? 'border-[var(--accent)] bg-[var(--accent-dim)] shadow-[0_0_0_1px_rgba(212,175,55,0.15)]'
