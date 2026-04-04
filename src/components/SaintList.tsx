@@ -111,11 +111,11 @@ export function SaintList() {
   }
 
   return (
-    <div className="flex min-h-0 flex-col gap-3 p-4">
-      <h2 className="font-serif text-sm font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
+    <div className="flex min-h-0 flex-col gap-2 p-3 sm:gap-3 sm:p-4">
+      <h2 className="font-serif text-xs font-semibold uppercase tracking-[0.24em] text-[var(--accent)] sm:text-sm">
         Saints
       </h2>
-      <div className="flex gap-3 overflow-x-auto pb-1 lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:pb-6">
+      <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 pr-2 lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:pb-6 lg:pr-0">
         {saints.map((saint) => {
           const isSelected = selectedSaintId === saint.id
 
@@ -124,17 +124,17 @@ export function SaintList() {
               key={saint.id}
               type="button"
               onClick={() => selectSaint(saint.id)}
-              className={`min-w-[240px] rounded-xl border p-4 text-left transition-all lg:min-w-0 ${
+              className={`min-w-[240px] snap-start rounded-2xl border p-3 text-left transition-all lg:min-w-0 lg:p-4 ${
                 isSelected
                   ? 'border-[var(--accent)] bg-[var(--accent-dim)] shadow-[0_0_0_1px_rgba(212,175,55,0.15)]'
                   : 'border-[#222] bg-[var(--bg-secondary)] hover:border-[#444]'
               }`}
             >
-              <span className="font-serif text-lg font-semibold text-[var(--text-primary)]">
+              <span className="font-serif text-[15px] font-semibold leading-tight text-[var(--text-primary)] sm:text-lg">
                 {saint.name}
               </span>
               {saint.titles.length > 0 && (
-                <span className="mt-1 block text-xs text-[var(--text-secondary)]">
+                <span className="mt-1 block text-[11px] leading-relaxed text-[var(--text-secondary)] sm:text-xs">
                   {saint.titles.slice(0, 2).join(' · ')}
                 </span>
               )}

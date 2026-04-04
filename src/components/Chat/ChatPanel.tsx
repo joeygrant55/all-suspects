@@ -2,12 +2,16 @@ import { useEffect, useRef, useState } from 'react'
 import { buildApiUrl } from '../../api/client'
 import { useSaintsStore } from '../../game/state'
 import { useVoice } from '../../hooks/useVoice'
-import { type SaintInteractionMode } from '../../types/saintChat'
+import {
+  type SaintInteractionMode,
+  type SaintStudyGuide,
+} from '../../types/saintChat'
 
 interface SaintResponse {
   saintId: string
   name: string
   response: string
+  studyGuide?: SaintStudyGuide
 }
 
 interface DirectorResponse {
@@ -72,18 +76,33 @@ const COUNSEL_PROMPTS: Record<string, string[]> = {
 
 const STUDY_PROMPTS: Record<string, string[]> = {
   aquinas: [
-    'How would Aquinas respond to Nietzsche?',
-    'How would a medieval theologian study justice?',
-    'What should I read first if I want Aquinas on virtue?',
-    'How would Aquinas understand happiness?',
+    'How would Aquinas investigate conscience before answering it?',
+    'How did Scripture, Aristotle, and Augustine shape Aquinas on happiness?',
+    'What should I read first if I want Aquinas on virtue, and why there?',
+    'How would a medieval Dominican study justice step by step?',
   ],
   augustine: [
     'How would Augustine understand restlessness and desire?',
     'Where should I start in Augustine if I want to study conversion?',
-    'How would Augustine frame memory and self-knowledge?',
-    'What first-hand text should I read on desire?',
+    'How did Augustine learn to reason about grace and the will?',
+    'What first-hand text should I read on memory and self-knowledge?',
   ],
 }
+
+const MODE_COMPASS = [
+  {
+    label: 'Counsel',
+    description: 'direct guidance, application, and spiritual presence',
+  },
+  {
+    label: 'Study',
+    description: 'sources, distinctions, and historical reasoning',
+  },
+  {
+    label: 'Formation',
+    description: 'how the saint learned and where to read next',
+  },
+] as const
 
 function getSaintDisplayName(saintId: string): string {
   return SAINT_DISPLAY_NAMES[saintId] ?? saintId
@@ -120,13 +139,13 @@ function getModeDescription(
 ): string {
   if (interactionMode === 'study') {
     if (saintId === 'aquinas') {
-      return `${saintName} will answer with more method, historical grounding, and first-hand reading guidance.`
+      return `${saintName} answers with source lineage, method, historical context, and a concrete study trail.`
     }
 
-    return `Study mode adds a more historical and educational frame. In this first slice, it is strongest with Aquinas.`
+    return `Study mode adds sources, method, context, and next-step guidance. In this first slice, it is strongest with Aquinas.`
   }
 
-  return `${saintName} will answer conversationally, with warmth, presence, and practical counsel.`
+  return `${saintName} will answer conversationally, with warmth, presence, and practical counsel for your situation.`
 }
 
 function getAskTimeoutMessage(saintName: string): string {
@@ -159,6 +178,91 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
+function normalizeStringList(value: unknown, maxItems = 4): string[] {
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return Array.from(
+    new Set(
+      value
+        .filter((entry): entry is string => typeof entry === 'string')
+        .map((entry) => entry.trim())
+        .filter(Boolean)
+    )
+  ).slice(0, maxItems)
+}
+
+function normalizeStudyGuide(payload: unknown): SaintStudyGuide | undefined {
+  if (!isRecord(payload)) {
+    return undefined
+  }
+
+  const studyTrail = isRecord(payload.studyTrail) ? payload.studyTrail : null
+  if (studyTrail === null) {
+    return undefined
+  }
+
+  const formationFocus =
+    typeof payload.formationFocus === 'string' ? payload.formationFocus.trim() : ''
+  const readNext =
+    typeof studyTrail.readNext === 'string' ? studyTrail.readNext.trim() : ''
+  const readingNote =
+    typeof studyTrail.readingNote === 'string'
+      ? studyTrail.readingNote.trim()
+      : ''
+  const nextQuestion =
+    typeof studyTrail.nextQuestion === 'string'
+      ? studyTrail.nextQuestion.trim()
+      : ''
+  const keyDistinction =
+    typeof studyTrail.keyDistinction === 'string'
+      ? studyTrail.keyDistinction.trim()
+      : ''
+  const practice =
+    typeof studyTrail.practice === 'string'
+      ? studyTrail.practice.trim()
+      : ''
+  const sourceLineage = normalizeStringList(payload.sourceLineage)
+  const reasoningMethod = normalizeStringList(payload.reasoningMethod)
+  const historicalContext = normalizeStringList(payload.historicalContext)
+
+  if (
+    !formationFocus
+    || !readNext
+    || !readingNote
+    || !nextQuestion
+    || !keyDistinction
+    || !practice
+    || sourceLineage.length === 0
+    || reasoningMethod.length === 0
+    || historicalContext.length === 0
+  ) {
+    return undefined
+  }
+
+  const honestyNote =
+    typeof payload.honestyNote === 'string' && payload.honestyNote.trim()
+      ? payload.honestyNote.trim()
+      : undefined
+
+  return {
+    formationFocus,
+    sourceLineage,
+    reasoningMethod,
+    historicalContext,
+    notableContributions: normalizeStringList(payload.notableContributions, 3),
+    studyTrail: {
+      readNext,
+      readingNote,
+      nextQuestion,
+      keyDistinction,
+      practice,
+    },
+    ...(honestyNote ? { honestyNote } : {}),
+  }
+}
+
 function normalizeSaintResponse(payload: unknown): SaintResponse | null {
   if (!isRecord(payload)) {
     return null
@@ -178,11 +282,13 @@ function normalizeSaintResponse(payload: unknown): SaintResponse | null {
     typeof payload.name === 'string' && payload.name.trim()
       ? payload.name.trim()
       : fallbackName
+  const studyGuide = normalizeStudyGuide(payload.studyGuide)
 
   return {
     saintId,
     name,
     response,
+    ...(studyGuide ? { studyGuide } : {}),
   }
 }
 
@@ -202,14 +308,15 @@ function normalizeDirectorResponse(
     : []
 
   if (saints.length > 0) {
-    const scripture = isRecord(payload.scripture)
-      && typeof payload.scripture.reference === 'string'
-      && payload.scripture.reference.trim()
-      && typeof payload.scripture.text === 'string'
-      && payload.scripture.text.trim()
+    const scripturePayload = isRecord(payload.scripture) ? payload.scripture : null
+    const scripture = scripturePayload
+      && typeof scripturePayload.reference === 'string'
+      && scripturePayload.reference.trim()
+      && typeof scripturePayload.text === 'string'
+      && scripturePayload.text.trim()
       ? {
-          reference: payload.scripture.reference.trim(),
-          text: payload.scripture.text.trim(),
+          reference: scripturePayload.reference.trim(),
+          text: scripturePayload.text.trim(),
         }
       : undefined
 
@@ -323,6 +430,137 @@ function SaintResponseBody({ response }: { response: string }) {
           </p>
         )
       })}
+    </div>
+  )
+}
+
+function StudyGuideCard({
+  saintName,
+  guide,
+  onPromptSelect,
+}: {
+  saintName: string
+  guide: SaintStudyGuide
+  onPromptSelect: (prompt: string) => void
+}) {
+  const distinctionPrompt = `Help me understand ${saintName}'s distinction between ${guide.studyTrail.keyDistinction}.`
+  const [expanded, setExpanded] = useState(false)
+
+  return (
+    <div className="mt-3 rounded-[22px] border border-[rgba(212,175,55,0.18)] bg-[linear-gradient(180deg,rgba(212,175,55,0.07),rgba(18,18,18,0.96))] px-4 py-4 text-sm text-[var(--text-primary)] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
+            Formation Lens
+          </p>
+          <p className="mt-2 leading-relaxed text-[var(--text-primary)]">
+            {guide.formationFocus}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+          className="shrink-0 rounded-full border border-[#3a3a3a] bg-[rgba(255,255,255,0.02)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+        >
+          {expanded ? 'Less' : 'More'}
+        </button>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-[rgba(212,175,55,0.14)] bg-[rgba(255,255,255,0.02)] px-3 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+          Study trail
+        </p>
+        <div className="mt-2 space-y-2 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+          <p>
+            <strong className="font-semibold text-[var(--text-primary)]">Read next:</strong>{' '}
+            {guide.studyTrail.readNext}
+          </p>
+          <p>{guide.studyTrail.readingNote}</p>
+          <p>
+            <strong className="font-semibold text-[var(--text-primary)]">Key distinction:</strong>{' '}
+            {guide.studyTrail.keyDistinction}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <button
+          type="button"
+          onClick={() => onPromptSelect(guide.studyTrail.nextQuestion)}
+          className="rounded-2xl border border-[rgba(212,175,55,0.28)] bg-[rgba(10,10,10,0.5)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+        >
+          Ask next question
+        </button>
+        <button
+          type="button"
+          onClick={() => onPromptSelect(distinctionPrompt)}
+          className="rounded-2xl border border-[#3a3a3a] bg-[var(--bg-secondary)] px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-secondary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--text-primary)]"
+        >
+          Explore distinction
+        </button>
+      </div>
+
+      {expanded && (
+        <div className="mt-4 grid gap-4 sm:grid-cols-2">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+              Source lineage
+            </p>
+            <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+              {guide.sourceLineage.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+              Method
+            </p>
+            <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+              {guide.reasoningMethod.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+              Historical setting
+            </p>
+            <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+              {guide.historicalContext.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+
+          {guide.notableContributions.length > 0 && (
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+                Contributions
+              </p>
+              <ul className="mt-2 list-disc space-y-1.5 pl-5 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+                {guide.notableContributions.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          <div className="sm:col-span-2 rounded-2xl border border-[#2d2d2d] bg-[rgba(255,255,255,0.02)] px-3 py-3 text-[13px] leading-relaxed text-[var(--text-secondary)]">
+            <p>
+              <strong className="font-semibold text-[var(--text-primary)]">Practice:</strong>{' '}
+              {guide.studyTrail.practice}
+            </p>
+            {guide.honestyNote && (
+              <p className="mt-2 text-xs leading-relaxed text-[var(--text-secondary)]">
+                {guide.honestyNote}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -494,18 +732,48 @@ export function ChatPanel() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="border-b border-[#1a1a1a] bg-[linear-gradient(180deg,rgba(212,175,55,0.08),rgba(212,175,55,0.02))] px-4 py-4 sm:px-6">
+      <div className="border-b border-[#1a1a1a] bg-[linear-gradient(180deg,rgba(212,175,55,0.08),rgba(212,175,55,0.02))] px-4 py-3 sm:px-6 sm:py-4">
         <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[var(--accent)] sm:text-[11px]">
               Current companion
             </p>
-            <h2 className="mt-1 font-serif text-2xl text-[var(--text-primary)]">
+            <h2 className="mt-1 font-serif text-xl leading-tight text-[var(--text-primary)] sm:text-2xl">
               {selectedSaintName}
             </h2>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">
               {modeDescription}
             </p>
+            <div className="mt-2 hidden gap-2 sm:grid sm:grid-cols-3">
+              {MODE_COMPASS.map((item) => {
+                const isHighlighted =
+                  interactionMode === 'counsel'
+                    ? item.label === 'Counsel'
+                    : item.label === 'Study' || item.label === 'Formation'
+
+                return (
+                  <div
+                    key={item.label}
+                    className={`rounded-2xl border px-3 py-2 text-left ${
+                      isHighlighted
+                        ? 'border-[rgba(212,175,55,0.3)] bg-[rgba(212,175,55,0.08)]'
+                        : 'border-[#242424] bg-[rgba(255,255,255,0.02)]'
+                    }`}
+                  >
+                    <p
+                      className={`text-[10px] font-semibold uppercase tracking-[0.16em] ${
+                        isHighlighted ? 'text-[var(--accent)]' : 'text-[var(--text-secondary)]'
+                      }`}
+                    >
+                      {item.label}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-[var(--text-secondary)]">
+                      {item.description}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
           </div>
 
           <div className="flex flex-col items-start gap-2 sm:items-end">
@@ -568,28 +836,37 @@ export function ChatPanel() {
       </div>
 
       {chatError && (
-        <div className="border-b border-[#2e1f1f] bg-[#1c1414] px-4 py-3 sm:px-6">
-          <div className="mx-auto flex max-w-3xl items-start justify-between gap-3 text-sm text-[#d8c2c2]">
-            <p>{chatError}</p>
+        <div className="px-4 pt-3 sm:px-6">
+          <div className="mx-auto max-w-3xl rounded-2xl border border-[#4a2d2d] bg-[#1c1414] px-4 py-3 text-sm text-[#e6caca] shadow-[0_10px_24px_rgba(0,0,0,0.16)]">
+            <div className="flex items-start justify-between gap-3">
+              <p className="leading-relaxed">{chatError}</p>
+              <button
+                type="button"
+                onClick={() => setChatError(null)}
+                className="shrink-0 text-xs font-semibold uppercase tracking-[0.16em] text-[#d2aaaa] transition-colors hover:text-white"
+              >
+                Dismiss
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-6">
         <div className="mx-auto flex max-w-3xl flex-col gap-6">
           {messages.length === 0 && (
-            <div className="rounded-[28px] border border-[rgba(212,175,55,0.18)] bg-[linear-gradient(180deg,rgba(20,20,20,0.96),rgba(14,14,14,0.98))] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
+            <div className="rounded-[24px] border border-[rgba(212,175,55,0.18)] bg-[linear-gradient(180deg,rgba(20,20,20,0.96),rgba(14,14,14,0.98))] p-4 shadow-[0_18px_60px_rgba(0,0,0,0.35)] sm:rounded-[28px] sm:p-6">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[var(--accent)]">
                 {isStudyMode ? 'Begin the study' : 'Begin the conversation'}
               </p>
-              <h3 className="mt-2 font-serif text-2xl text-[var(--text-primary)]">
+              <h3 className="mt-2 font-serif text-xl leading-tight text-[var(--text-primary)] sm:text-2xl">
                 {isStudyMode
                   ? `Study with ${selectedSaintName}.`
                   : `Ask ${selectedSaintName} something real.`}
               </h3>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[var(--text-secondary)]">
                 {isStudyMode
-                  ? 'Study mode leans into historical framing, method, and first-hand reading without losing the saint’s presence.'
+                  ? "Study mode now surfaces source lineage, method, historical setting, and a next-step study trail without losing the saint's presence."
                   : 'This is a text-first conversation. If ElevenLabs is configured, each saint reply can also be played aloud without changing the chat flow.'}
               </p>
               {isStudyMode && !studyModeIsStrong && (
@@ -598,13 +875,30 @@ export function ChatPanel() {
                   still answer with a lighter study frame.
                 </p>
               )}
-              <div className="mt-5 flex flex-wrap gap-2">
+              {isStudyMode && (
+                <div className="mt-5 grid gap-2 sm:grid-cols-3">
+                  {MODE_COMPASS.map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-2xl border border-[rgba(212,175,55,0.16)] bg-[rgba(255,255,255,0.02)] px-3 py-3"
+                    >
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--accent)]">
+                        {item.label}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
+                        {item.description}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="mt-5 flex snap-x snap-mandatory gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
                 {promptSuggestions.map((prompt) => (
                   <button
                     key={prompt}
                     type="button"
                     onClick={() => handlePromptClick(prompt)}
-                    className="rounded-full border border-[#2d2d2d] bg-[var(--bg-secondary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)]"
+                    className="min-w-[220px] snap-start rounded-2xl border border-[#2d2d2d] bg-[var(--bg-secondary)] px-3 py-2 text-left text-sm text-[var(--text-primary)] transition-colors hover:border-[var(--accent)] hover:text-[var(--accent)] sm:min-w-0 sm:rounded-full"
                   >
                     {prompt}
                   </button>
@@ -617,7 +911,7 @@ export function ChatPanel() {
             if (message.role === 'user') {
               return (
                 <div key={message.id} className="flex justify-end">
-                  <div className="max-w-[90%] rounded-3xl rounded-br-md bg-[#1e1e1e] px-4 py-3 text-sm leading-relaxed text-[var(--text-primary)] shadow-[0_12px_30px_rgba(0,0,0,0.2)] sm:max-w-[80%]">
+                  <div className="max-w-[92%] rounded-[24px] rounded-br-md bg-[#1e1e1e] px-4 py-3 text-sm leading-relaxed text-[var(--text-primary)] shadow-[0_12px_30px_rgba(0,0,0,0.2)] sm:max-w-[80%] sm:rounded-3xl">
                     {message.text}
                   </div>
                 </div>
@@ -636,7 +930,7 @@ export function ChatPanel() {
 
                   return (
                     <div key={`${message.id}-${saint.saintId}`} className="flex justify-start">
-                      <div className="max-w-[95%] sm:max-w-[88%]">
+                      <div className="max-w-full sm:max-w-[88%]">
                         <div className="mb-2 flex flex-wrap items-center gap-2">
                           <span className="font-serif text-xs font-semibold tracking-wide text-[var(--accent)]">
                             {saint.name}
@@ -671,9 +965,16 @@ export function ChatPanel() {
                             </button>
                           )}
                         </div>
-                        <div className="rounded-3xl rounded-bl-md bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] shadow-[0_12px_30px_rgba(0,0,0,0.18)]">
+                        <div className="rounded-[24px] rounded-bl-md bg-[var(--bg-secondary)] px-4 py-3 text-sm text-[var(--text-primary)] shadow-[0_12px_30px_rgba(0,0,0,0.18)] sm:rounded-3xl">
                           <SaintResponseBody response={saint.response} />
                         </div>
+                        {saint.studyGuide && (
+                          <StudyGuideCard
+                            saintName={saint.name}
+                            guide={saint.studyGuide}
+                            onPromptSelect={handlePromptClick}
+                          />
+                        )}
                       </div>
                     </div>
                   )
@@ -705,8 +1006,8 @@ export function ChatPanel() {
         </div>
       </div>
 
-      <div className="border-t border-[#222] bg-[var(--bg-primary)] px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row">
+      <div className="sticky bottom-0 border-t border-[#222] bg-[rgba(10,10,10,0.92)] px-4 py-3 pb-[calc(env(safe-area-inset-bottom)+12px)] backdrop-blur supports-[backdrop-filter]:bg-[rgba(10,10,10,0.78)] sm:px-6 sm:py-4">
+        <div className="mx-auto flex max-w-3xl flex-col gap-2 sm:flex-row sm:gap-3">
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
@@ -723,7 +1024,7 @@ export function ChatPanel() {
             type="button"
             onClick={() => void handleSend()}
             disabled={loading || !input.trim()}
-            className="rounded-2xl bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-black transition-opacity disabled:opacity-30"
+            className="rounded-2xl bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-black transition-opacity disabled:opacity-30 sm:min-w-[120px]"
           >
             {loading ? 'Sending...' : 'Send'}
           </button>
