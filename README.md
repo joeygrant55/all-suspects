@@ -75,3 +75,4 @@ npm run start      # Production backend entry
 - `docs/SMOKE-TEST-CHECKLIST.md` — pre-share smoke test flow
 - `docs/FIRST-SHAREABLE-BETA.md` — quality gate before outside sharing
 - `docs/KNOWN-ISSUES.md` — active risk log and share notes before sending it out
+- `docs/RELEASE-CHECKLIST.md` — final pre-deploy / pre-share release pass
