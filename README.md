@@ -78,3 +78,4 @@ npm run start      # Production backend entry
 - `docs/RELEASE-CHECKLIST.md` — final pre-deploy / pre-share release pass
 - `docs/SHIP-SEQUENCE.md` — shortest safe path from local changes to a real shareable build
 - `docs/REPO-STATE-HANDOFF.md` — snapshot of the current working-tree refactor risk before deploy/share decisions
+- `docs/SMOKE-TEST-RESULTS-TEMPLATE.md` — quick template for capturing what actually happened in a smoke-test pass
