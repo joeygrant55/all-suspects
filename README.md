@@ -79,5 +79,6 @@ npm run start      # Production backend entry
 - `docs/SHIP-SEQUENCE.md` — shortest safe path from local changes to a real shareable build
 - `docs/REPO-STATE-HANDOFF.md` — snapshot of the current working-tree refactor risk before deploy/share decisions
 - `docs/SMOKE-TEST-RESULTS-TEMPLATE.md` — quick template for capturing what actually happened in a smoke-test pass
+- `docs/LIVE-SMOKE-TEST-PLAN.md` — disciplined run order and prompts for a real end-to-end smoke-test pass
 - `docs/SHARE-FEEDBACK-TEMPLATE.md` — consistent template for collecting real beta feedback after sharing
 - `docs/POST-DEPLOY-VERIFICATION.md` — last-mile production verification checklist before broader sharing
