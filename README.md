@@ -82,3 +82,4 @@ npm run start      # Production backend entry
 - `docs/LIVE-SMOKE-TEST-PLAN.md` — disciplined run order and prompts for a real end-to-end smoke-test pass
 - `docs/SHARE-FEEDBACK-TEMPLATE.md` — consistent template for collecting real beta feedback after sharing
 - `docs/POST-DEPLOY-VERIFICATION.md` — last-mile production verification checklist before broader sharing
+- `docs/DEPLOY-DECISION-CHECKLIST.md` — pre-deploy / pre-share gate so repo state, smoke testing, and share readiness are judged together
